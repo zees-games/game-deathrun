@@ -69,3 +69,4 @@ Thumbs.db
 
 # tools/bake_lightmaps.sh's bake scenes and the editor's raw output; lightmaps/ is what ships.
 /lightbake_work/
+/addons/dot_profile
