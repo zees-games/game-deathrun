@@ -47,6 +47,7 @@ var _offline: bool = true
 var _watch_id: int = -1
 
 var _slot: int = 0
+var _wheel: DotWeaponWheel
 
 ## The last whole second of the countdown a beep was played for.
 var _beeped: int = -1

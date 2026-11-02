@@ -359,6 +359,10 @@ func _test_help_and_menu() -> void:
 	_check(wu.is_action_pressed(DotMenuBindings.WEAPON_PREVIOUS_ACTION) and wd.is_action_pressed(DotMenuBindings.WEAPON_NEXT_ACTION),
 		"wheel up is previous weapon and wheel down is next")
 	_check(not wu.is_action_pressed(&"dot_fps_jump") and not wd.is_action_pressed(&"dot_fps_jump"), "and the wheel does not jump")
+	var wc: Node = DrClient.new()
+	var took: bool = wc.call("_wheel_pressed", wd)
+	_check(not took and wc.get(&"_wheel") is DotWeaponWheel, "the client's DotWeaponWheel is built on first use and leaves a wheel alone with the pointer free")
+	wc.free()
 	var h := InputEventKey.new()
 	h.physical_keycode = KEY_H
 	h.keycode = KEY_H

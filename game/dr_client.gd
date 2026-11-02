@@ -1550,19 +1550,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _covered():
 		return
 
-	# The wheel, on dot-menu's previous/next weapon actions (rebindable). Only with the pointer
-	# captured and a weapon in hand: spectators and a menu get no weapon change.
-	if event is InputEventMouseButton and event.pressed and _pointer_ours() and not is_spectating():
-		var step := 0
-		if event.is_action_pressed(DotMenuBindings.WEAPON_NEXT_ACTION):
-			step = 1
-		elif event.is_action_pressed(DotMenuBindings.WEAPON_PREVIOUS_ACTION):
-			step = -1
-		if step != 0:
-			var cycled := _cycled_slot(step)
-			if cycled != 0:
-				_slot = cycled
-			return
+	# The wheel, on dot-menu's previous/next weapon actions (rebindable).
+	if _wheel_pressed(event):
+		return
 
 	# The game's keys, each a row of [DrBindings] read through its action, so a key moved on
 	# the Controls page moves what it does here.
@@ -1632,18 +1622,18 @@ func _unhandled_input(event: InputEvent) -> void:
 			_sampler.handle_event(event)
 
 
-## The slot [param step] places along from the one in hand, over the slots carried (so an
-## empty slot is skipped); 0 when there is nothing to change to.
-func _cycled_slot(step: int) -> int:
-	if weapons == null or weapons.arsenal == null:
-		return 0
-	var carried := weapons.arsenal.slots()
-	if carried.size() < 2:
-		return 0
-	var at := carried.find(_slot if _slot != 0 else weapons.arsenal.current_slot())
-	if at < 0:
-		at = carried.find(weapons.arsenal.current_slot())
-	return carried[posmod(at + step, carried.size())]
+## Steps the carried slots on the previous/next weapon actions; true when the event was one.
+func _wheel_pressed(event: InputEvent) -> bool:
+	if _wheel == null:
+		_wheel = DotWeaponWheel.new()
+		_wheel.ring_provider = func() -> Array:
+			return weapons.arsenal.slots() if weapons != null and weapons.arsenal != null else []
+		_wheel.current_provider = func() -> Variant:
+			return _slot if _slot != 0 else weapons.arsenal.current_slot()
+		_wheel.blocked = func() -> bool:
+			return not _pointer_ours() or is_spectating()
+		_wheel.chosen.connect(func(slot: Variant) -> void: _slot = int(slot))
+	return _wheel.handle_event(event)
 
 
 func describe() -> Dictionary:
