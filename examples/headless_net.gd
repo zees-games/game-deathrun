@@ -600,7 +600,7 @@ func _test_free_roam_crosses() -> void:
 		"switching mp_freeroam off mid-roam puts the roamer back on a player on both ends")
 	rules.allow_roaming = true
 	me.watching = false
-	spectate.on_spawned(key)
+	spectate.spawned(String(key))
 	_server_game.phase = held_phase
 	await _steps(6)
 	_finished()

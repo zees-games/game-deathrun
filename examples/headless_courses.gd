@@ -721,7 +721,7 @@ func _revive(game: DrGame, player: DrPlayer) -> void:
 	player.health.invulnerable = false
 
 	if game.spectate != null:
-		game.spectate.on_spawned(player.player_id)
+		game.spectate.spawned(String(player.player_id))
 
 
 func _ticks(game: DrGame, count: int) -> void:

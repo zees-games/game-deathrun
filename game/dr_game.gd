@@ -539,13 +539,16 @@ func _build_spectate() -> void:
 	spectate.sides = sides
 	spectate.death_cam_seconds = config.death_cam_seconds
 	spectate.freeze_cam_seconds = config.freeze_cam_seconds
-	spectate.phase_fn = func() -> int: return phase
-	spectate.in_showdown_fn = func(p: int) -> bool: return p == Phase.SHOWDOWN
+	spectate.authoritative = authoritative
+	spectate.tick_rate = tick_rate
+	spectate.rules = spectate_rules
+	spectate.fixed_index_fn = func(_key: String) -> int:
+		return DrSpectate.OVERVIEW_SHOWDOWN if phase == Phase.SHOWDOWN else DrSpectate.OVERVIEW_FIELD
 	add_child(spectate)
 
 	# The config's number is only the starting point: from here `mp_forcecamera` is the rule.
 	spectate_rules.force_camera = clampi(config.spectate_camera, 0, 2)
-	var ready_now := spectate.setup(authoritative, tick_rate, spectate_rules)
+	var ready_now := spectate.setup()
 
 	if not ready_now.ok:
 		DotLog.warn(CHANNEL, "spectating is off", {"why": ready_now.error.message})
@@ -596,7 +599,8 @@ func _refresh_overviews() -> void:
 	var middle := from.lerp(to, 0.5)
 	var arena := Transform3D(Basis.IDENTITY, from + (from - to).normalized() * 3.0 + Vector3(0.0, 9.0, 0.0)) \
 		.looking_at(middle, Vector3.UP)
-	spectate.set_overviews(field, arena)
+	var cameras: Array[Transform3D] = [field, arena]
+	spectate.set_overviews(cameras)
 
 
 # --- Players ----------------------------------------------------------------
@@ -733,7 +737,7 @@ func place_one(player: DrPlayer) -> void:
 	if authoritative and (phase == Phase.RUN or phase == Phase.SHOWDOWN):
 		_bench(player)
 	elif spectate != null:
-		spectate.on_spawned(player.player_id)
+		spectate.spawned(String(player.player_id))
 
 
 ## Sits somebody out for the rest of the round: watching, unhurtable, not counted.
@@ -773,7 +777,7 @@ func remove_player(player_id: StringName) -> void:
 	player.queue_free()
 
 	if spectate != null:
-		spectate.on_left(player_id)
+		spectate.left(String(player_id))
 
 	if progress != null:
 		progress.leave(player_id)
@@ -1219,7 +1223,7 @@ func _place_everybody() -> void:
 		_bot_walk[player.player_id] = -1
 
 		if spectate != null:
-			spectate.on_spawned(player.player_id)
+			spectate.spawned(String(player.player_id))
 
 
 func _set_phase(to: int) -> void:
