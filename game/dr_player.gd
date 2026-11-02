@@ -170,6 +170,11 @@ func _ready() -> void:
 	controller.after_fn = _after_tick
 	add_child(controller)
 
+	# Floors here are teleported out from under a rider (a trap platform slides away from someone
+	# pinned against a wall), so the motor must re-probe the ground every tick.
+	if controller.motor != null:
+		controller.motor.reuse_settled_ground = false
+
 	if samples_input:
 		sampler = DotFpsSampler.new(controller.tunables)
 		register_actions(sampler)
