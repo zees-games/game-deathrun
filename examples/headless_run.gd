@@ -12,7 +12,7 @@ extends "headless_run_client.gd"
 
 const SECTIONS := 31
 
-const CHECKS := 155
+const CHECKS := 156
 
 
 

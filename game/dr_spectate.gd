@@ -28,6 +28,7 @@ func _init() -> void:
 	history_seconds = 0.0
 	eye_height = DrPlayer.EYE_HEIGHT
 	prefer_own_side = true
+	guard_roam = true
 
 
 func _channel() -> String:
@@ -58,24 +59,6 @@ func on_died(
 	DotLog.debug(CHANNEL, "somebody who is out is watching", {
 		"player": String(player_id), "by": String(by), "fell": fell,
 	})
-
-
-## The free-camera key, asked of the server: a mirror is told, not asked, and a refusal (roaming off, `mp_forcecamera`) is the manager's own.
-func toggle_roam(key: String) -> DotResult:
-	if manager == null:
-		return _unset()
-
-	if not authoritative:
-		return DotResult.fail(DotError.CODE_STATE, "A mirror is told, not asked.")
-
-	if not manager.is_spectating(key):
-		return DotResult.fail(DotError.CODE_STATE, "You are playing, not watching.")
-
-	return super(key)
-
-
-func can_roam(key: String) -> bool:
-	return is_spectating(key) and super(key)
 
 
 func _name_of(key: String) -> String:
