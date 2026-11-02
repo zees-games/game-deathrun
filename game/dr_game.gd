@@ -1878,6 +1878,19 @@ func _bot_run(player: DrPlayer, command: DotFpsCommand) -> void:
 	command.yaw = rad_to_deg(atan2(-toward.x, -toward.z))
 	command.move = Vector2(0.0, 1.0)
 
+	# Cancel sideways momentum carried down a staircase (no ground to turn it on), which
+	# otherwise sails past a small stepping stone at the bottom.
+	if not bool(point["jump"]) and index + 1 < route.size() and bool((route[index + 1] as Dictionary)["jump"]) \
+			and toward.length() > 1.0 and toward.length() < 6.0:
+		var drift: Vector3 = player.controller.state.velocity
+		drift.y = 0.0
+		var heading_now := toward.normalized()
+		drift -= heading_now * drift.dot(heading_now)
+
+		if drift.length() > 0.5:
+			var steer := heading_now * config.run_speed - drift * 1.5
+			command.yaw = rad_to_deg(atan2(-steer.x, -steer.z))
+
 	if bool(point["walk"]):
 		command.set_button(DotFpsCommand.BUTTON_WALK, true)
 
