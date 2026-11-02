@@ -1855,13 +1855,7 @@ func _drive_bots() -> void:
 
 
 ## A stand-in runner: along the route, and over every gap the route lands it across.
-##
-## [b]A `jump` point is where the jump LANDS, and the take-off is wherever the ground ends.[/b]
-## A route that named take-off points as well needed one exactly at every edge, and the first
-## version of this aimed the jump at the take-off point it was already standing on — which
-## from a step past it is backwards; the bot jumped off the first block into the spikes
-## behind it. So the bot runs at the landing and jumps when a ray finds no floor ahead,
-## which is also what a person does.
+## A `jump` point is where the jump LANDS; the take-off is wherever a ray finds no floor ahead.
 func _bot_run(player: DrPlayer, command: DotFpsCommand) -> void:
 	var route := stage.route()
 
@@ -1878,8 +1872,7 @@ func _bot_run(player: DrPlayer, command: DotFpsCommand) -> void:
 	command.yaw = rad_to_deg(atan2(-toward.x, -toward.z))
 	command.move = Vector2(0.0, 1.0)
 
-	# Cancel sideways momentum carried down a staircase (no ground to turn it on), which
-	# otherwise sails past a small stepping stone at the bottom.
+	# Cancel sideways momentum carried down a staircase, which sails past a small stone at the bottom.
 	if not bool(point["jump"]) and index + 1 < route.size() and bool((route[index + 1] as Dictionary)["jump"]) \
 			and toward.length() > 1.0 and toward.length() < 6.0:
 		var drift: Vector3 = player.controller.state.velocity
@@ -1897,19 +1890,12 @@ func _bot_run(player: DrPlayer, command: DotFpsCommand) -> void:
 	if bool(point["crouch"]):
 		command.set_button(DotFpsCommand.BUTTON_CROUCH, true)
 
-	# Just landed, and the next landing is somewhere else: stop first. A jump taken the tick
-	# after a landing keeps the landing's momentum, which points the way the LAST jump went —
-	# and the next floe is off to the side. Measured on Ice Works: a bot that never stopped
-	# landed a metre and a half wide of the second floe, every time.
-	#
-	# And back to the middle of what it landed on before running at the next: stopped near the
-	# far edge, there is no run-up, and the jump from a standstill fell short into the pool.
+	# Just landed: stop (a jump keeps the last landing's momentum), then back to the middle for a run-up.
 	if grounded and _bot_settle.has(player.player_id):
 		var flat_speed := Vector2(player.controller.state.velocity.x, player.controller.state.velocity.z).length()
 
 		if flat_speed > 1.2:
-			# Brake against the motion rather than coast: letting go leaves friction alone to
-			# take a landing's 5 m/s down to a stand, which was most of a second per jump.
+			# Brake rather than coast: friction alone costs most of a second per jump.
 			var v := player.controller.state.velocity
 			command.yaw = rad_to_deg(atan2(-v.x, -v.z))
 			command.move = Vector2(0.0, -1.0)
@@ -1932,22 +1918,16 @@ func _bot_run(player: DrPlayer, command: DotFpsCommand) -> void:
 		elif toward.length() > float(point["reach"]) + 0.5 or at.y < (point["at"] as Vector3).y - 0.5:
 			var heading := toward.normalized()
 			var flat_speed := Vector2(player.controller.state.velocity.x, player.controller.state.velocity.z).length()
-			# How fast a jump from here has to be going to come down on the landing: the
-			# distance over a standing jump's time in the air.
+			# Fast enough to cover the distance to the landing within a standing jump's airtime.
 			var airtime := 2.0 * sqrt(2.0 * config.jump_height / maxf(config.gravity, 0.1))
 			var fast_enough := flat_speed * airtime >= toward.length() - 0.3
 
-			# The edge: no floor a stride ahead, nor a little further (both, because a seam
-			# between two floor pieces is a ray that finds nothing for one tick) — and going
-			# fast enough to make it. Or no floor right in front, whatever the speed: from the
-			# middle of a small block the stride ahead is already over the gap, and the first
-			# version took off from there at walking pace and fell short.
+			# Two rays, because a seam between floor pieces misses for one tick; at_edge jumps at any speed.
 			var at_edge := not _floor_at(at + heading * 0.35)
 			var gap_ahead := not _floor_at(at + heading * 0.7) and not _floor_at(at + heading * 1.4)
 
 			if at_edge or (gap_ahead and fast_enough):
-				# A fumble is a jump not taken, decided once per bot, waypoint and round, so it
-				# is reproducible and a different bot fumbles a different jump.
+				# A fumble is a jump not taken, fixed per bot, waypoint and round.
 				var draw := random.stream_for(&"bot_fumble",
 					round_number * 65536 + int(player.entity_id % 256) * 256 + index)
 
@@ -1991,15 +1971,8 @@ func _bot_unstick(player: DrPlayer, command: DotFpsCommand) -> void:
 		_bot_stuck[player.player_id] = [at, _tick]
 
 
-## A stand-in at the buttons: to the button of the trap a runner will reach first, and a press
-## once somebody has been in it for [member DrConfig.bot_trap_delay].
-##
-## [b]It walks to buttons in a straight line[/b], so a course's activator corridor has to be
-## one a person can walk straight along; every course in this repository's is, and the suite
-## runs every one with a stand-in at the buttons.
-## While the runners wait behind the gate, walks a stand-in activator to the first trap's button.
-## Run speed is the runners' too, so an activator that set off with the gate would never catch
-## the clump, and a course whose runners do not fall (dr_internet) saw no press at all.
+## While the runners wait behind the gate, walks a stand-in activator to the first trap's button,
+## so it is there when the clump arrives (run speed is the runners' too).
 func _bot_take_position(player: DrPlayer, command: DotFpsCommand) -> void:
 	var first := -1
 	var first_progress := 1 << 30
@@ -2018,6 +1991,8 @@ func _bot_take_position(player: DrPlayer, command: DotFpsCommand) -> void:
 		var _there := bot_walk_toward(player, first, command)
 
 
+## A stand-in at the buttons: walks (in a straight line) to the first trap a runner reaches and presses it
+## once somebody has been in it for [member DrConfig.bot_trap_delay].
 func _bot_activate(player: DrPlayer, command: DotFpsCommand) -> void:
 	var target := _bot_target_trap(player)
 

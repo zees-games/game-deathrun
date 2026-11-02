@@ -115,9 +115,7 @@ func _ready() -> void:
 
 func _run() -> void:
 	var game: DrGame = _client.get("game")
-	# Into a round, with the person at this keyboard on the side the view is about. The
-	# stand-ins are left where the draw put them, except that none of them presses anything
-	# the picture did not ask for.
+	# Into a round, with the person at this keyboard on the side the view is about.
 	await _until_a_round(game)
 	var local = _client.get("player")
 	var activator := _view == "activator" or _view == "button"

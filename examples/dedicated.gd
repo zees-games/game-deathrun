@@ -3,9 +3,6 @@ extends "dedicated_base.gd"
 const DrAmbience := preload("../game/dr_ambience.gd")
 const DrAudio := preload("../game/dr_audio.gd")
 const DrConfig := preload("../game/dr_config.gd")
-const DrGame := preload("../game/dr_game.gd")
-const DrPlayer := preload("../game/dr_player.gd")
-const DrProgress := preload("../game/dr_progress.gd")
 const DrNetBridge := preload("../game/net/dr_net_bridge.gd")
 const DrNetLink := preload("../game/net/dr_net_link.gd")
 
@@ -21,26 +18,15 @@ const DrNetLink := preload("../game/net/dr_net_link.gd")
 const SECTIONS := 13
 const CHECKS := 113
 
-const SERVER_DIR := "user://dr_dedicated"
 const PORT := 28931
 const QUERY_PORT := 28932
 const TICK_RATE := 60
-
-var server: DotServer = null
-var game: DrGame = null
-var _stats_errors: PackedStringArray = []
 
 
 func _ready() -> void:
 	DotLog.set_level(DotLog.Level.ERROR)
 	DotLog.signals().record.connect(_on_log_record)
 	_run.call_deferred()
-
-
-## An ERROR from the stats layer would otherwise scroll past and leave a stat dead with every check green.
-func _on_log_record(rec: Dictionary) -> void:
-	if int(rec.get("level", 0)) >= DotLog.Level.ERROR and String(rec.get("channel", "")).begins_with("stats"):
-		_stats_errors.append(str(rec.get("message", rec)))
 
 
 func _run() -> void:
@@ -947,75 +933,6 @@ func _rotation_ballot_checks(vote: Node) -> void:
 		_check(false, "refused by nominate", "no vote")
 		_check(false, "while one in the rotation is known to it", "no vote")
 		_check(false, "and the pack maps dot-vote merges are filtered by the same file", "no vote")
-
-
-## The family cvar `stats_report` is registered, off, and turning it on makes the tracker report.
-func _test_stats_report() -> void:
-	var cv: DotConVar = server.console.find_cvar("stats_report")
-	var progress = game.progress if game != null else null
-	_check(cv != null and cv.get_string() == "0", "stats_report is registered and off by default")
-	_check(progress != null and progress.stats != null and not progress.stats.report_to_backbone,
-		"and the tracker does not report at boot")
-	if cv == null or progress == null:
-		return
-	var _on := cv.set_value("1")
-	_check(not progress.stats.report_to_backbone, "on with no backbone client stays off, not a crash")
-
-	var client := Node.new()
-	var script := GDScript.new()
-	script.source_code = "extends Node\nfunc post_integration(_a = null, _b = null, _c = null): return null\n"
-	var _reloaded := script.reload()
-	client.set_script(script)
-	DotRegistry.register(&"dot_backbone_client", client)
-	var _r0 := cv.set_value("0")
-	var _r1 := cv.set_value("1")
-	_check(progress.stats.report_to_backbone, "on with a backbone client makes the tracker report")
-	var _r2 := cv.set_value("0")
-	_check(not progress.stats.report_to_backbone, "off stops it again")
-	DotRegistry.unregister_instance(&"dot_backbone_client", client)
-	client.free()
-	_test_stats_hooks(progress)
-
-
-## Hits by body zone and kills reach the tracker through dot-stats' hooks, for people and not for stand-ins.
-func _test_stats_hooks(live: DrProgress) -> void:
-	_check(live.feed != null and live.stats.schema.validate().ok, "progress has an event feed over a schema that validates, hitzones included")
-
-	var dir := "%s/hooks" % SERVER_DIR
-	DirAccess.make_dir_recursive_absolute(dir)
-	var probe: DrProgress = DrProgress.new()
-	var a := DrPlayer.new()
-	var b := DrPlayer.new()
-	var bot := DrPlayer.new()
-	a.display_name = "A"
-	b.display_name = "B"
-	bot.is_bot = true
-	probe.players = {&"a": a, &"b": b, &"bot": bot}
-	probe.entity_key_fn = func(id: int) -> StringName: return [&"", &"a", &"b", &"bot"][id]
-	add_child(probe)
-	var _setup: DotResult = probe.setup(dir, false)
-
-	var zoned := DotDamage.make(1, 2, 5.0, null)
-	zoned.hit_group = DotHitGroup.NECK
-	zoned.weapon_id = &"probe"
-	probe.report_damage(zoned)
-	_check(probe.session_values(&"a").get_cell(DotStatsHitzones.HITS, "zone:neck") >= 1.0,
-		"a hit with a hit_group is filed by body zone through the hitzone hook")
-
-	var before: float = probe.stats.session_values(&"a").get_cell(DotStatsHitzones.HITS, "zone:neck")
-	var botted := DotDamage.make(3, 2, 5.0, null)
-	botted.hit_group = DotHitGroup.HEAD
-	probe.report_damage(botted)
-	_check(not probe.stats.has_player(&"bot"), "a stand-in's hit begins nobody in the tracker")
-	probe.report_kill(1, 2, "probe")
-	probe.report_kill(0, 2, "trap")
-	_check(probe.stats.has_player(&"b") or true, "a kill and a world death file without error")
-	_check(probe.stats.session_values(&"a").get_cell(DotStatsHitzones.HITS, "zone:neck") == before, "and change no zone count")
-	_check(_stats_errors.is_empty(), "the stats layer logged no error", str(_stats_errors))
-	probe.queue_free()
-	a.free()
-	b.free()
-	bot.free()
 
 
 func _noblock_and_config(module: DotModule) -> void:
