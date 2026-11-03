@@ -112,8 +112,8 @@ func _net_config() -> DotNetConfig:
 	# The end arena is a fight at range with rifles, which is the ordinary reason to want it.
 	config.enable_lag_compensation = true
 	# Everybody playing, and nothing else: a trap is not an entity (see [DrCourse]), so a
-	# snapshot is a full server's players and room to spare.
-	config.max_entities_per_snapshot = 64
+	# snapshot is a full server's players; 0 is no cap.
+	config.max_entities_per_snapshot = 0
 	return config
 
 
