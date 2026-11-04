@@ -1,0 +1,15 @@
+{
+	"format": 1,
+	"mirrors": [],
+	"origin": "https://dotgames.org/content",
+	"packs": [
+		{
+			"id": "gamemann/game-deathrun",
+			"into": "",
+			"kind": "pack",
+			"manifest_sha256": "1ea1a5471fd93dda320ee1d42e44fb27b5bd751a9274d0f51170f5cc4f926760",
+			"optional": false,
+			"version": "1.0.0"
+		}
+	]
+}
