@@ -226,7 +226,6 @@ func pull() -> void:
 
 	net_finished = player.finished
 	net_points = clampi(player.points, 0, 65535)
-	net_ping = clampi(player.ping_ms, 0, 1023)
 	net_at_end = player.at_end
 	net_watching = player.watching
 	net_blind = player.blinded
@@ -234,6 +233,7 @@ func pull() -> void:
 	net_flashlight = player.flashlight
 	# Only the server's count: the client's own `warps` also ticks on a predicted pad and on replays, so copying it made the prediction disagree with every snapshot (a replay storm).
 	if identity == null or identity.is_authoritative:
+		net_ping = clampi(player.ping_ms, 0, 1023)
 		net_warp = player.warps & 0xF
 
 	# [b]After the arsenal has simulated, which on this end it has: the whole world ticks
