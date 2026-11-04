@@ -257,6 +257,13 @@ func _build_lower(size: int) -> void:
 	_field.offset_top = -80.0
 	_field.offset_bottom = -26.0
 	_field.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	if DotPlatform.has_touch():
+		# The bottom-right corner is the FIRE/USE cluster: park the line top right.
+		_field.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+		_field.offset_left = -400.0
+		_field.offset_right = -30.0
+		_field.offset_top = 20.0
+		_field.offset_bottom = 60.0
 
 	watching_label = _label(size)
 	watching_label.name = "Watching"
