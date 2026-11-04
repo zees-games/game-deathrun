@@ -65,7 +65,7 @@ func _run() -> void:
 	_check(not DrMapConfig.client_keys().has("dr_round_seconds"), "the client takes only what it predicts with")
 	_check(DirAccess.dir_exists_absolute(ProjectSettings.globalize_path("res://cfg/game/mg-deathrun/dot_map/map")), "the shipped starter folder exists")
 
-	_report(CHECKS)
+	_report_sections(1, 1, 1, CHECKS)
 
 
 func _write(path: String, text: String) -> void:
