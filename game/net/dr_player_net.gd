@@ -213,7 +213,9 @@ func pull() -> void:
 	net_watching = player.watching
 	net_blind = player.blinded
 	net_beacon = player.beacon
-	net_warp = player.warps & 0xF
+	# Only the server's count: the client's own `warps` also ticks on a predicted pad and on replays, so copying it made the prediction disagree with every snapshot (a replay storm).
+	if identity == null or identity.is_authoritative:
+		net_warp = player.warps & 0xF
 
 	# [b]After the arsenal has simulated, which on this end it has: the whole world ticks
 	# before anything is pulled.[/b] A rig that does not exist yet — which is every player
