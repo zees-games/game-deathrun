@@ -163,6 +163,16 @@ func _build() -> void:
 	_root.theme = piece_theme()
 	_follow()
 
+	_build_top(size)
+	_build_lower(size)
+
+	_build_bar()
+
+	_root.add_child(_make_crosshair())
+
+
+## The clock, the course name, the side and the shout.
+func _build_top(size: int) -> void:
 	# The clock, and the phase line under it. Full width, because the strip centres itself
 	# on its own middle; the course name sits under it.
 	strip = DotScoreStrip.new()
@@ -197,6 +207,9 @@ func _build() -> void:
 	_shout.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_shout.add_theme_color_override("font_color", Color(0.99, 0.86, 0.40))
 
+
+## The key prompt, the activator's trap list, the vitals, the gun pieces, the field count and the watching line.
+func _build_lower(size: int) -> void:
 	# Under the crosshair, small: what E would do now. Close to where the eye already is,
 	# because an activator presses while watching the trap, not the corner of the screen.
 	prompt = DotKeyPrompt.new()
@@ -252,10 +265,6 @@ func _build() -> void:
 	watching_label.offset_bottom = -104.0
 	watching_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	watching_label.add_theme_color_override("font_color", Color(0.80, 0.90, 1.0))
-
-	_build_bar()
-
-	_root.add_child(_make_crosshair())
 
 
 ## Bottom right, above the field line: the ammo counter, the held gun's sprite and the hit marker.

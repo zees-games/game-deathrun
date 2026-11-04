@@ -440,6 +440,57 @@ func describe_lines() -> PackedStringArray:
 ## wall, so an activator at the rail looks straight down into the corridor; a thin rail and an
 ## invisible clip above the wall keep them out of it.
 static func practice() -> Dictionary:
+	var pieces: Array = _practice_pieces()
+	var traps: Array = _practice_traps()
+
+	var doc := {
+		"format": 1,
+		"kind": "course",
+		"id": String(PRACTICE),
+		"name": "Practice Run",
+		"author": "mg-deathrun",
+		"blurb": "Five traps, one of each shape, before the real courses.",
+		"kill_height": -8.0,
+		"theme": {"deck": [0.86, 0.92, 1.0]},
+		"pieces": pieces,
+		"traps": traps,
+		# dot-props' loose toys: a ball in the start room, and two in the arena. headless_run
+		# walks into the start's football and shoots the arena's beach ball.
+		"toys": [
+			{"toy": "football", "at": [1.8, 0.0, 6.5]},
+			{"toy": "beach_ball", "at": [-7.0, 0.0, -64.0]},
+			{"toy": "tyre", "at": [7.0, 0.0, -68.0], "yaw": 30.0},
+		],
+		"start": {"at": [0.0, 0.0, 4.5], "size": [6.0, 3.0, 6.0], "yaw": 0.0},
+		"activators": {"at": [6.25, 3.0, 5.0], "size": [4.0, 3.0, 4.0], "yaw": 0.0},
+		"finish": {"at": [0.0, 0.0, -49.25], "size": [6.0, 3.0, 2.5], "yaw": 0.0},
+		"end": {
+			"runners": {"at": [0.0, 0.0, -56.5], "size": [8.0, 3.0, 4.0], "yaw": 0.0},
+			"activators": {"at": [0.0, 0.0, -71.5], "size": [8.0, 3.0, 4.0], "yaw": 180.0},
+		},
+		"route": [
+			{"at": [0.0, 0.0, -9.0]},
+			{"at": [-1.0, 0.0, -32.5], "jump": true, "reach": 0.6},
+			{"at": [1.0, 0.0, -35.5], "jump": true, "reach": 0.6},
+			{"at": [-1.0, 0.0, -38.5], "jump": true, "reach": 0.6},
+			{"at": [0.0, 0.0, -41.5], "jump": true},
+			{"at": [0.0, 0.0, -49.25]},
+		],
+	}
+
+	var checked := DrCourseDoc.validate(doc)
+
+	if not checked.ok:
+		# The suite's first check, and the reason it is the first: a built-in course that does
+		# not validate is a server with nothing to play.
+		push_error("The built-in course does not validate: %s" % checked.error.message)
+		return doc
+
+	return checked.value
+
+
+## The practice course's floors, walls, kill zones and arena.
+static func _practice_pieces() -> Array:
 	var pieces: Array = [
 		# The runners' floor, in four lengths with the traps' gaps between them.
 		{"kind": "box", "at": [0.0, -0.5, -1.0], "size": [6.0, 1.0, 18.0]},
@@ -475,6 +526,11 @@ static func practice() -> Dictionary:
 		{"kind": "box", "at": [4.0, 0.75, -64.0], "size": [2.0, 1.5, 2.0], "role": "pillar"},
 	]
 
+	return pieces
+
+
+## The practice course's five traps.
+static func _practice_traps() -> Array:
 	var traps: Array = [
 		{
 			"id": "trapdoor", "name": "Trapdoor", "victim": [1.4, 0.0, -13.0],
@@ -528,47 +584,4 @@ static func practice() -> Dictionary:
 		},
 	]
 
-	var doc := {
-		"format": 1,
-		"kind": "course",
-		"id": String(PRACTICE),
-		"name": "Practice Run",
-		"author": "mg-deathrun",
-		"blurb": "Five traps, one of each shape, before the real courses.",
-		"kill_height": -8.0,
-		"theme": {"deck": [0.86, 0.92, 1.0]},
-		"pieces": pieces,
-		"traps": traps,
-		# dot-props' loose toys: a ball in the start room, and two in the arena. headless_run
-		# walks into the start's football and shoots the arena's beach ball.
-		"toys": [
-			{"toy": "football", "at": [1.8, 0.0, 6.5]},
-			{"toy": "beach_ball", "at": [-7.0, 0.0, -64.0]},
-			{"toy": "tyre", "at": [7.0, 0.0, -68.0], "yaw": 30.0},
-		],
-		"start": {"at": [0.0, 0.0, 4.5], "size": [6.0, 3.0, 6.0], "yaw": 0.0},
-		"activators": {"at": [6.25, 3.0, 5.0], "size": [4.0, 3.0, 4.0], "yaw": 0.0},
-		"finish": {"at": [0.0, 0.0, -49.25], "size": [6.0, 3.0, 2.5], "yaw": 0.0},
-		"end": {
-			"runners": {"at": [0.0, 0.0, -56.5], "size": [8.0, 3.0, 4.0], "yaw": 0.0},
-			"activators": {"at": [0.0, 0.0, -71.5], "size": [8.0, 3.0, 4.0], "yaw": 180.0},
-		},
-		"route": [
-			{"at": [0.0, 0.0, -9.0]},
-			{"at": [-1.0, 0.0, -32.5], "jump": true, "reach": 0.6},
-			{"at": [1.0, 0.0, -35.5], "jump": true, "reach": 0.6},
-			{"at": [-1.0, 0.0, -38.5], "jump": true, "reach": 0.6},
-			{"at": [0.0, 0.0, -41.5], "jump": true},
-			{"at": [0.0, 0.0, -49.25]},
-		],
-	}
-
-	var checked := DrCourseDoc.validate(doc)
-
-	if not checked.ok:
-		# The suite's first check, and the reason it is the first: a built-in course that does
-		# not validate is a server with nothing to play.
-		push_error("The built-in course does not validate: %s" % checked.error.message)
-		return doc
-
-	return checked.value
+	return traps

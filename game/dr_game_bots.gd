@@ -33,6 +33,9 @@ var _bot_walk: Dictionary = {}
 
 var _bot_hands: Dictionary = {}
 
+## Bots: player id -> the middle of what a bot just landed on, while it stops and steps back to it before the next jump.
+var _bot_settle: Dictionary = {}
+
 ## Whether there is something to stand on under [param point], within a metre and a half down.
 ## A ray through the world layer, so a trapdoor that has opened is not a floor.
 func _floor_at(point: Vector3) -> bool:
@@ -230,3 +233,43 @@ func _aim_bot(player: DrPlayer, command: DotFpsCommand, target: DrPlayer) -> voi
 
 
 # Reacting
+
+
+## Cancels sideways momentum carried down a staircase, which sails past a small stone at the bottom.
+func _bot_cancel_drift(player: DrPlayer, command: DotFpsCommand, route: Array, index: int, point: Dictionary, toward: Vector3) -> void:
+	if not bool(point["jump"]) and index + 1 < route.size() and bool((route[index + 1] as Dictionary)["jump"]) \
+			and toward.length() > 1.0 and toward.length() < 6.0:
+		var drift: Vector3 = player.controller.state.velocity
+		drift.y = 0.0
+		var heading_now := toward.normalized()
+		drift -= heading_now * drift.dot(heading_now)
+
+		if drift.length() > 0.5:
+			var steer := heading_now * config.run_speed - drift * 1.5
+			command.yaw = rad_to_deg(atan2(-steer.x, -steer.z))
+
+
+## Just landed: stops (a jump keeps the last landing's momentum), then goes back to the middle for a run-up. True while it is doing so.
+func _bot_settle_step(player: DrPlayer, command: DotFpsCommand, at: Vector3) -> bool:
+	if not _bot_settle.has(player.player_id):
+		return false
+
+	var flat_speed := Vector2(player.controller.state.velocity.x, player.controller.state.velocity.z).length()
+
+	if flat_speed > 1.2:
+		# Brake rather than coast: friction alone costs most of a second per jump.
+		var v := player.controller.state.velocity
+		command.yaw = rad_to_deg(atan2(-v.x, -v.z))
+		command.move = Vector2(0.0, -1.0)
+		return true
+
+	var middle: Vector3 = _bot_settle[player.player_id]
+	var back := Vector3(middle.x - at.x, 0.0, middle.z - at.z)
+
+	if back.length() > 0.35:
+		command.yaw = rad_to_deg(atan2(-back.x, -back.z))
+		command.set_button(DotFpsCommand.BUTTON_WALK, true)
+		return true
+
+	_bot_settle.erase(player.player_id)
+	return false

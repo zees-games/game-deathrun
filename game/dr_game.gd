@@ -236,9 +236,6 @@ var _bot_goal: Dictionary = {}
 var _bot_watch: Dictionary = {}
 var _bot_stuck: Dictionary = {}
 
-## Bots: player id -> the middle of what a bot just landed on, while it stops and steps back
-## to it before the next jump.
-var _bot_settle: Dictionary = {}
 
 
 func _ready() -> void:
@@ -1872,17 +1869,7 @@ func _bot_run(player: DrPlayer, command: DotFpsCommand) -> void:
 	command.yaw = rad_to_deg(atan2(-toward.x, -toward.z))
 	command.move = Vector2(0.0, 1.0)
 
-	# Cancel sideways momentum carried down a staircase, which sails past a small stone at the bottom.
-	if not bool(point["jump"]) and index + 1 < route.size() and bool((route[index + 1] as Dictionary)["jump"]) \
-			and toward.length() > 1.0 and toward.length() < 6.0:
-		var drift: Vector3 = player.controller.state.velocity
-		drift.y = 0.0
-		var heading_now := toward.normalized()
-		drift -= heading_now * drift.dot(heading_now)
-
-		if drift.length() > 0.5:
-			var steer := heading_now * config.run_speed - drift * 1.5
-			command.yaw = rad_to_deg(atan2(-steer.x, -steer.z))
+	_bot_cancel_drift(player, command, route, index, point, toward)
 
 	if bool(point["walk"]):
 		command.set_button(DotFpsCommand.BUTTON_WALK, true)
@@ -1890,26 +1877,36 @@ func _bot_run(player: DrPlayer, command: DotFpsCommand) -> void:
 	if bool(point["crouch"]):
 		command.set_button(DotFpsCommand.BUTTON_CROUCH, true)
 
-	# Just landed: stop (a jump keeps the last landing's momentum), then back to the middle for a run-up.
-	if grounded and _bot_settle.has(player.player_id):
-		var flat_speed := Vector2(player.controller.state.velocity.x, player.controller.state.velocity.z).length()
+	if grounded and _bot_settle_step(player, command, at):
+		return
 
-		if flat_speed > 1.2:
-			# Brake rather than coast: friction alone costs most of a second per jump.
-			var v := player.controller.state.velocity
-			command.yaw = rad_to_deg(atan2(-v.x, -v.z))
-			command.move = Vector2(0.0, -1.0)
-			return
+	_bot_take_off(player, command, point, index, toward, grounded)
 
-		var middle: Vector3 = _bot_settle[player.player_id]
-		var back := Vector3(middle.x - at.x, 0.0, middle.z - at.z)
+	_bot_unstick(player, command)
 
-		if back.length() > 0.35:
-			command.yaw = rad_to_deg(atan2(-back.x, -back.z))
-			command.set_button(DotFpsCommand.BUTTON_WALK, true)
-			return
+	if toward.length() > float(point["reach"]):
+		return
 
-		_bot_settle.erase(player.player_id)
+	# A landing is not reached until the bot is on its feet on it.
+	if bool(point["jump"]) and not grounded:
+		return
+
+	# Nor from the foot of the step it is on: reach is flat, and a landing 1.2 m back on top of
+	# a 0.94 m riser was ticked off by a bot standing against the riser, which then walked into
+	# the face toward the next point and waited a second for the unstick jump, on every step.
+	# (The take-off above is allowed that close for the same reason: still below the landing.)
+	if bool(point["jump"]) and at.y < (point["at"] as Vector3).y - 0.5:
+		return
+
+	if bool(point["jump"]) and index + 1 < route.size() and bool((route[index + 1] as Dictionary)["jump"]):
+		_bot_settle[player.player_id] = point["at"]
+
+	_bot_route[player.player_id] = index + 1
+
+
+## Jumps from the right spot toward a jump waypoint, unless this bot fumbles it.
+func _bot_take_off(player: DrPlayer, command: DotFpsCommand, point: Dictionary, index: int, toward: Vector3, grounded: bool) -> void:
+	var at := player.controller.state.position
 
 	if bool(point["jump"]):
 		if not grounded:
@@ -1933,27 +1930,6 @@ func _bot_run(player: DrPlayer, command: DotFpsCommand) -> void:
 
 				if draw.next_range_f(0.0, 100.0) >= config.bot_fumble_chance:
 					command.set_button(DotFpsCommand.BUTTON_JUMP, true)
-
-	_bot_unstick(player, command)
-
-	if toward.length() > float(point["reach"]):
-		return
-
-	# A landing is not reached until the bot is on its feet on it.
-	if bool(point["jump"]) and not grounded:
-		return
-
-	# Nor from the foot of the step it is on: reach is flat, and a landing 1.2 m back on top of
-	# a 0.94 m riser was ticked off by a bot standing against the riser, which then walked into
-	# the face toward the next point and waited a second for the unstick jump, on every step.
-	# (The take-off above is allowed that close for the same reason: still below the landing.)
-	if bool(point["jump"]) and at.y < (point["at"] as Vector3).y - 0.5:
-		return
-
-	if bool(point["jump"]) and index + 1 < route.size() and bool((route[index + 1] as Dictionary)["jump"]):
-		_bot_settle[player.player_id] = point["at"]
-
-	_bot_route[player.player_id] = index + 1
 
 
 ## Jumps when the bot has been running for a second and got nowhere.

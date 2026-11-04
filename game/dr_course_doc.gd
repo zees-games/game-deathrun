@@ -123,6 +123,41 @@ static func validate(source: Dictionary) -> DotResult:
 	doc["kill_height"] = float(doc.get("kill_height", -12.0))
 	doc["round_seconds"] = float(doc.get("round_seconds", 0.0))
 
+	var laid := _check_pieces(doc, id)
+
+	if not laid.ok:
+		return laid
+
+	var wired := _check_traps(doc, id)
+
+	if not wired.ok:
+		return wired
+
+	# Toys: dot-props' DotPropToyBox placements, `{toy, at, yaw}`. Which ids exist is the
+	# catalogue's to say when the map is built (an unknown one is left out and listed), so a map
+	# with a toy a newer dot-props has still plays on an older server.
+	var toys: Array = []
+	for raw: Variant in doc.get("toys", []):
+		var toy := DotPropToyBox.normal_placement(raw)
+		if toy.is_empty():
+			return _refuse("toy %d is not {toy, at}" % toys.size(), doc)
+		toys.append(toy)
+
+	if toys.size() > MAX_TOYS:
+		return _refuse("%d toys; the most is %d" % [toys.size(), MAX_TOYS], doc)
+
+	doc["toys"] = toys
+
+	var rest := _places(doc)
+
+	if not rest.ok:
+		return rest.wrap("course %s" % id)
+
+	return DotResult.success(doc)
+
+
+## The pieces, normalised into [param doc], and the teleports' destinations.
+static func _check_pieces(doc: Dictionary, id: String) -> DotResult:
 	var pieces: Variant = doc.get("pieces", [])
 
 	if typeof(pieces) != TYPE_ARRAY or (pieces as Array).is_empty():
@@ -157,6 +192,11 @@ static func validate(source: Dictionary) -> DotResult:
 		if why != "":
 			return _refuse(why, doc)
 
+	return DotResult.success(null)
+
+
+## The traps, normalised into [param doc], each with its own id.
+static func _check_traps(doc: Dictionary, id: String) -> DotResult:
 	var traps: Variant = doc.get("traps", [])
 
 	if typeof(traps) != TYPE_ARRAY:
@@ -184,27 +224,7 @@ static func validate(source: Dictionary) -> DotResult:
 
 	doc["traps"] = checked_traps
 
-	# Toys: dot-props' DotPropToyBox placements, `{toy, at, yaw}`. Which ids exist is the
-	# catalogue's to say when the map is built (an unknown one is left out and listed), so a map
-	# with a toy a newer dot-props has still plays on an older server.
-	var toys: Array = []
-	for raw: Variant in doc.get("toys", []):
-		var toy := DotPropToyBox.normal_placement(raw)
-		if toy.is_empty():
-			return _refuse("toy %d is not {toy, at}" % toys.size(), doc)
-		toys.append(toy)
-
-	if toys.size() > MAX_TOYS:
-		return _refuse("%d toys; the most is %d" % [toys.size(), MAX_TOYS], doc)
-
-	doc["toys"] = toys
-
-	var rest := _places(doc)
-
-	if not rest.ok:
-		return rest.wrap("course %s" % id)
-
-	return DotResult.success(doc)
+	return DotResult.success(null)
 
 
 ## The places a round puts people: the runners' start, the activators' corridor, the finish
