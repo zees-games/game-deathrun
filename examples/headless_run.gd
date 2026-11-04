@@ -10,9 +10,9 @@ extends "headless_run_client.gd"
 ## Every number about the course here is the built-in practice course's
 ## ([method DrCatalogue.practice]), whose comment lists where each trap is.
 
-const SECTIONS := 31
+const SECTIONS := 32
 
-const CHECKS := 157
+const CHECKS := 163
 
 
 
@@ -55,6 +55,7 @@ func _run() -> void:
 	await _test_the_map_menu()
 	await _test_offline_trigger()
 	await _test_free_roam()
+	await _test_spectate_tap()
 	await _test_the_drawn_gun()
 
 	for world in _worlds.duplicate():
