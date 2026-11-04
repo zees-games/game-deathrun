@@ -1,0 +1,7 @@
+[
+  {"paths": [""], "licence": "MIT", "author": "TMC", "url": "https://github.com/zees-games/mg-deathrun", "title": "mg-deathrun (original content)"},
+  {"paths": ["assets/ammo", "assets/blaster-kit", "assets/melee", "assets/kenney", "textures/prototype"], "licence": "CC0-1.0", "author": "Kenney", "url": "https://kenney.nl", "title": "Kenney weapon, blaster, survival and blocky character kits, prototype textures"},
+  {"paths": ["assets/arms"], "licence": "CC0-1.0", "author": "Kenney, para", "url": "https://opengameart.org/content/fps-arms-rigged-only", "title": "Rigged first-person arm (para) and Kenney blocky characters"},
+  {"paths": ["assets/low-poly-guns"], "licence": "CC0-1.0", "author": "Quaternius", "url": "https://opengameart.org/content/low-poly-guns-pack", "title": "Kitbashed guns from Quaternius low poly guns"},
+  {"paths": ["textures/surfaces"], "licence": "CC0-1.0", "author": "Lennart Demes / ambientCG", "url": "https://ambientcg.com", "title": "Surface textures"}
+]

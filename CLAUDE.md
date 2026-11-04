@@ -97,3 +97,5 @@ The Workshop's limits are in [docs/not-yet.md](docs/not-yet.md): a pack course i
 The course vote has not been tried in a browser.
 
 **Course documents may carry a `walkway` (2026-10-20)** for converted maps whose activators must wind through rooms: `DrCourseDoc` reads it (cap `MAX_PIECES` 2400 pieces), `DrCourse.walkway()` / `walkway_stop()` / `route_progress()` expose it, and `DrGame.bot_walk_toward` walks it; see docs/bots.md.
+
+**Publishing the pack**: `tools/publish.sh --version V` (id `game-deathrun`, the renamed repo; prod retired `mg-deathrun`, `courses` link left out, host addons from dot-server-deploy's `addons.lock`); publish dev (`DOT_SITE=https://tmcdev.net`, `--token-file ~/.config/dot/creator-token-dev`), then prod (`https://moddingcommunity.com`), from `~/godot/dot-cloud` via `heavy -- env DOT_SITE=... ` and let the prod run write `content.lock.json`.
