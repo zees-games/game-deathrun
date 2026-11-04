@@ -138,12 +138,13 @@ func _register_net_vars() -> void:
 		for spec in DotFpsNetSync.rewind_specs():
 			var _timers := replicate(spec["property"], DotNetVar.Type[spec["type"]]).bits(int(spec["bits"])).to_owner_only()
 
-	replicate(&"net_health", DotNetVar.Type.FLOAT_RANGE).range_of(0.0, 1000.0).bits(12)
-	replicate(&"net_finished", DotNetVar.Type.BOOL)
-	replicate(&"net_points", DotNetVar.Type.UINT).bits(16)
-	replicate(&"net_ping", DotNetVar.Type.UINT).bits(10)
-	replicate(&"net_at_end", DotNetVar.Type.BOOL)
-	replicate(&"net_watching", DotNetVar.Type.BOOL)
+	# Only the game (DrGame, DrServices) writes these, never the owner's prediction: server-driven, so a bump is not a misprediction.
+	replicate(&"net_health", DotNetVar.Type.FLOAT_RANGE).range_of(0.0, 1000.0).bits(12).server_driven()
+	replicate(&"net_finished", DotNetVar.Type.BOOL).server_driven()
+	replicate(&"net_points", DotNetVar.Type.UINT).bits(16).server_driven()
+	replicate(&"net_ping", DotNetVar.Type.UINT).bits(10).server_driven()
+	replicate(&"net_at_end", DotNetVar.Type.BOOL).server_driven()
+	replicate(&"net_watching", DotNetVar.Type.BOOL).server_driven()
 
 	for spec in ZeeWeaponNet.all_specs():
 		var declaration := replicate(spec["property"], DotNetVar.Type[spec["type"]])
@@ -171,10 +172,10 @@ func _register_net_vars() -> void:
 	# is already always relevant (`DrNetBridge`: the map is open air), so a beacon reaches
 	# every client however far away they are without asking — and a beacon turned OFF that
 	# set `always_relevant` back to false would take the player out of everybody's snapshot.
-	var _blind := replicate(&"net_blind", DotNetVar.Type.BOOL).to_owner_only()
-	replicate(&"net_beacon", DotNetVar.Type.BOOL)
+	var _blind := replicate(&"net_blind", DotNetVar.Type.BOOL).to_owner_only().server_driven()
+	replicate(&"net_beacon", DotNetVar.Type.BOOL).server_driven()
 	replicate(&"net_flashlight", DotNetVar.Type.BOOL)
-	replicate(&"net_warp", DotNetVar.Type.UINT).bits(4)
+	replicate(&"net_warp", DotNetVar.Type.UINT).bits(4).server_driven()
 
 
 func _net_apply_input(input: DotNetInput, _tick: int) -> void:
