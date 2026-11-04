@@ -186,13 +186,14 @@ func _net_simulate(tick: int, delta: float) -> void:
 	if identity != null and identity.is_authoritative:
 		if bridge != null:
 			bridge.ensure_game_ticked(tick)
-	else:
+	elif player.is_alive() and not player.watching:
 		# The prediction: the controller's own tick, which poses the course at this tick
 		# first and carries the player after (see [DrController]) — the same steps the server
 		# takes, so a trapdoor rolling over carries a predicted runner exactly as the server
 		# carries the real one.
 		player.controller.apply_command(last_move.duplicate_command())
 		player.controller.simulate_tick(tick, delta)
+	# else: nobody out is simulated on the server (DrGame._step), so a dead body predicted falling only drifts from it.
 
 	pull()
 
