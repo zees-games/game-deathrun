@@ -70,6 +70,8 @@ func _ready() -> void:
 			DrCourse.use_bakes = false
 		elif arg.begins_with("--view="):
 			_view = arg.trim_prefix("--view=")
+		elif arg == "--touch=1":
+			DotPlatform.touch_override = 1
 		elif arg == "--spent":
 			_spent = true
 		elif arg == "--board":

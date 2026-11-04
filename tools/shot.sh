@@ -18,6 +18,7 @@
 #   tools/shot.sh --view=maps --seconds=0.5            # M: the solo course list with a Workshop fixture course (Name [Pack])
 #   tools/shot.sh --action emote dance                 # the local runner, third person, playing an avatar action (action_a/_b.png)
 #   tools/shot.sh --view=third --board                 # with the Tab scoreboard held open
+#   tools/shot.sh --touch=1                            # a touch device: the on-screen buttons draw
 #   tools/shot.sh --view=course --out=res://screenshots/x.png  # any --dr-* is the game's config
 #
 # xvfb-run because this needs a rendering context and the machines this runs on have no
@@ -44,7 +45,7 @@ for arg in "$@"; do
         --seconds=*) seconds="${arg#*=}" ;;
         --out=*)     out="${arg#*=}" ;;
         --dr-*)      config+=("$arg") ;;
-        --trap=*|--after=*|--eye=*|--end-wait=*|--fire=*|--board|--spent|--no-bake) config+=("$arg") ;;
+        --trap=*|--after=*|--eye=*|--end-wait=*|--fire=*|--board|--spent|--no-bake|--touch=1) config+=("$arg") ;;
         *)           echo "unknown argument: $arg" >&2; exit 2 ;;
     esac
 done
@@ -58,5 +59,5 @@ fi
 
 scene="res://tools/shot.tscn"
 
-exec xvfb-run -a "${GODOT:-godot}" --path . --resolution 1280x720 \
+exec xvfb-run -a "${GODOT:-godot}" --path . --resolution "${RES:-1280x720}" \
     "$scene" -- "--seconds=$seconds" "--view=$view" "--out=$out" "${config[@]}"
