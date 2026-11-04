@@ -194,9 +194,11 @@ func _build_top(size: int) -> void:
 	_role = _label(size + 4)
 	_role.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
 	_role.offset_left = 30.0
-	_role.offset_top = 22.0
+	# The phone's Menu button sits in this corner: drop below it.
+	var role_top := 72.0 if DotPlatform.has_touch() else 22.0
+	_role.offset_top = role_top
 	_role.offset_right = 420.0
-	_role.offset_bottom = 60.0
+	_role.offset_bottom = role_top + 38.0
 
 	_shout = _label(size + 20)
 	_shout.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
