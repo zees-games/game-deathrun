@@ -18,8 +18,8 @@ const DrNetLink := preload("../game/net/dr_net_link.gd")
 const SECTIONS := 13
 const CHECKS := 113
 
-const PORT := 28931
-const QUERY_PORT := 28932
+var PORT := DRTestPorts.free_port(2)
+var QUERY_PORT := PORT + 1
 const TICK_RATE := 60
 
 

@@ -176,14 +176,14 @@ func _hold_for(game: DrGame, player: DrPlayer, move: Vector2, yaw: float, ticks:
 
 
 ## A real offline client, booted: its settings are built and read by its sampler and its
-## camera, and Escape opens the screen. Escape used to let go of the mouse and offer nothing.
+## camera, and Escape opens the screen.
 func _test_the_client_settings() -> void:
 	_section("the client's settings are read, and Escape opens them")
 	var client: Node = (load("res://game/dr_client.gd") as GDScript).new()
 	client.set(&"force_offline", true)
 	client.set(&"config_file", "user://cfg/headless-none.json")
 	add_child(client)
-	# The course used to be drawn, and steered, while it was still being built.
+	# The course must not be drawn, or steered, while it is still being built.
 	var platform: DotGameClient = client.get("platform")
 	var covered := platform != null and platform.gate != null and not platform.is_shown() \
 		and platform.is_input_blocked()
@@ -382,11 +382,8 @@ func _test_help_and_menu() -> void:
 	_finished()
 
 
-## The family's rule since the first play test: M opens the course list, and solo a choice
-## changes it now. The server's half (the owner's flag, the vote) is in `dedicated` and dot-vote.
-## Offline the world samples the local player's movement itself, so the client's buttons
-## have to go onto that sample. They were stamped on the controller's command and then sampled
-## over, and offline no trigger ever reached the world's gun (game-zombie-zone's play test).
+## Offline the world samples the body itself, so the client's buttons must go onto that sample
+## or no trigger ever reaches the world's gun.
 func _test_offline_trigger() -> void:
 	_section("offline, the client's trigger reaches the world's gun")
 	var game := await _world()
@@ -464,10 +461,8 @@ func _test_free_roam() -> void:
 	_finished()
 
 
-## The play test's weapons, in the end arena: the drawn rig was given the whole pack, so the slot
-## held whatever was given last and never the gun the server fired; nothing counted the magazine;
-## nothing said a shot had landed. Armed: with `give_everything` back the first check fails,
-## without `correct_drawn` the fourth, without the HIT path the last.
+## The end arena's weapons: the drawn rig holds the gun the server fired, the magazine is
+## counted, and a landed shot is marked.
 func _test_the_drawn_gun() -> void:
 	_section("an armed runner draws the server's gun, counted on the HUD, with a marker for a hit")
 	var client: Node = (load("res://game/dr_client.gd") as GDScript).new()
@@ -631,12 +626,8 @@ func _finished() -> void:
 	_sections_finished += 1
 
 
-## A world on the practice course, stepped by hand.
-##
-## [b]The previous world is freed first.[/b] mg-wipeout's finding: every world here is a child
-## of this node, so all of them share ONE physics space, and every course is built at the
-## origin — a world left standing kept its start gate exactly where the next one's runner had
-## to go.
+## A world on the practice course, stepped by hand. The previous one is freed first: every world
+## is a child of this node, so all share one physics space and a standing one blocks the next gate.
 func _world(configure: Callable = Callable()) -> DrGame:
 	for old in _worlds.duplicate():
 		await _dispose(old)
