@@ -1,0 +1,15 @@
+{
+  "format": "tmc-game-listing",
+  "version": 1,
+  "listing": {
+    "name": "Deathrun",
+    "description": "Runners race down a long course full of traps while activators, drawn each round, press the buttons to kill them. Whoever reaches the end is handed a weapon and the activators are called down to fight them.",
+    "tags": ["3D", "Multiplayer", "Minigame"],
+    "platforms": ["PLATFORM_WEB"],
+    "graphicsType": "THREE_D",
+    "tmcKind": "MINIGAME"
+  },
+  "pack": {
+    "id": "gamemann/game-deathrun"
+  }
+}
