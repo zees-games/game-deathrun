@@ -1,5 +1,5 @@
 #!/bin/bash
-# Publishes this game's pack (id mg-deathrun). courses is a link to mg-deathrun-maps, its own pack; screenshots and ci are
+# Publishes this game's pack (id game-deathrun). courses is a link to mg-deathrun-maps, its own pack; screenshots and ci are
 # not runtime content. Host addons come from the server (--host-addons).
 #   tools/publish.sh [--version V | --bump patch] [--site URL --token-file F --dry-run ...]
 set -euo pipefail
