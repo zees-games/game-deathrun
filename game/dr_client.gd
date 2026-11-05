@@ -112,12 +112,15 @@ var _use: bool = false
 
 var _touch: DotTouchButtons = null
 
-## Offsets are from the bottom-right corner (see [DotTouchButtons]).
-const TOUCH_LAYOUT: Array[Dictionary] = [
-	{"id": &"use", "label": "USE", "offset": Vector2(96, 110), "radius": 54.0},
-	{"id": &"jump", "label": "JUMP", "offset": Vector2(60, 238), "radius": 36.0},
-	{"id": &"crouch", "label": "DUCK", "offset": Vector2(196, 184), "radius": 34.0},
-]
+## dot-game's platformer preset without sprint, board and chat (a runner has no sprint key and the board and chat are not routed from the touch cluster).
+static func touch_layout() -> DotGameTouchLayout:
+	var res := DotGameTouchLayout.build(DotGameTouchLayout.PLATFORMER, {
+		DotGameTouchLayout.SPRINT: null, DotGameTouchLayout.BOARD: null, DotGameTouchLayout.CHAT: null,
+	})
+	if not res.ok:
+		push_error("mg-deathrun touch layout refused: %s" % str(res.error))
+		return DotGameTouchLayout.custom()
+	return res.value
 
 
 func _ready() -> void:
@@ -1144,12 +1147,10 @@ func _build_touch() -> void:
 	_touch.name = "TouchButtons"
 	_touch.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_touch.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_touch.set_buttons(TOUCH_LAYOUT)
+	touch_layout().apply(_touch, platform)
 	_touch.button_down.connect(_touch_button.bind(true))
 	_touch.button_up.connect(_touch_button.bind(false))
 	hud.add_child(_touch)
-	if platform != null:
-		platform.fit_touch_buttons(_touch, TOUCH_LAYOUT)
 	DrPlayer.touch_ignore_fn = _touch.contains_point
 	if _sampler is DotFpsTouchSampler:
 		(_sampler as DotFpsTouchSampler).ignore_fn = _touch.contains_point

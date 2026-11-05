@@ -17,7 +17,7 @@ func _ready() -> void:
 func _run() -> void:
 	print("mg-deathrun: touch buttons")
 	var ids: Array[StringName] = []
-	for b: Dictionary in DrClient.TOUCH_LAYOUT:
+	for b: Dictionary in DrClient.touch_layout().buttons():
 		ids.append(b["id"])
 	_check(ids.has(&"use") and ids.has(&"jump") and ids.has(&"crouch"), "use, jump and duck are on the layout")
 
@@ -30,7 +30,7 @@ func _run() -> void:
 	for size: Vector2 in [Vector2(844, 390), Vector2(667, 375), Vector2(932, 430)]:
 		var buttons := DotTouchButtons.new()
 		buttons.size = size
-		buttons.set_buttons(DrClient.TOUCH_LAYOUT)
+		buttons.set_buttons(DrClient.touch_layout().buttons())
 		add_child(buttons)
 		var bounds := Rect2(Vector2.ZERO, size)
 		_check(bounds.encloses(buttons.footprint()), "the cluster fits %dx%d" % [size.x, size.y], str(buttons.footprint()))
