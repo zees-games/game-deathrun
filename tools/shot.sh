@@ -59,5 +59,8 @@ fi
 
 scene="res://tools/shot.tscn"
 
+# The phone frame, so the fit is judged where it matters.
+for c in "${config[@]}"; do [ "$c" = "--touch=1" ] && RES="${RES:-844x390}"; done
+
 exec xvfb-run -a "${GODOT:-godot}" --path . --resolution "${RES:-1280x720}" \
     "$scene" -- "--seconds=$seconds" "--view=$view" "--out=$out" "${config[@]}"

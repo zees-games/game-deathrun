@@ -1148,6 +1148,8 @@ func _build_touch() -> void:
 	_touch.button_down.connect(_touch_button.bind(true))
 	_touch.button_up.connect(_touch_button.bind(false))
 	hud.add_child(_touch)
+	if platform != null:
+		platform.fit_touch_buttons(_touch, TOUCH_LAYOUT)
 	DrPlayer.touch_ignore_fn = _touch.contains_point
 	if _sampler is DotFpsTouchSampler:
 		(_sampler as DotFpsTouchSampler).ignore_fn = _touch.contains_point
