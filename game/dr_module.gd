@@ -175,7 +175,7 @@ func _game_load() -> DotResult:
 		world.config.map_rotation_file = new_value.strip_edges()
 		var _read := world.load_rotation()
 		if vote != null:
-			vote.refresh_courses())
+			vote.refresh_maps())
 	# A player's choice of side, from chat as !activator / !runner / !any.
 	add_command("activator", _cmd_wish.bind(DrGame.ACTIVATORS), "Ask to be an activator in the next draw", "")
 	add_command("runner", _cmd_wish.bind(DrGame.RUNNERS), "Ask to run in the next draw", "")
@@ -231,7 +231,7 @@ func _game_load() -> DotResult:
 	# The vote was built above, before these arrived; read without them, its list held only
 	# the practice course and never opened a ballot. dr_reload refreshes it the same way.
 	if vote != null:
-		vote.refresh_courses()
+		vote.refresh_maps()
 
 	world.start()
 
@@ -716,7 +716,7 @@ func _build_vote(world: DrGame) -> void:
 	vote.name = "CourseVote"
 	vote.commands_spec_fn = world.rotation_commands
 	vote.in_rotation_fn = func(id: StringName) -> bool: return world.catalogue.in_rotation(id)
-	vote.courses_fn = func() -> Array:
+	vote.maps_fn = func() -> Array:
 		var out: Array = []
 
 		# The game's own courses only: the Workshop's come from the source's own follow, which
@@ -806,11 +806,11 @@ func _build_vote(world: DrGame) -> void:
 			if vote != null:
 				vote.open_after_sec = maxf(value, 0.0))
 
-	# No note_course for the course already built: start() builds it again, which is a
+	# No note_map for the course already built: start() builds it again, which is a
 	# world_rebuilt, and two begin()s for one play is one play counted twice in the cooldowns.
 	world.world_rebuilt.connect(func() -> void:
 		if vote != null and world.stage != null:
-			vote.note_course(world.stage.id())
+			vote.note_map(world.stage.id())
 	)
 	world.match_node.round_ended.connect(func(_number: int, _winner: int, _outcome: int) -> void:
 		if vote != null:
