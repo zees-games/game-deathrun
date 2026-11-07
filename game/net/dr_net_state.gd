@@ -1,4 +1,4 @@
-extends Node
+extends DotGameNetIo
 
 ## The bridge's constants, signals and state, split out of `dr_net_bridge.gd` to keep it under the size budget. No `class_name`; the bridge extends this.
 
@@ -82,16 +82,9 @@ signal chat_received(wire: Dictionary)
 signal voice_arrived(payload: PackedByteArray)
 
 var game: DrGame = null
-var net: DotNetManager = null
-var link: DrNetLink = null
 
 ## Which session this process is. Zero on a server.
 var local_player_id: int = 0
-
-## Where the clock learns the link's length in milliseconds; dot-net cannot measure a transport,
-## dot-server's heartbeat can ([method DotClientLink.ping_ms]). With no sample every command is
-## stamped for a tick already simulated and discarded as late.
-var rtt_source: Callable = Callable()
 
 ## Where a voice frame goes on the server. Assigned by [DotGameModule] to the services
 ## layer's `relay_voice`, because the bridge is the only thing that names both ends.

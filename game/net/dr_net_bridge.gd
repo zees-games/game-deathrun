@@ -197,25 +197,6 @@ func open_link(parent: Node) -> void:
 	DotGameLink.attach(link, parent, self, DrNetLink.NODE_NAME)
 
 
-## How every dot-net message reaches a peer.
-##
-## [b]Routed by DELIVERY, not by kind.[/b] Snapshots are unreliable and go on the snapshot
-## call; everything else is reliable, and which reliable call it is depends on which end is
-## sending — the server has events, the client has requests. Sending them all as events
-## works on a server and silently drops every client request, which is a client that
-## connects, draws, and can never ask for anything.
-func _send(peer_id: int, payload: PackedByteArray, delivery: int) -> void:
-	if link == null:
-		return
-
-	if delivery == DotNetMessage.Delivery.UNRELIABLE:
-		link.send_snapshot(peer_id, payload)
-	elif net.is_server:
-		link.send_event(peer_id, payload)
-	else:
-		link.send_request(payload)
-
-
 # --- Identity --------------------------------------------------------------
 
 static func player_key(session_id: int) -> StringName:
@@ -739,16 +720,6 @@ func client_tick(tick: int, command: DotFpsCommand, slot: int = 0, use: bool = f
 
 # --- Receiving -------------------------------------------------------------
 
-func receive_snapshot(payload: PackedByteArray) -> DotResult:
-	if net == null or net.is_server:
-		return DotResult.fail(DotError.CODE_FORBIDDEN, "Only a client receives these.")
-
-	if rtt_source.is_valid():
-		net.stats.note_rtt(float(rtt_source.call()))
-
-	return net.receive_snapshot(payload)
-
-
 ## [param packet] and the commands before it from the local replay history, oldest first,
 ## for one input packet. See [constant INPUT_COPIES].
 func _input_copies(packet: DotNetInput) -> Array:
@@ -838,20 +809,6 @@ func receive_voice(peer_id: int, payload: PackedByteArray) -> DotResult:
 
 	voice_arrived.emit(payload)
 	return DotResult.success(null)
-
-
-func receive_event(payload: PackedByteArray) -> DotResult:
-	if net == null:
-		return DotResult.fail(DotError.CODE_STATE, "No manager.")
-
-	return net.receive(payload, 1)
-
-
-func receive_request(peer_id: int, payload: PackedByteArray) -> DotResult:
-	if net == null:
-		return DotResult.fail(DotError.CODE_STATE, "No manager.")
-
-	return net.receive(payload, peer_id)
 
 
 # --- Server: what a joining peer is told -----------------------------------
