@@ -60,6 +60,10 @@ Whoever is out can fly a free camera (G): dot-spectate's `DotSpectatorRules`, on
 
 `dr_hud.gd` draws the clock, health and the button prompt through dot-ui's glance pieces: `DotScoreStrip` with the clock alone (hidden between rounds, red for the last ten seconds) and the phase line under it, the course name under that; `DotVitals` only at the end, because a trap is a death and a number that never moves teaches a player to ignore it; `DotKeyPrompt` under the crosshair at a button, the trap's name with the use key drawn as a key, or "<trap> — spent" in the spent colour and no key. The use key is `DrClient.USE_KEY`, handed to the HUD, so the prompt, the phase line and the activator's shout name the key the client reads. Coloured by `DrHud.piece_theme()` (a slate-violet plate, the course name's pale blue as highlight). The health plate ends 206 pixels off the bottom, above the chat box's full eight-row log (202); the old number ended at 150, over it. `tools/shot.sh --view=button [--spent]` renders the prompt. Naming these classes makes the pack need a client shell with dot-ui API level 4; the derived `requires.json` asks for it and `headless_run` checks it.
 
+## The flashlight
+
+dot-flashlight's, on F, for everybody who is alive and in the round, runner and activator alike. The server owns on and off (`DrGame.toggle_flashlight`, asked by `DrEvents.Ask.FLASHLIGHT`) and replicates one flag per player (`net_flashlight`). A course has no ambient energy, so which ones start lit is their ambience mood (`DrFlashlight.mood_of`, the same id prefixes the sound director reads) against the config's `dark_moods` (horror, cave and night); every other course starts dark and the key lights it. A lit beam is visible to everyone who can see the player, which is the trade: a light is a tell. Config: `dr_flashlight_*` cvars, `cfg/game/mg-deathrun/flashlight/game.yml`, a workbench set.
+
 ## Settings
 
 `DrSettings` is dot-menu's `DotMenuSettings` with this game's schema (sensitivity ACCOUNT at the family's 0.022 degrees per unit, field of view SERVER_CLAMPED with default 92, three volumes). Escape opens it; walking is suspended while it is up.

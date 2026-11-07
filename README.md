@@ -30,6 +30,7 @@ There are three courses: a short practice run built into the game, and **Ice Wor
 | **Space** | Jump |
 | **Shift** | Walk (for a narrow ledge) |
 | **Ctrl** | Crouch |
+| **F** | Flashlight, runners and activators alike while still in the round (on at the start of a dark course: horror, cave and night ones). A lit beam is seen by everyone who can see you |
 | **E** | Press the button in front of you (activators) |
 | **Mouse 1** | Fire, at the end |
 | **Mouse 2** / **R** / **1**-**5** | Alt-fire / reload / weapon slots |

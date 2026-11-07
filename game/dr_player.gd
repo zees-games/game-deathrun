@@ -102,6 +102,10 @@ var blinded: bool = false
 ## An administrator's `beacon`: a ring, a column and a ping every client draws.
 var beacon: bool = false
 
+## The flashlight is on (server-owned, replicated); `flashlight_ready` is cleared on a new course so the next tick sets its start state.
+var flashlight: bool = false
+var flashlight_ready: bool = false
+
 var beacon_marker: DotFxBeacon = null
 
 ## What other people see this player as. Client side.
@@ -576,5 +580,6 @@ func describe() -> Dictionary:
 		"armed": weapons != null,
 		"blinded": blinded,
 		"beacon": beacon,
+		"flashlight": flashlight,
 		"avatar": avatar.digest() if avatar != null else "stock",
 	}

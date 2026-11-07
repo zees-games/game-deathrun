@@ -86,6 +86,9 @@ var net_blind: bool = false
 ## `DrPlayer.beacon`. Everybody's.
 var net_beacon: bool = false
 
+## `DrPlayer.flashlight`. Everybody's: the beam is drawn for the others.
+var net_flashlight: bool = false
+
 ## `DrPlayer.warps`, four bits of it: how many times the server has put this player
 ## somewhere rather than moved them there. See [method _forget_the_path].
 var net_warp: int = 0
@@ -158,6 +161,7 @@ func _register_net_vars() -> void:
 	# set `always_relevant` back to false would take the player out of everybody's snapshot.
 	var _blind := replicate(&"net_blind", DotNetVar.Type.BOOL).to_owner_only()
 	replicate(&"net_beacon", DotNetVar.Type.BOOL)
+	replicate(&"net_flashlight", DotNetVar.Type.BOOL)
 	replicate(&"net_warp", DotNetVar.Type.UINT).bits(4)
 
 
@@ -213,6 +217,7 @@ func pull() -> void:
 	net_watching = player.watching
 	net_blind = player.blinded
 	net_beacon = player.beacon
+	net_flashlight = player.flashlight
 	net_warp = player.warps & 0xF
 
 	# [b]After the arsenal has simulated, which on this end it has: the whole world ticks
@@ -302,6 +307,7 @@ func _adopt() -> void:
 
 	player.blinded = net_blind
 	player.beacon = net_beacon
+	player.flashlight = net_flashlight
 
 	_apply_weapons()
 

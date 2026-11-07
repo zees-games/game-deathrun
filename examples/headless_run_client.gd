@@ -508,8 +508,8 @@ func _test_free_roam() -> void:
 	var keys := DrBindings.make()
 	_check(keys.defaults_on("G").size() == 1 and str(keys.row_for_action(DrBindings.ROAM).get("default", "")) == "G",
 		"the free camera is on G, and nothing else defaults to G")
-	_check(not DrEvents.write_ask_roam().is_empty() and int(DrEvents.Ask.values().max()) == DrEvents.Ask.ROAM,
-		"the request is the last of the asks and carries a byte")
+	_check(not DrEvents.write_ask_roam().is_empty() and int(DrEvents.Ask.values().max()) == DrEvents.Ask.FLASHLIGHT,
+		"the requests end with the flashlight and the roam one carries a byte")
 	_finished()
 
 

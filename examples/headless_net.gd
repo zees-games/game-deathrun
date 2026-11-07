@@ -16,8 +16,8 @@ extends "headless_net_base.gd"
 ##
 ## Sections and checks are both counted; mg-smash-copter's notes say why the second matters.
 
-const SECTIONS := 16
-const CHECKS := 89
+const SECTIONS := 17
+const CHECKS := 93
 
 
 func _ready() -> void:
@@ -39,6 +39,7 @@ func _run() -> void:
 		await _test_the_course_arrives()
 		await _test_the_local_player_is_predicted()
 		await _test_free_roam_crosses()
+		await _test_the_flashlight_crosses()
 		await _test_a_press_agrees()
 		await _test_a_carry_is_predicted()
 		await _test_the_end_crosses()
@@ -603,6 +604,25 @@ func _test_free_roam_crosses() -> void:
 	spectate.spawned(String(key))
 	_server_game.phase = held_phase
 	await _steps(6)
+	_finished()
+
+
+func _test_the_flashlight_crosses() -> void:
+	_section("the flashlight is asked for, and the server's state comes back to everybody")
+	await _wait_for_a_round()
+	var server_me: DrPlayer = _server_game.players[DrNetBridge.player_key(SESSION)]
+	var was := server_me.flashlight
+	_client_bridge.ask_flashlight()
+	await _steps(8)
+	_check(server_me.flashlight != was, "the server switched it")
+	_check(_mine().flashlight == server_me.flashlight, "and the owner is told")
+	var theirs: DrPlayer = _client_game.players[_stand_in.player_id]
+	_stand_in.flashlight = true
+	await _steps(8)
+	_check(theirs.flashlight, "and the others' flag is the server's")
+	_client_bridge.ask_flashlight()
+	await _steps(8)
+	_check(server_me.flashlight == was and _mine().flashlight == was, "the next ask switches it back")
 	_finished()
 
 

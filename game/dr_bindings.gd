@@ -10,6 +10,8 @@ const VIEW := &"dr_view"
 ## The spectator's free camera, on and off (`mp_freeroam`). Its flying keys are the movement keys.
 const ROAM := &"dr_roam"
 const SCOREBOARD := &"dr_scoreboard"
+## The flashlight, on and off, for everybody still in the round.
+const FLASHLIGHT := &"dr_flashlight"
 ## dot-ui's chat window's actions, which dot-game's chat client leaves at their defaults.
 const CHAT := &"chat_open"
 const CHAT_TEAM := &"chat_open_team"
@@ -28,6 +30,7 @@ static func make() -> DotMenuBindings:
 	# The wheel goes through the weapons (and so does not jump: add_movement leaves the wheel's
 	# jump rows off). Its own rows, rebindable on the Controls page.
 	keys.add_wheel_weapons()
+	keys.add(FLASHLIGHT, &"bind_flashlight", "Flashlight", "F", "Hands")
 	keys.add(CHAT, &"bind_chat", "Chat", "Y", "Communication")
 	keys.add(CHAT_TEAM, &"bind_chat_team", "Chat to your side", "U", "Communication")
 	keys.add(VIEW, &"bind_view", "First or third person", "F5", "General")
