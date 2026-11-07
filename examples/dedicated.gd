@@ -307,7 +307,7 @@ func _test_the_course_vote() -> void:
 
 	# Every course in the directory, not only this suite's practice course.
 	game.config.course_ids = PackedStringArray()
-	vote.call("refresh_courses")
+	vote.call("refresh_maps")
 	var ids: Array = []
 
 	for choice: DotVoteChoice in (vote.get("source") as DotVoteListSource).entries:
@@ -888,7 +888,7 @@ func _test_rotation_file() -> void:
 	catalogue.apply_rotation(game.config.course_ids)
 	game.config.course_ids = kept_ids
 	if vote != null:
-		vote.call("refresh_courses")
+		vote.call("refresh_maps")
 	_finished()
 
 
@@ -898,23 +898,23 @@ func _hibernation_checks(vote: Node) -> void:
 	var sleeper: DotVoteDirector = vote.get("director")
 	_check(server.hibernation_changed.is_connected(sleeper.set_hibernating),
 		"the vote follows the server's hibernation without a line of this game's")
-	vote.set("_opened_this_course", true)
+	vote.set("_opened_this_map", true)
 	server.console.execute("sv_hibernate_when_empty 1")
 	_check(server.is_hibernating() and sleeper.hibernating, "an empty server sleeps, and the vote with it",
 		server.state_name())
-	var on_course: float = vote.get("_on_course_sec")
+	var on_course: float = vote.get("_on_map_sec")
 	vote.call("advance", 600.0)
-	_check(is_equal_approx(vote.get("_on_course_sec"), on_course), "ten minutes asleep do not count towards the ballot")
+	_check(is_equal_approx(vote.get("_on_map_sec"), on_course), "ten minutes asleep do not count towards the ballot")
 	server.console.execute("sv_hibernate_when_empty 0")
 	_check(not sleeper.hibernating, "waking wakes the vote")
-	_check(is_zero_approx(vote.get("_on_course_sec")) and not vote.get("_opened_this_course"),
+	_check(is_zero_approx(vote.get("_on_map_sec")) and not vote.get("_opened_this_map"),
 		"and the course ballot is owed again from the top")
 
 
 ## The rotation file as the ballot and `nominate` see it.
 func _rotation_ballot_checks(vote: Node) -> void:
 	if vote != null:
-		vote.call("refresh_courses")
+		vote.call("refresh_maps")
 		var ballot: Array = []
 		for choice in (vote.get("source") as DotVoteListSource).entries:
 			ballot.append(String(choice.id))
