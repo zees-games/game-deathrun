@@ -1586,6 +1586,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			_use = event.is_pressed()
 			return
 
+	# A tap or a left click while out. Touch arrives as a screen touch plus the mouse press the
+	# engine emulates from it; is_next_press skips the emulated one, so a tap steps once.
+	if is_spectating() and DotSpectatorHost.is_next_press(event):
+		_firing = false
+		spectate_step(1)
+		return
+
 	if event is InputEventMouseButton:
 		var button := event as InputEventMouseButton
 
@@ -1595,9 +1602,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_firing = false
 			_alt = false
 
-			if button.pressed and button.button_index == MOUSE_BUTTON_LEFT:
-				spectate_step(1)
-			elif button.pressed and button.button_index == MOUSE_BUTTON_RIGHT:
+			if button.pressed and button.button_index == MOUSE_BUTTON_RIGHT:
 				spectate_step(-1)
 			return
 
