@@ -1654,6 +1654,43 @@ func route_progress(point: Vector3) -> int:
 	return best
 
 
+## Whether a runner following the route can be inside trap [param index]'s zone: some stretch of
+## the route (sampled every half metre) lies in the zone. A course without a route, or one where no
+## trap's zone touches it, says yes for every trap, so a stand-in activator keeps its old choice.
+func route_touches_trap(index: int) -> bool:
+	var points := route()
+
+	if points.size() < 2:
+		return true
+
+	var any_touched := false
+	var this_touched := false
+
+	for trap in range(traps.size()):
+		var zone := trap_zone(trap)
+		var touched := false
+
+		for i in range(points.size() - 1):
+			var from: Vector3 = (points[i] as Dictionary)["at"]
+			var to: Vector3 = (points[i + 1] as Dictionary)["at"]
+			var steps := maxi(int(from.distance_to(to) / 0.5), 1)
+
+			for step in range(steps + 1):
+				if zone.has_point(from.lerp(to, float(step) / float(steps)) + Vector3(0.0, 0.5, 0.0)):
+					touched = true
+					break
+
+			if touched:
+				break
+
+		any_touched = any_touched or touched
+
+		if trap == index:
+			this_touched = touched
+
+	return this_touched or not any_touched
+
+
 ## Roughly where the middle of everything is, and how far it reaches. For an overview camera.
 func bounds() -> AABB:
 	var box := AABB()
