@@ -137,7 +137,7 @@ func _vote(index: DotContentIndex, catalogue: DrCatalogue) -> DrVote:
 	var vote := DrVote.new()
 	vote.config_path = ""
 	vote.content_index = index
-	vote.courses_fn = func() -> Array:
+	vote.maps_fn = func() -> Array:
 		var out: Array = []
 		for id in catalogue.playable_courses(PackedStringArray()):
 			if not catalogue.is_workshop(id):
