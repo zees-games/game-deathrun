@@ -18,7 +18,6 @@ game/dr_game.gd	2233
 game/dr_module.gd	894
 game/dr_module.gd::_build_vote	114
 game/dr_module.gd::_game_load	88
-game/dr_vote.gd::setup	89
 game/net/dr_net_bridge.gd	1455
 game/net/dr_net_bridge.gd::_on_event	136
 tools/shot.gd::_run	91

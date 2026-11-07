@@ -41,7 +41,6 @@ game/dr_spectate.gd::banner	5
 game/dr_spectate.gd::history	2
 game/dr_spectate.gd::long_block	12
 game/dr_textures.gd::long_block	12
-game/dr_vote.gd::long_block	7
 game/net/dr_events.gd::banner	8
 game/net/dr_events.gd::history	1
 game/net/dr_events.gd::long_block	10
