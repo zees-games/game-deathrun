@@ -70,6 +70,8 @@ func _ready() -> void:
 			DrCourse.use_bakes = false
 		elif arg.begins_with("--view="):
 			_view = arg.trim_prefix("--view=")
+		elif arg == "--touch=1":
+			DotPlatform.touch_override = 1
 		elif arg == "--spent":
 			_spent = true
 		elif arg == "--board":
@@ -191,6 +193,14 @@ func _run() -> void:
 		tab.pressed = true
 		menu.handle_event(tab)
 
+	# The cover lifts a moment after the player exists; --view=cover is the one that wants it up.
+	var platform: DotGameClient = _client.get("platform")
+	var waited := 0
+	while platform != null and not platform.is_shown() and waited < 600:
+		await get_tree().process_frame
+		waited += 1
+	if waited > 0:
+		await get_tree().create_timer(1.5).timeout
 	await _frames(3)
 	_report_view_model()
 	var image := get_viewport().get_texture().get_image()

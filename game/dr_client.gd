@@ -110,6 +110,18 @@ var _reloading: bool = false
 ## The use key, held. Presses the button in front of an activator; see `DrGame._advance_buttons`.
 var _use: bool = false
 
+var _touch: DotTouchButtons = null
+
+## dot-game's platformer preset without sprint, board and chat (a runner has no sprint key and the board and chat are not routed from the touch cluster).
+static func touch_layout() -> DotGameTouchLayout:
+	var res := DotGameTouchLayout.build(DotGameTouchLayout.PLATFORMER, {
+		DotGameTouchLayout.SPRINT: null, DotGameTouchLayout.BOARD: null, DotGameTouchLayout.CHAT: null,
+	})
+	if not res.ok:
+		push_error("mg-deathrun touch layout refused: %s" % str(res.error))
+		return DotGameTouchLayout.custom()
+	return res.value
+
 
 func _ready() -> void:
 	# First, before anything can be drawn: the course and the player arrive after this node is
@@ -156,8 +168,7 @@ func _ready() -> void:
 	_build_ragdolls()
 
 	# Here and not on the player: a connected client's player arrives in a JOIN, frames after the keyboard.
-	_sampler = DotFpsSampler.new(DrPlayer.tunables_for(config))
-	DrPlayer.register_actions(_sampler)
+	_sampler = DrPlayer.new_sampler(DrPlayer.tunables_for(config))
 
 	_build_hud()
 	_build_chat()
@@ -1125,6 +1136,43 @@ func _build_hud() -> void:
 	hud.use_key = USE_KEY
 	hud.use_action = DrBindings.USE
 	add_child(hud)
+	_build_touch()
+
+
+## On a touch device: use (held, like the key), jump and duck (held on the sampler). Offsets are from the bottom-right.
+func _build_touch() -> void:
+	if not DotPlatform.has_touch():
+		return
+	_touch = DotTouchButtons.new()
+	_touch.name = "TouchButtons"
+	_touch.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_touch.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	touch_layout().apply(_touch, platform)
+	_touch.button_down.connect(_touch_button.bind(true))
+	_touch.button_up.connect(_touch_button.bind(false))
+	hud.add_child(_touch)
+	DrPlayer.touch_ignore_fn = _touch.contains_point
+	if _sampler is DotFpsTouchSampler:
+		(_sampler as DotFpsTouchSampler).ignore_fn = _touch.contains_point
+		(_sampler as DotFpsTouchSampler).set_screen_width(get_viewport().get_visible_rect().size.x)
+
+
+func _touch_button(id: StringName, down: bool) -> void:
+	if id == &"use":
+		_use = down and not _covered()
+		return
+	var bit := DotFpsCommand.BUTTON_JUMP if id == &"jump" else (DotFpsCommand.BUTTON_CROUCH if id == &"crouch" else 0)
+	var live: DotFpsSampler = _sampler if not _offline else (player.sampler if player != null else null)
+	if bit != 0 and live is DotFpsTouchSampler:
+		(live as DotFpsTouchSampler).hold(bit, down and not _covered())
+
+
+## Screen touches go to the sampler before any Control can take them.
+func _input(event: InputEvent) -> void:
+	if event is InputEventScreenTouch or event is InputEventScreenDrag:
+		var live: DotFpsSampler = _sampler if not _offline else (player.sampler if player != null else null)
+		if live != null and not _covered():
+			live.handle_event(event)
 
 
 ## The chat box, before the netcode and before any player exists.
