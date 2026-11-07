@@ -14,7 +14,7 @@
 # client_scene and module in step with it; its examples/install_descriptor suite fails when
 # the two disagree.
 
-content_id: gamemann/mg-deathrun
+content_id: gamemann/game-deathrun
 version: 0.0.0
 kind: pack
 
