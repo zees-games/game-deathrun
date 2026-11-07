@@ -180,8 +180,7 @@ func _ready() -> void:
 		controller.motor.reuse_settled_ground = false
 
 	if samples_input:
-		sampler = DotFpsSampler.new(controller.tunables)
-		register_actions(sampler)
+		sampler = new_sampler(controller.tunables)
 
 
 ## How a player moves.
@@ -230,6 +229,23 @@ static func tunables_for(config: DrConfig) -> DotFpsTunables:
 	t.step_height = 0.4
 
 	return t
+
+
+## Set by the client's touch buttons, so a finger on one does not also drag the view.
+static var touch_ignore_fn: Callable = Callable()
+
+
+## A [DotFpsTouchSampler] on a touch device (it still reads keys), else the plain sampler, with the actions registered.
+static func new_sampler(p_tunables: DotFpsTunables) -> DotFpsSampler:
+	var made: DotFpsSampler
+	if DotPlatform.has_touch():
+		var touch := DotFpsTouchSampler.new(p_tunables)
+		touch.ignore_fn = touch_ignore_fn
+		made = touch
+	else:
+		made = DotFpsSampler.new(p_tunables)
+	register_actions(made)
+	return made
 
 
 ## Registers the movement actions, and binds the slow walk to shift. See mg-smash-copter.
