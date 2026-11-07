@@ -1,4 +1,4 @@
-extends "dr_client_base.gd"
+extends "dr_client_flashlight.gd"
 
 const DrBindings := preload("dr_bindings.gd")
 const DrWeaponIcons := preload("dr_weapon_icons.gd")
@@ -1151,11 +1151,17 @@ func _add_noblock_and_workbench() -> void:
 	if game.config_binder != null:
 		for set: DotProfileSet in game.config_binder.profile_sets():
 			wb.add_set(set, "Game settings: %s" % set.rel_path.trim_prefix("config_"))
+	var _fl := game.flashlight_conf()
+	if game.flashlight_binder != null:
+		for set: DotProfileSet in game.flashlight_binder.profile_sets():
+			wb.add_set(set, "Flashlight")
 	add_child(wb)
 	var started := wb.start()
 	DotLog.result(CHANNEL, "the workbench", started)
 	if started.ok and game.config_binder != null:
 		game.config_binder.attach(wb.api.runtime)
+	if started.ok and game.flashlight_binder != null and wb.api != null:
+		game.flashlight_binder.attach(wb.api.runtime as DotProfileRuntime)
 	platform.add_workbench(wb)
 
 
@@ -1171,6 +1177,10 @@ func _start_remote_workbench() -> void:
 	if game.config_binder != null:
 		for set: DotProfileSet in game.config_binder.profile_sets():
 			wb.add_set(set, "Game settings: %s" % set.rel_path.trim_prefix("config_"))
+	var _fl := game.flashlight_conf()
+	if game.flashlight_binder != null:
+		for set: DotProfileSet in game.flashlight_binder.profile_sets():
+			wb.add_set(set, "Flashlight")
 	add_child(wb)
 	var started := wb.start(game.ensure_runtime())
 	DotLog.result(CHANNEL, "the remote workbench", started)
@@ -1359,6 +1369,10 @@ func _process(delta: float) -> void:
 		)
 
 	_present_effects(delta)
+
+
+func _eye_is_ours() -> bool:
+	return not third_person and not is_spectating()
 
 
 ## Whether this client's own player is out and watching somebody.
@@ -1559,6 +1573,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey:
 		if event.is_action_pressed(DrBindings.ROAM) and is_spectating():
 			toggle_roam()
+			return
+
+		if event.is_action_pressed(DrBindings.FLASHLIGHT) and player != null and player.is_alive() and not is_spectating():
+			if flash != null:
+				var _asked := flash.toggle()
 			return
 
 		if event.is_action_pressed(DrBindings.VIEW):
