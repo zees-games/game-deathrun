@@ -1632,7 +1632,9 @@ func arm(player: DrPlayer, weapon_id: StringName) -> bool:
 	var def := player.weapons.arsenal.catalogue.get_def(weapon_id)
 
 	if def != null:
-		var _selected := player.weapons.arsenal.select(def.slot, _tick)
+		# select refuses while a round's freeze disables the arsenal, leaving a bot on the first weapon given.
+		if not player.weapons.arsenal.equip(def.slot):
+			var _selected := player.weapons.arsenal.select(def.slot, _tick)
 		player.wanted_slot = def.slot
 
 	player_armed.emit(player.player_id, weapon_id)
