@@ -261,6 +261,9 @@ func _bind_rule_cvars(world: DrGame) -> void:
 		add_cvar, DotConVar.FLAG_ARCHIVE | DotConVar.FLAG_NOTIFY | DotConVar.FLAG_REPLICATED
 	)
 
+	# zee_ads_rules: spread and pace while aimed are part of the prediction, so the numbers cross as one JSON cvar.
+	var _ads := world.ads_rules.bind_cvars(add_cvar, DotConVar.FLAG_ARCHIVE | DotConVar.FLAG_NOTIFY | DotConVar.FLAG_REPLICATED)
+
 	# dot-player-controller's mp_forceview (first or third person: the player's choice, or one
 	# held) and mp_solidplayers (players and stand-ins block each other, 1 by default).
 	# REPLICATED: the client places its own camera under the first and predicts its own

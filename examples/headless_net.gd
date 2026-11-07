@@ -17,7 +17,7 @@ extends "headless_net_base.gd"
 ## Sections and checks are both counted; mg-smash-copter's notes say why the second matters.
 
 const SECTIONS := 17
-const CHECKS := 93
+const CHECKS := 94
 
 
 func _ready() -> void:
@@ -376,6 +376,7 @@ func _test_the_end_crosses() -> void:
 
 	# The gun in their hand, as somebody else draws it: the client's copy of this player,
 	# drawn as a watcher would (not its own first-person view), holds what the server handed.
+	_check(server_me.weapons != null and server_me.weapons.ads_rules == _server_game.ads_rules, "the server rig takes the game's zee_ads_rules")
 	var held_def := server_me.weapons.arsenal.current_def() if server_me.weapons != null else null
 	var copy := _mine()
 	var _shown := copy.present_body(false, copy.global_position, Color.WHITE)

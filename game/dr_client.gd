@@ -315,6 +315,8 @@ func _follow_cvars() -> void:
 		var _bodies := game.ragdoll_rules.follow_cvars(link)
 		# And sv_toys*: a client hides the toys a server took away.
 		var _toys := game.toy_rules.follow_cvars(link)
+		# And zee_ads_rules: this end predicts the server's aimed pace and spread.
+		var _ads := game.ads_rules.follow_cvars(link)
 		# The server's mp_forceview and mp_solidplayers: this end places its own camera and
 		# predicts its own player.
 		var _view := game.view_rules.follow_cvars(link)
@@ -948,6 +950,7 @@ func _arm_locally(weapon_id: StringName = &"") -> void:
 	weapons.wall_extra_mask = player.controller.tunables.collision_mask if player.controller != null else 0
 	weapons.view_model_ref = DotNodeRef.of_path(view_model.get_path())
 	weapons.player_ref = DotNodeRef.of_path(player.get_path())
+	weapons.ads_rules = game.ads_rules
 	player.add_child(weapons)
 
 	var ready_now := weapons.setup()
