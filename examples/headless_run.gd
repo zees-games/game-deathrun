@@ -1,4 +1,4 @@
-extends "headless_run_client.gd"
+extends "headless_run_flashlight.gd"
 
 ## The simulation, headless: documents, the trap timeline, the draw, the buttons, every shape
 ## of trap killing somebody, the end, and how a round is decided.
@@ -10,9 +10,9 @@ extends "headless_run_client.gd"
 ## Every number about the course here is the built-in practice course's
 ## ([method DrCatalogue.practice]), whose comment lists where each trap is.
 
-const SECTIONS := 32
+const SECTIONS := 33
 
-const CHECKS := 163
+const CHECKS := 174
 
 
 
@@ -56,6 +56,7 @@ func _run() -> void:
 	await _test_offline_trigger()
 	await _test_free_roam()
 	await _test_spectate_tap()
+	await _test_the_flashlight()
 	await _test_the_drawn_gun()
 
 	for world in _worlds.duplicate():

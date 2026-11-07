@@ -3,6 +3,7 @@ extends "dr_game_bots.gd"
 const DrCatalogue := preload("dr_catalogue.gd")
 const DrAmbience := preload("dr_ambience.gd")
 const DrCourseDoc := preload("dr_course_doc.gd")
+const DrFlashlight := preload("dr_flashlight.gd")
 const DrProgress := preload("dr_progress.gd")
 const DrRules := preload("dr_rules.gd")
 const DrSpectate := preload("dr_spectate.gd")
@@ -165,6 +166,11 @@ var view_rules: DotPlayerViewRules = DotPlayerViewRules.new()
 var body_rules: DotPlayerBodyRules = DotPlayerBodyRules.new()
 ## The ambience cvars (`dr_ambient*`): bound by the module (REPLICATED), followed by a client through its link.
 var ambient_rules: DotAmbienceRules = DrAmbience.make_rules()
+
+## The flashlight's config and binder, made on first use so a suite that builds a game by hand still has one; the course id the lights were last set for.
+var flashlight_config: DotFlashlightConfig = null
+var flashlight_binder: DotGameConfigBinder = null
+var _flashlight_course: String = ""
 
 
 func _init() -> void:
@@ -1748,6 +1754,7 @@ func _step(delta: float) -> void:
 		if player.is_alive() and not player.watching:
 			player.simulate(_tick, delta)
 
+	_advance_flashlights()
 	_advance_buttons()
 	_watch_course()
 	_advance_grace()
@@ -1766,6 +1773,48 @@ func _step(delta: float) -> void:
 		return
 
 	match_node.tick(_tick)
+
+
+# --- The flashlight --------------------------------------------------------------
+
+## The flashlight config, made on first use.
+func flashlight_conf() -> DotFlashlightConfig:
+	if flashlight_config == null:
+		flashlight_config = DrFlashlight.make_config()
+		flashlight_binder = DrFlashlight.make_binder(flashlight_config)
+		DotLog.result(CHANNEL, "flashlight config", flashlight_binder.load_layers())
+	return flashlight_config
+
+
+## A new course sets everybody's light by its mood (dark ones start lit). Server side.
+func _advance_flashlights() -> void:
+	if not authoritative:
+		return
+
+	var cfg := flashlight_conf()
+	var course_id := str(course_doc.get("id", ""))
+
+	if course_id != _flashlight_course:
+		_flashlight_course = course_id
+		for p: DrPlayer in players.values():
+			p.flashlight_ready = false
+
+	for player: DrPlayer in players.values():
+		if not player.flashlight_ready:
+			player.flashlight_ready = true
+			player.flashlight = DrFlashlight.starts_on(cfg, course_id)
+
+
+## A living player in the round switches their light, runner or activator. Refused for somebody out, and where the course or the config disallows it. Server side.
+func toggle_flashlight(id: StringName) -> bool:
+	var player: DrPlayer = players.get(id)
+
+	if player == null or not player.is_alive() or player.watching \
+			or not DotFlashlightRules.allowed_on(flashlight_conf(), str(course_doc.get("id", ""))):
+		return false
+
+	player.flashlight = not player.flashlight
+	return true
 
 
 # --- Toys ----------------------------------------------------------------------
