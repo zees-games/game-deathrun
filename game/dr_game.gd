@@ -1954,6 +1954,9 @@ func _bot_take_position(player: DrPlayer, command: DotFpsCommand) -> void:
 	var first_progress := 1 << 30
 
 	for index in range(stage.trap_count()):
+		if not stage.route_touches_trap(index):
+			continue
+
 		var progress := stage.route_progress(stage.trap_zone(index).get_center())
 
 		if progress >= 0 and progress < first_progress:
@@ -2067,7 +2070,7 @@ func _bot_target_trap(player: DrPlayer = null) -> int:
 	var best_score := INF
 
 	for index in range(stage.trap_count()):
-		if not stage.trap_ready(index, _tick):
+		if not stage.trap_ready(index, _tick) or not stage.route_touches_trap(index):
 			continue
 
 		var zone := stage.trap_zone(index)
