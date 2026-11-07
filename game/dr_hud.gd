@@ -138,6 +138,24 @@ func bind(p_game: DrGame, p_player: DrPlayer) -> void:
 		_build()
 
 
+## Through a scoped gun at full aim: zee's circle and reticle (the gun is not drawn then).
+var scope: ZeeScopeOverlay = null
+
+## The dot, which gives way as the sights come up (it is hidden behind a scope).
+var _aim_dot: Control = null
+
+
+## The client's hands this frame: the scope follows their progressive fade-in and the dot gives way as the sights rise.
+func follow_hands(hands: ZeeViewModel) -> void:
+	var scoped := hands != null and hands.scope_fraction() > 0.0
+	if scope != null:
+		scope.fraction = hands.aim_fraction() if scoped else 0.0
+		if hands != null:
+			scope.follow(hands)
+	if _aim_dot != null:
+		_aim_dot.modulate.a = 0.0 if scoped else 1.0
+
+
 func _build() -> void:
 	# A full-rect Control between the CanvasLayer and the labels: a CanvasLayer is not a
 	# Control and does not lay its children out, so anchors on a Label parented straight to one
@@ -157,6 +175,11 @@ func _build() -> void:
 	blind_overlay.visible = false
 	_root.add_child(blind_overlay)
 
+	# Above the blind, below every widget: through a scoped gun at full aim the scope is the view and the HUD reads over it.
+	scope = ZeeScopeOverlay.new()
+	scope.name = "Scope"
+	_root.add_child(scope)
+
 	var size := 22
 
 	# The glance pieces read their colours from the theme on the type DotHudPiece; set on
@@ -169,7 +192,8 @@ func _build() -> void:
 
 	_build_bar()
 
-	_root.add_child(_make_crosshair())
+	_aim_dot = _make_crosshair()
+	_root.add_child(_aim_dot)
 
 
 ## The clock, the course name, the side and the shout.

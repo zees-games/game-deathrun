@@ -107,6 +107,11 @@ var _rig_height: float = 0.0
 var _firing: bool = false
 var _alt: bool = false
 var _reloading: bool = false
+## The aim button, held (`DrBindings.AIM`); what goes on the wire is `_aim_sent`.
+var _aiming: bool = false
+
+## The field of view the menu sets (bound in `_adopt`); the lens zooms from it while aimed, never compounding.
+var base_fov: float = 92.0
 ## The use key, held. Presses the button in front of an activator; see `DrGame._advance_buttons`.
 var _use: bool = false
 
@@ -460,7 +465,7 @@ func _adopt(candidate: DrPlayer) -> void:
 		player.command_stamp = _stamp
 
 	if settings != null:
-		settings.bind_camera(camera)
+		settings.bind_camera(self, &"base_fov")
 		# Offline the player samples for themselves, from their controller's own tunables.
 		if player.sampler != null:
 			settings.bind_look(player.sampler.tunables)
@@ -1020,7 +1025,7 @@ func _build_camera() -> void:
 
 	camera = Camera3D.new()
 	camera.name = "Eye"
-	camera.fov = 92.0
+	camera.fov = base_fov
 	camera.current = true
 
 	# Other players and stand-ins: hidden when one is at the lens, faded in third person when
@@ -1243,11 +1248,41 @@ func _start_remote_workbench() -> void:
 
 
 func _suspend_input(suspended: bool) -> void:
+	if suspended:
+		# The button's release goes to the menu, so the aim is let go here or it sticks up.
+		_aiming = false
+
 	if _sampler != null:
 		_sampler.suspended = suspended
 
 	if player != null and player.sampler != null:
 		player.sampler.suspended = suspended
+
+
+## Whether the sights may come up: first person, the pointer ours, alive, not watching and not under the cover.
+func _aim_allowed() -> bool:
+	return _pointer_ours() and not third_person and not is_spectating() and not _covered() \
+		and player != null and player.is_alive()
+
+
+## What the command says about the sights: the view model's own state (a toggle in the rules reaches the server's spread and pace as it does the
+## picture), and nothing when the sights may not come up.
+func _aim_sent() -> bool:
+	var hands := view_model if view_model != null and is_instance_valid(view_model) else null
+	return _aim_allowed() and (hands.is_aim_held() if hands != null else _aiming)
+
+
+## The sights on the picture, once a frame: the view model's aim and the lens zoom from the base field of view.
+func _present_aim() -> void:
+	var hands := view_model if view_model != null and is_instance_valid(view_model) else null
+
+	if hands != null:
+		hands.aim_input(_aiming and _aim_allowed())
+
+	camera.fov = base_fov * (hands.aim_fov_scale() if hands != null and not is_spectating() else 1.0)
+
+	if hud != null:
+		hud.follow_hands(hands if hands != null and not is_spectating() else null)
 
 
 ## Whether the pointer is the game's: captured. A menu frees it and the platform takes it back.
@@ -1295,7 +1330,7 @@ func _physics_process(delta: float) -> void:
 		if not net.clock.is_synced():
 			continue
 
-		bridge.client_tick(net.clock.input_tick() - (ticks - 1 - i), move, _slot, _use)
+		bridge.client_tick(net.clock.input_tick() - (ticks - 1 - i), move, _slot, _use, _aim_sent())
 
 	# A teleport turns the predicted body in the tick; the mouse's own angles are this sampler's,
 	# and the next command would turn them back. Read after the tick, so a replay that crossed
@@ -1318,6 +1353,7 @@ func _drive_offline(_delta: float) -> void:
 		_stamp(pending)
 		player.wanted_slot = _slot
 
+	player.aiming = _aim_sent()
 	player.wants_use = _use and not _covered()
 
 	_drive_view_model(pending)
@@ -1367,6 +1403,8 @@ func _process(delta: float) -> void:
 
 	if camera == null or player == null:
 		return
+
+	_present_aim()
 
 	# [b]Before the rig, and instead of it.[/b] The rig below hangs the camera off the
 	# player's own node, and a player who is out is a body at the kill height.
@@ -1649,6 +1687,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			_reloading = event.is_pressed()
 			return
 
+		if event.is_action(DrBindings.AIM):
+			_aiming = event.is_pressed()
+			return
+
 		if event.is_action(DrBindings.USE):
 			# Held, and sent every tick in this game's own input message; the server makes the
 			# edge. A request instead would be a press resolved a round trip after the key,
@@ -1678,6 +1720,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 		if button.button_index == MOUSE_BUTTON_LEFT:
 			_firing = button.pressed
+		elif button.is_action(DrBindings.AIM):
+			_aiming = button.pressed
 		elif button.button_index == MOUSE_BUTTON_RIGHT:
 			_alt = button.pressed
 

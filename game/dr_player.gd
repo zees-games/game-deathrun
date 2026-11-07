@@ -93,6 +93,10 @@ var watching: bool = false
 ## Which weapon slot they have asked for, from this game's own input message.
 var wanted_slot: int = 0
 
+## The aim button, held, as the last command said it (the server: from the wire; offline and the predicting client: from the sights).
+## The rig takes it as `BUTTON_AIM`, and its aimed pace scales the motor (`step_controller`).
+var aiming: bool = false
+
 ## Whether the use key is held — a button, for an activator — from the same message.
 var wants_use: bool = false
 
@@ -299,7 +303,24 @@ func simulate(tick: int, delta: float) -> void:
 
 		controller.apply_command(sampled)
 
+	step_controller(tick, delta)
+
+
+## The motor's tick at the weapon's ADS pace while the rig says it is aimed. The server, offline and a predicting client all come through here
+## and read the same rig rule, so the prediction agrees. The top speed is scaled for the one tick and put back (the tunables are shared).
+func step_controller(tick: int, delta: float) -> void:
+	var rig := _rig()
+	var tunables := controller.tunables
+	var scale := rig.ads_move_scale() if rig != null else 1.0
+
+	if tunables == null or scale >= 1.0:
+		controller.simulate_tick(tick, delta)
+		return
+
+	var kept := tunables.max_speed
+	tunables.max_speed = kept * clampf(scale, 0.05, 1.0)
 	controller.simulate_tick(tick, delta)
+	tunables.max_speed = kept
 
 
 ## Before the motor: the course where it is on this tick.

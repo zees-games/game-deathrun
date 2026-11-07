@@ -110,6 +110,9 @@ var last_slot: int = 0
 
 var last_use: bool = false
 
+## The aim button of the last command a peer sent (the sights up), which the body's rig and motor read.
+var last_aim: bool = false
+
 var last_state_tick: int = -1
 
 
@@ -172,10 +175,12 @@ func _net_apply_input(input: DotNetInput, _tick: int) -> void:
 		last_move = command.move
 		last_slot = command.slot
 		last_use = command.use
+		last_aim = command.aim
 
 		if player != null:
 			player.wanted_slot = command.slot
 			player.wants_use = command.use
+			player.aiming = command.aim
 
 
 ## On the authority the whole game ticks as one — the course is posed, every player moves,
@@ -195,7 +200,7 @@ func _net_simulate(tick: int, delta: float) -> void:
 		# takes, so a trapdoor rolling over carries a predicted runner exactly as the server
 		# carries the real one.
 		player.controller.apply_command(last_move.duplicate_command())
-		player.controller.simulate_tick(tick, delta)
+		player.step_controller(tick, delta)
 
 	pull()
 

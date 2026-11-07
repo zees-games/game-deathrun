@@ -157,11 +157,17 @@ func _portrait(atlas: String) -> Texture2D:
 	return texture
 
 
+## Whether the command holds the sights up. Overridden by the client, which owns the key and the rules for when it counts.
+func _aim_sent() -> bool:
+	return false
+
+
 func _drive_view_model(command: DotFpsCommand) -> void:
 	if weapons == null or player == null:
 		return
 
 	var weapon_command := DotWeaponCommand.new()
+	weapon_command.set_button(DotWeaponCommand.BUTTON_AIM, _aim_sent())
 
 	if command != null:
 		weapon_command.set_button(

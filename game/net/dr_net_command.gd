@@ -26,11 +26,16 @@ var slot: int = 0
 ## taken; held every tick and edged by the server (`DrGame._advance_buttons`).
 var use: bool = false
 
+## The aim button, held: the sights are up. One bit after `use`, so a batch is bit-packed and a server of a build before this one reads the next
+## input from the wrong bit; client and server are one pack version (the join handshake pins it, see docs/comment-notes.md "Aim on the wire").
+var aim: bool = false
+
 
 func _write(writer: DotNetWriter) -> void:
 	move.write(writer)
 	writer.write_uint(clampi(slot, 0, (1 << SLOT_BITS) - 1), SLOT_BITS)
 	writer.write_bool(use)
+	writer.write_bool(aim)
 
 
 func _read(reader: DotNetReader) -> void:
@@ -38,6 +43,7 @@ func _read(reader: DotNetReader) -> void:
 	move.read(reader)
 	slot = reader.read_uint(SLOT_BITS)
 	use = reader.read_bool()
+	aim = reader.read_bool()
 
 
 ## Not optional. Quantisation bounds each field; it cannot bound the relationship between
@@ -50,4 +56,4 @@ func _sanitise() -> void:
 
 func _equals(other: DotNetInput) -> bool:
 	var them := other as DrNetCommand
-	return them != null and slot == them.slot and use == them.use and move.equals(them.move)
+	return them != null and slot == them.slot and use == them.use and aim == them.aim and move.equals(them.move)
