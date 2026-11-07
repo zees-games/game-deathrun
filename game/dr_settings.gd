@@ -1,8 +1,8 @@
-extends DotMenuSettings
+extends DotMenuGameSettings
 
 const DrBindings := preload("dr_bindings.gd")
 
-## A player's own settings and the menu that changes them, on dot-menu's `DotMenuSettings`.
+## A player's own settings and the menu that changes them, on dot-menu's `DotMenuGameSettings` with this game's spec.
 ## Call `setup()`, then `bind_look`, `bind_camera` and `bind_audio`; `open()` shows the menu.
 ## Why the scopes are the family's: docs/comment-notes.md.
 
@@ -25,50 +25,28 @@ const NOT_APPLIED: Array[StringName] = [
 
 
 func _init() -> void:
-	name = "Settings"
-	directory = SETTINGS_DIR
-	app_namespace = APP_NAMESPACE
-	schema = schema_for()
-	config = DotMenuConfig.new()
-	config.brand_name = "Deathrun"
-	# By name: an older dot-menu has no such property. Top left keeps it off the thumbs' corner.
-	if &"menu_button_corner" in config:
-		config.set(&"menu_button_corner", &"top_left")
-	# Help and Leave are dot-menu's stock: H opens help, Leave leaves the server or quits a
-	# solo game. Every game in the family has both (the first play test found this one without
-	# them). The keys are a table now ([DrBindings]), so the help screen lists them.
-	bindings = DrBindings.make()
-	var _layered := config.load_layered()
+	super(spec_for())
 
 
-## The document: this game's field of view first, so it keeps its own default, then the
-## stock settings it applies.
-static func schema_for() -> DotSettingsSchema:
-	var s := DotSettingsSchema.new()
-	s.version = SCHEMA_VERSION
-	s.add(DotSettingsDef.integer(&"field_of_view", DEFAULT_FOV, 70, 120, &"video").with_scope(
-		DotSettingsDef.Scope.SERVER_CLAMPED
-	))
-	s.add(DotSettingsDef.boolean(&"reduce_motion", false, &"accessibility").with_scope(DotSettingsDef.Scope.ACCOUNT)
-		.with_description("The end-of-round announcement appears at once, with nothing sliding, rising or bursting."))
-	s.add(DotSettingsDef.boolean(&"ambient", true, &"audio").with_description("Quiet sounds under the course."))
-	s.add(DotSettingsDef.number(&"ambient_volume", 1.0, 0.0, 1.0, &"audio"))
-	return DotMenuStock.declare(s, DotMenuStock.DEFAULT_GROUPS, null, NOT_APPLIED)
-
-
-func setup(store: DotSettingsStore = null, with_menu: bool = true) -> DotResult:
-	var made := super.setup(store, with_menu)
-	if menu != null:
-		var general := menu.page(&"general")
-		if general != null:
-			general.section("Comfort").add(DotMenuRow.toggle(&"reduce_motion", "Reduce motion",
-				"The end-of-round announcement appears at once."))
-	return made
-
-
-## The help screen's goal and rules; the keys come from [DrBindings].
-func _fill_help(help: DotMenuHelp) -> void:
-	help.about = "One long course of traps. Most players run it; one or more activators, drawn fresh each round, stand on a walkway beside it with a button for every trap. Runners try to reach the end; activators try to catch them in the traps."
-	help.add_text("Activators", "Stand at a button and press the use key while a runner is in its trap. Each trap shows its name when you look at its button.")
-	help.add_text("The end", "Whoever reaches the end is handed a weapon, and the first one there calls the activators down to settle it.")
-	help.add_section("Mouse", [["Left", "Fire, at the end; watch the next player while out"], ["Right", "Alternate fire; watch the one before while out"]], &"keys")
+## The game's settings as data: names, field of view, extra settings, keys and the help screen's goal and rules.
+static func spec_for() -> DotMenuGameSpec:
+	var s := DotMenuGameSpec.new()
+	s.schema_version = SCHEMA_VERSION
+	s.brand_name = "Deathrun"
+	s.settings_dir = SETTINGS_DIR
+	s.app_namespace = APP_NAMESPACE
+	s.default_fov = DEFAULT_FOV
+	s.reduce_motion_text = "The end-of-round announcement appears at once, with nothing sliding, rising or bursting."
+	s.comfort_row_text = "The end-of-round announcement appears at once."
+	# Top left keeps the menu button off the thumbs' corner.
+	s.menu_button_corner = &"top_left"
+	s.ambient_text = "Quiet sounds under the course."
+	s.not_applied = NOT_APPLIED
+	s.bindings_maker = func() -> DotMenuBindings: return DrBindings.make()
+	s.help_about = "One long course of traps. Most players run it; one or more activators, drawn fresh each round, stand on a walkway beside it with a button for every trap. Runners try to reach the end; activators try to catch them in the traps."
+	s.help_cards = [
+		["Activators", "Stand at a button and press the use key while a runner is in its trap. Each trap shows its name when you look at its button."],
+		["The end", "Whoever reaches the end is handed a weapon, and the first one there calls the activators down to settle it."],
+	]
+	s.help_sections = [["Mouse", [["Left", "Fire, at the end; watch the next player while out"], ["Right", "Alternate fire; watch the one before while out"]], &"keys"]]
+	return s
