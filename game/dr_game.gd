@@ -159,7 +159,7 @@ var ragdoll_rules: DotPlayerRagdollRules = DotPlayerRagdollRules.new()
 var toy_rules: DotPropToyRules = DotPropToyRules.new()
 
 ## Aim-down-sights numbers (`zee_ads_rules`, REPLICATED): the server's cfg over the shipped defaults, handed to every weapon
-## rig. Bound by the module and followed by a client, so its prediction agrees. Nothing sets the aim bit yet.
+## rig. Bound by the module and followed by a client, so its prediction agrees. The aim bit (`DrNetCommand.aim`) sets BUTTON_AIM on the rig and scales the motor (`DrPlayer.step_controller`).
 var ads_rules: ZeeAdsRules = ZeeAdsRules.load_config()
 
 ## dot-player-controller's `mp_forceview` (may a player switch to third person) and
@@ -1693,6 +1693,7 @@ func weapon_command_for(player: DrPlayer) -> DotWeaponCommand:
 	command.set_button(DotWeaponCommand.BUTTON_ATTACK, pending.is_pressed(DotFpsCommand.BUTTON_USER_0))
 	command.set_button(DotWeaponCommand.BUTTON_ALT, pending.is_pressed(DotFpsCommand.BUTTON_USER_1))
 	command.set_button(DotWeaponCommand.BUTTON_RELOAD, pending.is_pressed(DotFpsCommand.BUTTON_USER_2))
+	command.set_button(DotWeaponCommand.BUTTON_AIM, player.aiming)
 	command.yaw = pending.yaw
 	command.pitch = pending.pitch
 	command.slot = player.wanted_slot

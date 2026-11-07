@@ -14,6 +14,7 @@
 #   tools/shot.sh --view=killcam --seconds=2           # the round's last moment replayed (--seconds=7.5: the podium)
 #   tools/shot.sh --view=end --end-wait=5              # ...once the weapon they were handed is out
 #   tools/shot.sh --view=end --end-wait=3 --fire=0.4   # ...firing: flash, tracer, impact, the counter down
+#   tools/shot.sh --view=end --end-wait=3 --gun=marksman --aim   # ...down the sights with a chosen weapon (--gun=<id>), and the aim bit the command sent
 #   tools/shot.sh --view=third --no-bake               # without the baked light, to compare
 #   tools/shot.sh --view=maps --seconds=0.5            # M: the solo course list with a Workshop fixture course (Name [Pack])
 #   tools/shot.sh --action emote dance                 # the local runner, third person, playing an avatar action (action_a/_b.png)
@@ -45,7 +46,7 @@ for arg in "$@"; do
         --seconds=*) seconds="${arg#*=}" ;;
         --out=*)     out="${arg#*=}" ;;
         --dr-*)      config+=("$arg") ;;
-        --trap=*|--after=*|--eye=*|--end-wait=*|--fire=*|--board|--spent|--no-bake|--touch=1) config+=("$arg") ;;
+        --trap=*|--after=*|--eye=*|--end-wait=*|--fire=*|--aim|--gun=*|--board|--spent|--no-bake|--touch=1) config+=("$arg") ;;
         *)           echo "unknown argument: $arg" >&2; exit 2 ;;
     esac
 done

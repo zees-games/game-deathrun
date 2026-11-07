@@ -21,6 +21,9 @@ var _end_wait := 1.5
 ## `--fire=N`: at the end, the trigger held for N seconds before the frame (the flash, the
 ## tracer and the impact in it, and the counter down).
 var _fire := 0.0
+## `--gun=<id>`: the runner at the end is handed this weapon too and holds it. `--aim`: the Aim key held for the frame (down the sights), with what the command said printed.
+var _gun := &""
+var _aim := false
 var _out := "res://screenshots/shot.png"
 var _trap := ""
 var _after := 0.5
@@ -78,6 +81,10 @@ func _ready() -> void:
 			_board = true
 		elif arg.begins_with("--end-wait="):
 			_end_wait = arg.trim_prefix("--end-wait=").to_float()
+		elif arg == "--aim":
+			_aim = true
+		elif arg.begins_with("--gun="):
+			_gun = StringName(arg.trim_prefix("--gun="))
 		elif arg.begins_with("--fire="):
 			_fire = arg.trim_prefix("--fire=").to_float()
 		elif arg.begins_with("--seconds="):
@@ -178,6 +185,25 @@ func _run() -> void:
 			# `--end-wait=N` waits longer at the end: the weapon is handed over on arrival and
 			# its deploy is still running at 1.5 s.
 			await _seconds_of(maxf(1.5, _end_wait))
+			if _gun != &"":
+				var def: DotWeaponDef = null
+				for candidate in ZeeWeaponPack.weapons():
+					if candidate.id == _gun:
+						def = candidate
+				var _armed := game.arm(local, _gun)
+				if def != null:
+					local.wanted_slot = def.slot
+					_client.set("_slot", def.slot)
+				await _seconds_of(1.5)
+			if _aim:
+				# The pointer is never captured under xvfb; the client aims only while it is.
+				Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+				_client.set("_aiming", true)
+				await _seconds_of(1.0)
+				await _frames(30)
+				var camera: Camera3D = _client.get("camera")
+				print("aim bit: sent %s, body %s, rig pace %.2f, fov %.1f" % [_client.call("_aim_sent"), local.aiming,
+					local.weapons.ads_move_scale() if local.weapons != null else 1.0, camera.fov])
 			if _fire > 0.0:
 				_client.set("_firing", true)
 				await _seconds_of(_fire)

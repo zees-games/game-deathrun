@@ -656,6 +656,7 @@ func ensure_game_ticked(tick: int) -> void:
 			behaviour.player.controller.apply_command(behaviour.last_move.duplicate_command())
 			behaviour.player.wanted_slot = behaviour.last_slot
 			behaviour.player.wants_use = behaviour.last_use
+			behaviour.player.aiming = behaviour.last_aim
 
 	game.tick_once(tick)
 
@@ -665,7 +666,7 @@ func ensure_game_ticked(tick: int) -> void:
 
 # --- The client tick -------------------------------------------------------
 
-func client_tick(tick: int, command: DotFpsCommand, slot: int = 0, use: bool = false) -> void:
+func client_tick(tick: int, command: DotFpsCommand, slot: int = 0, use: bool = false, aim: bool = false) -> void:
 	if net == null or net.is_server or game == null:
 		return
 
@@ -677,6 +678,7 @@ func client_tick(tick: int, command: DotFpsCommand, slot: int = 0, use: bool = f
 	packet.move = command if command != null else DotFpsCommand.new()
 	packet.slot = slot
 	packet.use = use
+	packet.aim = aim
 
 	# Into the local history BEFORE predicting: reconciliation replays it.
 	net.local_inputs().push(packet)
@@ -690,9 +692,11 @@ func client_tick(tick: int, command: DotFpsCommand, slot: int = 0, use: bool = f
 		mine.last_move = packet.move
 		mine.last_slot = slot
 		mine.last_use = use
+		mine.last_aim = aim
 
 		if mine.player != null:
 			mine.player.wanted_slot = slot
+			mine.player.aiming = aim
 
 	if link != null:
 		var payload := net.encode_ack()

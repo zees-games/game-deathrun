@@ -16,8 +16,8 @@ extends "headless_net_base.gd"
 ##
 ## Sections and checks are both counted; mg-smash-copter's notes say why the second matters.
 
-const SECTIONS := 17
-const CHECKS := 94
+const SECTIONS := 18
+const CHECKS := 103
 
 
 func _ready() -> void:
@@ -66,6 +66,37 @@ func _run() -> void:
 ## inverses for you: dot-moderation once wrote "voice muted" and read back a warning.
 func _test_the_codec() -> void:
 	_section("every event decodes to what was encoded")
+
+	# The command: the aim bit rides after `use`, alone and in a batch with commands that do not carry it.
+	var sent_commands: Array = []
+	for i in range(3):
+		var sent := DrNetCommand.new()
+		sent.tick = 40 + i
+		sent.delta = 1.0 / 64.0
+		sent.slot = 2 + i
+		sent.use = i == 0
+		sent.aim = i != 1
+		sent.move.yaw = 10.0 * float(i)
+		sent.move.move = Vector2(0.0, 1.0)
+		sent.move.set_button(DrNetCommand.BUTTON_FIRE, i == 2)
+		sent_commands.append(sent)
+	var writer := DotNetWriter.new()
+	DotNetInput.write_batch(writer, sent_commands)
+	var got := DotNetInput.read_batch(writer.to_reader(), func() -> DotNetInput: return DrNetCommand.new())
+	var round_trip := got.size() == 3
+	for i in range(mini(got.size(), 3)):
+		var back_cmd := got[i] as DrNetCommand
+		round_trip = round_trip and back_cmd != null and back_cmd.aim == (i != 1) and back_cmd.use == (i == 0) and back_cmd.slot == 2 + i \
+			and back_cmd.move.is_pressed(DrNetCommand.BUTTON_FIRE) == (i == 2) and absf(back_cmd.move.yaw - 10.0 * float(i)) < 1.0
+	_check(round_trip, "a batch of commands keeps each one's aim bit, use, slot and buttons", "%d back" % got.size())
+	var plain := DrNetCommand.new()
+	var bits_plain := DotNetWriter.new()
+	plain._write(bits_plain)
+	plain.aim = true
+	var bits_aim := DotNetWriter.new()
+	plain._write(bits_aim)
+	_check(bits_plain.to_bytes().size() == bits_aim.to_bytes().size() and plain._equals(plain) and not plain._equals(DrNetCommand.new()),
+		"the bit costs no byte, and a command with it is not equal to one without", "%d bytes" % bits_aim.to_bytes().size())
 
 	var hello := DrEvents.read_hello(DotNetReader.new(DrEvents.write_hello(SESSION, 64, 1234, 5.0, 300.0)))
 	_check(bool(hello["ok"]) and int(hello["player_id"]) == SESSION
@@ -255,6 +286,88 @@ func _test_the_course_arrives() -> void:
 	_finished()
 
 
+var _client_peak := 0.0
+
+
+## The claim: the aim bit a client sends is the server body's `aiming`, the rig's `BUTTON_AIM` and the pace of the motor on both ends.
+## Armed: with `ensure_game_ticked` not copying `last_aim` onto the body, the aimed checks fail.
+func _test_the_aim_bit_crosses() -> void:
+	_section("the aim bit crosses the wire, slows the runner and the prediction agrees")
+	var server_me: DrPlayer = _server_game.players[DrNetBridge.player_key(SESSION)]
+	var rig: ZeeWeaponRig = server_me.weapons
+	var armed := rig != null and rig.current_def() != null and _mine() != null
+	_check(armed, "the server's runner holds a gun (from the section before)")
+	if not armed:
+		_finished()
+		return
+
+	var paced := _server_game.ads_rules.move_speed_for(rig.current_def().id)
+	# The client's own drawn gun, as the client builds it when the player is armed (`_arm_locally`): a rig under the predicted player, no authority,
+	# driven with the aim button every tick, which is what the prediction's pace reads (`step_controller`).
+	var drawn := ZeeWeaponRig.new()
+	drawn.name = "Weapons"
+	drawn.role = ZeeWeaponRig.Role.SERVER
+	drawn.authority = false
+	drawn.tick_rate = _client_game.tick_rate
+	drawn.player_ref = DotNodeRef.of_path(_mine().get_path())
+	drawn.ads_rules = _client_game.ads_rules
+	_mine().add_child(drawn)
+	var drawn_ready := drawn.setup()
+	var _drawn_given := drawn.give(rig.current_def().id)
+	_check(drawn_ready.ok, "the client's drawn rig sets up", "" if drawn_ready.ok else drawn_ready.error.message)
+	var drawn_tick := 500000
+	var aim_step := func(command: DotFpsCommand, aim: bool) -> void:
+		drawn_tick += 1
+		var weapon_command := DotWeaponCommand.new()
+		weapon_command.set_button(DotWeaponCommand.BUTTON_AIM, aim)
+		var _o := drawn.simulate_tick(weapon_command, drawn_tick)
+		await _step(command, aim)
+	var start := server_me.global_position
+
+	var run := func(direction: Vector2, aim: bool) -> float:
+		var walk := DotFpsCommand.new()
+		walk.move = direction
+		server_me.place_at(start, 0.0)
+		for _i in range(INPUT_LEAD + 8):
+			await aim_step.call(null, false)
+		var peak := 0.0
+		var client_peak := 0.0
+		for _i in range(SERVER_TICK_RATE / 2):
+			await aim_step.call(walk, aim)
+			var v := server_me.controller.state.velocity
+			peak = maxf(peak, Vector2(v.x, v.z).length())
+			var cv := _mine().controller.state.velocity
+			client_peak = maxf(client_peak, Vector2(cv.x, cv.z).length())
+		_client_peak = client_peak
+		return peak
+	var best := Vector2.ZERO
+	var hip_run := 0.0
+	for direction: Vector2 in [Vector2(0.0, 1.0), Vector2(1.0, 0.0), Vector2(-1.0, 0.0), Vector2(0.0, -1.0)]:
+		var reach: float = await run.call(direction, false)
+		if reach > hip_run:
+			hip_run = reach
+			best = direction
+	_check(not server_me.aiming and rig.ads_move_scale() == 1.0, "unaimed, the server's body is not aiming and not slowed")
+
+	var aimed_run: float = await run.call(best, true)
+	var forward := DotFpsCommand.new()
+	forward.move = best
+	_check(server_me.aiming and _mine().aiming and absf(rig.ads_move_scale() - paced) < 0.001,
+		"aimed, the server's body and the client's both are, and the rig is at the rules' pace",
+		"server %s client %s scale %.2f of %.2f" % [server_me.aiming, _mine().aiming, rig.ads_move_scale(), paced])
+	_check(hip_run > 0.5 and absf(aimed_run / hip_run - paced) < 0.1,
+		"and the server's body walks at that pace", "hip %.2f m/s aimed %.2f m/s, ratio %.2f of %.2f" % [hip_run, aimed_run, aimed_run / maxf(hip_run, 0.001), paced])
+	_check(absf(_client_peak - aimed_run) < 0.3, "the prediction, slowed alike, tops out where the server does",
+		"client %.2f m/s, server %.2f m/s" % [_client_peak, aimed_run])
+
+	for _i in range(INPUT_LEAD + 8):
+		await aim_step.call(forward, false)
+	_check(not server_me.aiming and rig.ads_move_scale() == 1.0, "let go, the pace comes back")
+	_mine().remove_child(drawn)
+	drawn.queue_free()
+	_finished()
+
+
 ## The course's toys over the wire: paired by index on both ends, frozen copies, and a ball
 ## kicked on the server followed on the client.
 func _test_the_toys_reach_the_client() -> void:
@@ -396,6 +509,7 @@ func _test_the_end_crosses() -> void:
 	_finished()
 
 	await _test_a_hit_is_the_shooters()
+	await _test_the_aim_bit_crosses()
 
 	_section("the showdown's result crosses")
 	var damage := DotDamage.make(server_me.entity_id, _stand_in.entity_id, 1000.0, null)

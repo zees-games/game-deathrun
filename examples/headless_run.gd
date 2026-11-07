@@ -10,9 +10,9 @@ extends "headless_run_flashlight.gd"
 ## Every number about the course here is the built-in practice course's
 ## ([method DrCatalogue.practice]), whose comment lists where each trap is.
 
-const SECTIONS := 33
+const SECTIONS := 34
 
-const CHECKS := 174
+const CHECKS := 179
 
 
 
@@ -41,6 +41,7 @@ func _run() -> void:
 	await _test_the_carry()
 	await _test_a_bot_runs_the_course()
 	await _test_the_end()
+	await _test_the_aim_button()
 	await _test_toys()
 	await _test_the_traps_win()
 	await _test_the_runners_win()
@@ -565,6 +566,96 @@ func _test_the_end() -> void:
 		"a stand-in does not fire on the tick it first aims", str(first_shot))
 	_check(int(first_shot["nightmare"]) < int(first_shot["easy"]),
 		"and a nightmare one fires sooner than an easy one", str(first_shot))
+	_finished()
+
+
+## The aim button, as the game reads it: `DrPlayer.aiming` (the client sets it offline, the wire sets it online) reaches the rig as BUTTON_AIM,
+## slows the motor to the rules' pace and closes the spread. Armed: with `DrGame.weapon_command_for` not setting BUTTON_AIM, the first,
+## second and fourth checks fail; with `DrPlayer.step_controller` calling the motor unscaled, the first.
+func _test_the_aim_button() -> void:
+	_section("the aim button slows an armed runner's pace and closes the spread")
+	var game := await _world(func(c: DrConfig) -> void:
+		c.countdown_seconds = 0.2
+		c.arrival_grace_seconds = 0.5
+	)
+	var players := await _round(game, 3)
+	var runner := players[0]
+	await _step(game, int(0.3 * TICK_RATE))
+	runner.place_at(game.course_doc["finish"]["at"], 0.0)
+	await _step(game, int(0.8 * TICK_RATE))
+	var rig := runner.weapons
+	var armed := rig != null and rig.current_def() != null
+	_check(armed, "the armed runner holds a gun")
+	if not armed:
+		_finished()
+		return
+	var rules := game.ads_rules
+	var held := rig.current_def()
+	var paced := rules.move_speed_for(held.id)
+	var start := runner.global_position
+
+	# How far the body gets in a second from the same spot, best of four directions (the end arena has walls), sights down then up.
+	var walk := func(direction: Vector2, aim: bool) -> float:
+		runner.place_at(start, 0.0)
+		runner.controller.state.velocity = Vector3.ZERO
+		runner.aiming = aim
+		var command := DotFpsCommand.new()
+		command.move = direction
+		await _step(game, 4)
+		var from := runner.controller.state.position
+		for i in range(TICK_RATE):
+			runner.controller.apply_command(command)
+			runner.aiming = aim
+			await _step(game, 1)
+		return runner.controller.state.position.distance_to(from)
+	var best := Vector2.ZERO
+	var hip := 0.0
+	for direction: Vector2 in [Vector2(0.0, 1.0), Vector2(1.0, 0.0), Vector2(-1.0, 0.0), Vector2(0.0, -1.0)]:
+		var reach: float = await walk.call(direction, false)
+		if reach > hip:
+			hip = reach
+			best = direction
+	var hip_scale := rig.ads_move_scale()
+	var aimed: float = await walk.call(best, true)
+	var aimed_scale := rig.ads_move_scale()
+	_check(hip > 1.0 and absf(aimed / hip - paced) < 0.1 and absf(aimed_scale - paced) < 0.001 and hip_scale == 1.0,
+		"aimed, the runner walks at the rules' pace and not otherwise", "hip %.2f m aimed %.2f m, ratio %.2f of %.2f, rig %.2f" % [hip, aimed, aimed / maxf(hip, 0.001), paced, aimed_scale])
+
+	# The wire to the rig: the server builds the weapon command from the body's flag.
+	runner.controller.apply_command(DotFpsCommand.new())
+	runner.aiming = true
+	var up := game.weapon_command_for(runner)
+	runner.aiming = false
+	var down := game.weapon_command_for(runner)
+	_check(up.is_pressed(DotWeaponCommand.BUTTON_AIM) and not down.is_pressed(DotWeaponCommand.BUTTON_AIM),
+		"the body's flag is the weapon command's aim button")
+
+	# The spread: first shots of a held trigger with the sights down, then up for longer than they take to rise.
+	var spreads := func(aim: bool) -> float:
+		var command := DotWeaponCommand.new()
+		command.set_button(DotWeaponCommand.BUTTON_AIM, aim)
+		var tick := 100000
+		for i in range(TICK_RATE * 2):
+			tick += 1
+			var _o := rig.simulate_tick(command, tick)
+		command.set_button(DotWeaponCommand.BUTTON_ATTACK, true)
+		var total := 0.0
+		var shots := 0
+		for i in range(TICK_RATE):
+			tick += 1
+			rig.arsenal.current().magazine = held.magazine
+			var outcome := rig.simulate_tick(command, tick)
+			for shot in outcome.shots:
+				total += shot.spread
+				shots += 1
+			command.set_button(DotWeaponCommand.BUTTON_ATTACK, i % 2 == 1)
+		return total / float(maxi(shots, 1))
+	var hip_spread: float = spreads.call(false)
+	var aimed_spread: float = spreads.call(true)
+	_check(hip_spread > 0.0 and aimed_spread < hip_spread * 0.9,
+		"and the sights close the spread", "hip %.3f, aimed %.3f degrees, rule %.2f" % [hip_spread, aimed_spread, rules.spread_for(held.id)])
+	_check(rig.ads_progress() > 0.99 and rig.ads_move_scale() == paced, "fully raised, the rig is at full progress and the rules' pace",
+		"%.2f, %.2f" % [rig.ads_progress(), rig.ads_move_scale()])
 	_finished()
 
 

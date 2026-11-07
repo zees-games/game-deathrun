@@ -9,6 +9,7 @@ const DrCourseDoc := preload("../game/dr_course_doc.gd")
 const DrEvents := preload("../game/net/dr_events.gd")
 const DrGame := preload("../game/dr_game.gd")
 const DrNetBridge := preload("../game/net/dr_net_bridge.gd")
+const DrNetCommand := preload("../game/net/dr_net_command.gd")
 const DrPlayer := preload("../game/dr_player.gd")
 const DrEvent := preload("../game/net/dr_event.gd")
 const DrRequest := preload("../game/net/dr_request.gd")
@@ -163,19 +164,19 @@ func _exchange() -> void:
 
 
 ## One tick on both ends, with a real physics frame between them.
-func _step(command: DotFpsCommand = null) -> void:
+func _step(command: DotFpsCommand = null, aim: bool = false) -> void:
 	_tick += 1
 	var _ticks := _client_net.clock.advance(1.0 / float(maxi(_client_game.tick_rate, 1)))
 	_server_bridge.server_tick(_tick)
 	_flush()
-	_client_bridge.client_tick(_tick + INPUT_LEAD, command if command != null else DotFpsCommand.new())
+	_client_bridge.client_tick(_tick + INPUT_LEAD, command if command != null else DotFpsCommand.new(), 0, false, aim)
 	_flush()
 	await get_tree().physics_frame
 
 
-func _steps(count: int, command: DotFpsCommand = null) -> void:
+func _steps(count: int, command: DotFpsCommand = null, aim: bool = false) -> void:
 	for _i in range(count):
-		await _step(command)
+		await _step(command, aim)
 
 
 func _section(name: String) -> void:

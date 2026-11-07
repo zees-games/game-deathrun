@@ -6,6 +6,8 @@ extends RefCounted
 
 const USE := &"dr_use"
 const RELOAD := &"dr_reload"
+## Aim down the sights, held. The right button is the bash here, so the sights are on the middle one.
+const AIM := &"dr_aim"
 const VIEW := &"dr_view"
 ## The spectator's free camera, on and off (`mp_freeroam`). Its flying keys are the movement keys.
 const ROAM := &"dr_roam"
@@ -25,6 +27,7 @@ static func make() -> DotMenuBindings:
 	keys.add(&"dot_fps_walk", &"bind_walk", "Walk, for a narrow ledge", "Shift", "Movement")
 	keys.add(USE, &"bind_use", "Press the button in front of you (activators)", "E", "Hands")
 	keys.add(RELOAD, &"bind_reload", "Reload (at the end)", "R", "Hands")
+	keys.add(AIM, &"bind_aim", "Aim down the sights (hold, at the end)", "Mouse 3", "Hands")
 	for i in range(SLOTS.size()):
 		keys.add(SLOTS[i], StringName("bind_slot_%d" % (i + 1)), "Weapon slot %d (at the end)" % (i + 1), str(i + 1), "Hands")
 	# The wheel goes through the weapons (and so does not jump: add_movement leaves the wheel's
