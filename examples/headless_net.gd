@@ -17,7 +17,7 @@ extends "headless_net_base.gd"
 ## Sections and checks are both counted; mg-smash-copter's notes say why the second matters.
 
 const SECTIONS := 19
-const CHECKS := 106
+const CHECKS := 108
 
 
 func _ready() -> void:
