@@ -54,6 +54,7 @@ func attach(p_game: Object, p_net: DotNetManager) -> DotResult:
 		)
 
 	game = world
+	weapon_net.attach(self)
 	net = p_net
 
 	_entities = Node.new()
@@ -140,6 +141,7 @@ func _wire_server_events() -> void:
 		game.spectate.view_changed.connect(_on_spectate_changed)
 
 	_wire_lag_compensation()
+	weapon_net.watch(game.weapon_layer)
 
 
 ## Hands dot-combat the two callables that make lag compensation real.
@@ -849,6 +851,8 @@ func _on_request(message: DotNetMessage) -> void:
 			_spectate_roam(peer_id)
 		DrEvents.Ask.FLASHLIGHT:
 			var _switched := game.toggle_flashlight(player_key(player_for_peer(peer_id)))
+		DrEvents.Ask.DROP_WEAPON:
+			var _thrown := game.weapon_layer.throw_for(player_key(player_for_peer(peer_id)))
 
 
 ## Somebody who is out asked to look at somebody else. The server's list, the server's rule.
@@ -921,6 +925,7 @@ func _admit(peer_id: int) -> void:
 	# The course's toys by net id in toy order, which the joiner's own copies are paired with.
 	if not _toys_body.is_empty():
 		_tell(peer_id, DrEvents.Kind.TOYS, _toys_body)
+	weapon_net.send_snapshot(peer_id, game.weapon_layer)
 
 	for other in _behaviours.keys():
 		_tell(peer_id, DrEvents.Kind.JOIN, _join_body(int(other)))
@@ -1025,6 +1030,11 @@ func ask_flashlight() -> void:
 	_ask(DrEvents.Ask.FLASHLIGHT, PackedByteArray([0]))
 
 
+## Throw the gun in hand. The server decides whether it may.
+func ask_drop_weapon() -> void:
+	_ask(DrEvents.Ask.DROP_WEAPON, PackedByteArray([0]))
+
+
 ## Out, and asking for the free camera, or back onto a player from it.
 func ask_roam() -> void:
 	_ask(DrEvents.Ask.ROAM, DrEvents.write_ask_roam())
@@ -1055,6 +1065,9 @@ func _on_event(message: DotNetMessage) -> void:
 		return
 
 	var reader := event.reader()
+
+	if weapon_net.apply(event.kind, reader, game.weapon_layer):
+		return
 
 	match event.kind:
 		DrEvents.Kind.HELLO:
