@@ -116,12 +116,12 @@ var _by_collider: Dictionary = {}
 var _posed_tick: int = -2147483648
 var _posed_time: float = -1.0
 
-## The map's toys (dot-props' [DotPropToyBox]): loose ones only on a course (balls,
+## The map's toys (dot-props' [DotPropBodyBox]): loose ones only on a course (balls,
 ## tyres, barrels in the start room and the arena), simulated where [member authoritative], posed from snapshots elsewhere,
 ## under the game's `sv_toys*` [member toy_rules]. Set by the game before it builds.
-var toys: DotPropToyBox = null
+var toys: DotPropBodyBox = null
 var authoritative: bool = true
-var toy_rules: DotPropToyRules = null
+var toy_rules: DotPropBodyRules = null
 var gravity: float = 20.0
 
 ## The LightmapGI laid over this course, or null: drawn with live light alone.
@@ -190,7 +190,7 @@ func build(p_doc: Dictionary) -> DotResult:
 ## traps and the other toys stop and a runner never does (they walk through it and push it,
 ## `DrGame._advance_toys`): a crusher or a trapdoor sends a ball flying.
 func _build_toys() -> void:
-	toys = DotPropToyBox.new()
+	toys = DotPropBodyBox.new()
 	toys.name = "Toys"
 	toys.authoritative = authoritative
 	toys.draw = draw_world

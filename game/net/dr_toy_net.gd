@@ -1,10 +1,10 @@
 extends DotNetBehaviour
 
-## One of the map's toys on the wire (dot-props' [DotPropToy]): its moving part's pose, whether
+## One of the map's toys on the wire (dot-props' [DotPropBody]): its moving part's pose, whether
 ## it is on, and a wrapping use count. Server physics, never predicted; paired by index.
 ## Reasoning: docs/comment-notes.md.
 
-var toy: DotPropToy = null
+var toy: DotPropBody = null
 
 var net_position: Vector3 = Vector3.ZERO
 var net_rotation: Quaternion = Quaternion.IDENTITY
