@@ -81,6 +81,9 @@ var killcam: DrKillcam = null
 var winner_reveal: DotWinnerReveal = null
 ## The server's `mp_killcam_time`; -1 until it has said, so the config's number stands.
 var _killcam_sec: float = -1.0
+
+## The server's `mp_killview_camera` ([enum DotKillViewRules.Camera]); the eye until it has said.
+var _killcam_camera: int = DotKillViewRules.Camera.EYE
 var _round_ending: bool = false
 var _round_end_number: int = 0
 var _round_end_why: String = ""
@@ -329,6 +332,7 @@ func _follow_cvars() -> void:
 		var _ambient := game.ambient_rules.follow_cvars(link)
 		if link.has_method(&"replicated_cvar"):
 			_on_killcam_cvar("mp_killcam_time", String(link.call(&"replicated_cvar", "mp_killcam_time", "")))
+			_on_killcam_cvar("mp_killview_camera", String(link.call(&"replicated_cvar", "mp_killview_camera", "")))
 			if link.has_signal(&"replicated_cvar_changed"):
 				link.connect(&"replicated_cvar_changed", _on_killcam_cvar)
 		# And mp_forcecamera / mp_freeroam*: this end flies the spectator's free camera.
@@ -620,6 +624,8 @@ func _build_killcam() -> void:
 	killcam.colour_fn = func(p: DrPlayer) -> Color: return game.side_colour(game.team_of(p.player_id))
 	killcam.seconds_fn = func() -> float: return _killcam_sec if _killcam_sec >= 0.0 else game.config.killcam_seconds
 	killcam.hide_while_playing = [hud, chat]
+	killcam.camera_mode_fn = func() -> int: return _killcam_camera
+	killcam.world_mask = _level_mask()
 	killcam.over.connect(func(_skipped: bool) -> void: _reveal_round())
 	add_child(killcam)
 	winner_reveal = DotWinnerReveal.new()
@@ -639,6 +645,8 @@ func _is_remote(p: DrPlayer) -> bool:
 func _on_killcam_cvar(cvar_name: String, value: String) -> void:
 	if cvar_name == "mp_killcam_time" and value.strip_edges().is_valid_float():
 		_killcam_sec = clampf(value.to_float(), 0.0, 30.0)
+	elif cvar_name == "mp_killview_camera" and value.strip_edges().is_valid_float():
+		_killcam_camera = DotKillViewRules.Camera.BEHIND if value.to_float() >= 0.5 else DotKillViewRules.Camera.EYE
 
 
 func _begin_round_end(number: int, why: String) -> void:
