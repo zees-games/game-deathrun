@@ -1132,7 +1132,7 @@ func _other_players() -> Array:
 
 ## What the third-person and spectator cameras stop against: the course and the props.
 func _level_mask() -> int:
-	return game.physics.mask_of([&"world", &"prop"]) if game.physics != null else 1
+	return game.physics.mask_of([&"world", &"prop"]) if game != null and game.physics != null else 1
 
 
 ## The server changed `mp_forceview`: the view it allows now.
