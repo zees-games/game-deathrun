@@ -9,6 +9,7 @@ const DrConfig := preload("dr_config.gd")
 const DrMapConfig := preload("dr_map_config.gd")
 const DrPaths := preload("dr_paths.gd")
 const DrKillcam := preload("dr_killcam.gd")
+const KillPovView := preload("dr_kill_pov_view.gd")
 
 ## One local player, a camera and a HUD over an [DrGame] — offline, or against a server.
 ##
@@ -628,6 +629,7 @@ func _build_killcam() -> void:
 	killcam.world_mask = _level_mask()
 	killcam.over.connect(func(_skipped: bool) -> void: _reveal_round())
 	add_child(killcam)
+	var _mounted := KillPovView.mount(self, killcam)
 	winner_reveal = DotWinnerReveal.new()
 	winner_reveal.name = "WinnerReveal"
 	winner_reveal.skip_actions = DrKillcam.SKIP_ACTIONS
