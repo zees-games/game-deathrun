@@ -16,8 +16,8 @@ extends "headless_net_base.gd"
 ##
 ## Sections and checks are both counted; mg-smash-copter's notes say why the second matters.
 
-const SECTIONS := 18
-const CHECKS := 103
+const SECTIONS := 19
+const CHECKS := 105
 
 
 func _ready() -> void:
@@ -33,6 +33,7 @@ func _run() -> void:
 	OS.add_logger(errors)
 
 	_test_the_codec()
+	_test_neutralise()
 
 	if await _build():
 		await _test_a_client_joins()
@@ -61,6 +62,20 @@ func _run() -> void:
 
 
 # --- The codec ------------------------------------------------------------------
+
+func _test_neutralise() -> void:
+	_section("a silent player's command lets go")
+	var command := DrNetCommand.new()
+	command.use = true
+	command.move.move = Vector2(0.0, 1.0)
+	command.move.yaw = 40.0
+	command.move.set_button(DrNetCommand.BUTTON_FIRE, true)
+	command._neutralise()
+	_check(not command.use and command.move.move == Vector2.ZERO and command.move.buttons == 0,
+		"use, move and buttons are cleared")
+	_check(is_equal_approx(command.move.yaw, 40.0), "and the view is kept")
+	_finished()
+
 
 ## Every encoder against its decoder. Nothing checks that two ends of a serialisation are
 ## inverses for you: dot-moderation once wrote "voice muted" and read back a warning.

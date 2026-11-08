@@ -54,6 +54,12 @@ func _sanitise() -> void:
 	slot = clampi(slot, 0, (1 << SLOT_BITS) - 1)
 
 
+## A silent player lets go: the default neutralises `move`, the plain `use` is cleared here.
+func _neutralise() -> void:
+	super()
+	use = false
+
+
 func _equals(other: DotNetInput) -> bool:
 	var them := other as DrNetCommand
 	return them != null and slot == them.slot and use == them.use and aim == them.aim and move.equals(them.move)
