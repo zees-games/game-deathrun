@@ -26,6 +26,7 @@ func _ready() -> void:
 
 
 func _run() -> void:
+	DrCatalogue.practice_toys = DrTestToys.PRACTICE
 	print("deathrun over the wire")
 	print("")
 
