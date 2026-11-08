@@ -664,6 +664,7 @@ func _test_the_aim_button() -> void:
 ## straight through it, so it is no cover.
 func _test_toys() -> void:
 	_section("the course's toys")
+	DrCatalogue.practice_toys = DrTestToys.PRACTICE
 	var game := await _world()
 	# After the round starts: a start builds the course again, and its toys with it.
 	var players := await _round(game, 2)
@@ -695,6 +696,7 @@ func _test_toys() -> void:
 	_check(beach.body.global_position.distance_to(o0) > 0.4 and through,
 		"a shot sends the arena's beach ball off, and the combat's trace sees through it: no cover",
 		"%.2f m, clear %s" % [beach.body.global_position.distance_to(o0), str(through)])
+	DrCatalogue.practice_toys = []
 	_finished()
 
 

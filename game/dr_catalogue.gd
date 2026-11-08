@@ -426,6 +426,10 @@ func describe_lines() -> PackedStringArray:
 
 # --- The one built in ---------------------------------------------------------
 
+## Tests only: loose physics props (dot-props' toys) to put on the practice course; empty in play.
+static var practice_toys: Array = []
+
+
 ## Five traps of five shapes, a corridor for the activator above them, and a room to settle
 ## it in.
 ##
@@ -454,13 +458,9 @@ static func practice() -> Dictionary:
 		"theme": {"deck": [0.86, 0.92, 1.0]},
 		"pieces": pieces,
 		"traps": traps,
-		# dot-props' loose toys: a ball in the start room, and two in the arena. headless_run
-		# walks into the start's football and shoots the arena's beach ball.
-		"toys": [
-			{"toy": "football", "at": [1.8, 0.0, 6.5]},
-			{"toy": "beach_ball", "at": [-7.0, 0.0, -64.0]},
-			{"toy": "tyre", "at": [7.0, 0.0, -68.0], "yaw": 30.0},
-		],
+		# No physics props (toys) of its own: only prop hunt, murder mystery, hide n seek and
+		# the playground keep them. Tests set [member practice_toys].
+		"toys": practice_toys.duplicate(true),
 		"start": {"at": [0.0, 0.0, 4.5], "size": [6.0, 3.0, 6.0], "yaw": 0.0},
 		"activators": {"at": [6.25, 3.0, 5.0], "size": [4.0, 3.0, 4.0], "yaw": 0.0},
 		"finish": {"at": [0.0, 0.0, -49.25], "size": [6.0, 3.0, 2.5], "yaw": 0.0},
