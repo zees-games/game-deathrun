@@ -12,7 +12,7 @@ extends "headless_run_flashlight.gd"
 
 const SECTIONS := 34
 
-const CHECKS := 179
+const CHECKS := 180
 
 
 
