@@ -396,6 +396,7 @@ func _build_netcode() -> DotResult:
 	bridge.round_changed.connect(_on_round)
 	bridge.death_received.connect(_on_death)
 	bridge.armed_received.connect(_on_armed)
+	bridge.weapon_net.lost_received.connect(_on_weapon_lost)
 	bridge.hit_received.connect(_on_hit)
 	bridge.stage_received.connect(_on_stage)
 	bridge.finished_received.connect(_on_finished)
@@ -855,6 +856,12 @@ func _hear_the_world() -> void:
 			chat.notice(why)
 			if audio != null:
 				var _denied := audio.deny())
+	game.weapon_layer.lost.connect(func(id: StringName, weapon: StringName) -> void:
+		if id == &"local":
+			_on_weapon_lost(_watch_id, weapon))
+	game.weapon_layer.picked.connect(func(id: StringName, weapon: StringName) -> void:
+		if id == &"local":
+			_on_armed(_watch_id, weapon))
 	game.player_armed.connect(func(id: StringName, weapon: StringName) -> void:
 		if id == &"local":
 			_on_armed(_watch_id, weapon)
@@ -925,6 +932,24 @@ func _on_armed(session_id: int, weapon_id: StringName) -> void:
 	if chat != null:
 		chat.say_locally("You were handed a %s." % String(weapon_id).replace("_", " "),
 			Color(0.86, 0.92, 0.80))
+
+
+## A gun left the watched player's hands (thrown, or left where they fell): the drawn rig lets go of it too.
+func _on_weapon_lost(session_id: int, weapon_id: StringName) -> void:
+	if session_id != _watch_id or weapons == null:
+		return
+	var def := weapons.arsenal.catalogue.get_def(weapon_id)
+	if def != null:
+		var empty: Array[int] = []
+		var _gone := weapons.arsenal.drop_from_slot(def.slot, empty)
+
+
+## Throw the gun in hand (the Q key, at the end).
+func ask_drop_weapon() -> void:
+	if bridge != null:
+		bridge.ask_drop_weapon()
+	elif player != null:
+		var _id := game.weapon_layer.throw_for(player.player_id)
 
 
 # --- The weapons, drawn ----------------------------------------------------
@@ -1683,6 +1708,10 @@ func _unhandled_input(event: InputEvent) -> void:
 				spectate_step(0)
 			else:
 				toggle_view()
+			return
+
+		if event.is_action_pressed(DrBindings.DROP_WEAPON) and player != null and player.at_end:
+			ask_drop_weapon()
 			return
 
 		# The slots. One to five, which is what the pack uses.
