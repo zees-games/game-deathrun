@@ -8,6 +8,7 @@ const DrNetCommand := preload("dr_net_command.gd")
 const DrNetLink := preload("dr_net_link.gd")
 const DrPlayerNet := preload("dr_player_net.gd")
 const DrToyNet := preload("dr_toy_net.gd")
+const DrWeaponNet := preload("dr_weapon_net.gd")
 const DrRequest := preload("dr_request.gd")
 
 const DrGame := preload("../dr_game.gd")
@@ -42,6 +43,9 @@ signal phase_received(phase: int)
 
 ## Somebody died, and what did it.
 signal death_received(player_id: int, by: int, why: StringName, weapon_id: StringName)
+
+## The guns on the floor, over the link; a client connects to its `lost_received`.
+var weapon_net := DrWeaponNet.new()
 
 ## Somebody was handed, or picked up, a weapon. The HUD names it.
 signal armed_received(player_id: int, weapon_id: StringName)

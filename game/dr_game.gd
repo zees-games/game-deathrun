@@ -7,6 +7,7 @@ const DrFlashlight := preload("dr_flashlight.gd")
 const DrProgress := preload("dr_progress.gd")
 const DrRules := preload("dr_rules.gd")
 const DrSpectate := preload("dr_spectate.gd")
+const DrWeaponLayer := preload("dr_weapon_layer.gd")
 
 ## The simulation. Headless, authoritative, and the only thing that decides anything.
 ## A round is a corridor of traps: runners run one long course to its end, activators drawn fresh each round press a button per trap from a corridor beside it. The first runner to the end arena calls the activators down; there is no respawn, so a press is worth something.
@@ -158,6 +159,10 @@ var ragdoll_rules: DotPlayerRagdollRules = DotPlayerRagdollRules.new()
 ## walk pushes one). Bound by the module (REPLICATED) and followed by a client, which draws them.
 var toy_rules: DotPropBodyRules = DotPropBodyRules.new()
 
+## Guns lying about (`dr_weapon_layer.gd`), built on both ends, and the `sv_weapon_drop*` rules it runs under: bound by the module, REPLICATED.
+var weapon_layer: DrWeaponLayer = null
+var drop_rules: DotWeaponDropRules = _walk_over_drops()
+
 ## Aim-down-sights numbers (`zee_ads_rules`, REPLICATED): the server's cfg over the shipped defaults, handed to every weapon
 ## rig. Bound by the module and followed by a client, so its prediction agrees. The aim bit (`DrNetCommand.aim`) sets BUTTON_AIM on the rig and scales the motor (`DrPlayer.step_controller`).
 var ads_rules: ZeeAdsRules = ZeeAdsRules.load_config()
@@ -269,6 +274,8 @@ func _ready() -> void:
 	_build_random()
 	_build_stage()
 	_build_combat()
+	weapon_layer = DrWeaponLayer.new()
+	weapon_layer.setup(self)
 	_build_effects()
 	_build_match()
 	_build_spectate()
@@ -1665,6 +1672,8 @@ func _advance_weapons() -> void:
 	if combat == null or (phase != Phase.RUN and phase != Phase.SHOWDOWN):
 		return
 
+	weapon_layer.tick()
+
 	for id: StringName in players:
 		var player: DrPlayer = players[id]
 
@@ -2183,6 +2192,13 @@ func _bot_fight(player: DrPlayer, command: DotFpsCommand) -> void:
 		command.move = Vector2(1.0 if (_tick / tick_rate) % 2 == 0 else -1.0, 0.0)
 
 
+## Players take a gun by walking over it: there is no use key to press at the end.
+static func _walk_over_drops() -> DotWeaponDropRules:
+	var rules := DotWeaponDropRules.new()
+	rules.auto_pickup = true
+	return rules
+
+
 func _on_player_died(player: DrPlayer, damage: DotDamage) -> void:
 	var by := entities.key_for_id(damage.attacker)
 	var why: StringName = damage.context.get("why", DIED_SHOT)
@@ -2202,6 +2218,9 @@ func _on_player_died(player: DrPlayer, damage: DotDamage) -> void:
 
 	if match_node != null and DotEntity.is_kind(player.entity_id, DotEntity.KIND_PLAYER):
 		match_node.report_kill(String(by), String(player.player_id), why, _tick)
+
+	if authoritative and weapon_layer != null:
+		weapon_layer.drop_dead(player.player_id)
 
 	# How the body falls, picked once, here, and carried on DEATH to every client.
 	if authoritative:
