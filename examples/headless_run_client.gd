@@ -81,6 +81,15 @@ func _test_progress() -> void:
 		"the activator has one runner trapped", str(values.get_value(DrProgress.TRAP_KILLS)))
 	_check(is_equal_approx(values.get_value(DrProgress.PRESSES), 1.0), "and one trap sprung")
 
+	var held := DotStatsValues.new()
+	held.values = {String(DrProgress.TRAP_KILLS): 10.0}
+	game.progress.rank.seed_baseline(activator.player_id, held)
+	var alone: float = game.progress.rank.weighted(game.progress.session_values(activator.player_id).to_dictionary())
+	game.progress._publish_rank(activator.player_id)
+	_check(game.progress.session_values(activator.player_id).get_value(DrProgress.RANK_SCORE, 0.0) == roundf(alone + 10.0),
+		"rank_score is built on the stored lifetime (10 trapped) plus this session, not the session alone",
+		str(game.progress.session_values(activator.player_id).to_dictionary()))
+
 	var declared := DrProgress.ids()
 	var unread := PackedStringArray()
 
