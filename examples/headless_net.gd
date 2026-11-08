@@ -17,7 +17,7 @@ extends "headless_net_base.gd"
 ## Sections and checks are both counted; mg-smash-copter's notes say why the second matters.
 
 const SECTIONS := 19
-const CHECKS := 108
+const CHECKS := 109
 
 
 func _ready() -> void:
@@ -926,6 +926,8 @@ func _test_killcam_icon() -> void:
 	_check(banner.icon_rect.visible and banner.icon_rect.texture != null, "the banner shows the rifle's picture")
 	banner.free()
 	_check(kc.camera_mode_fn.call() == DotKillViewRules.Camera.EYE, "the killcam camera is the eye until the server says")
+	var pov := preload("../game/dr_kill_pov.gd")
+	_check(pov.weapon_name(pov.hash_of(&"pistol")) != "" and pov.weapon_name(0.0) == "" and pov.aux_of(null) == [0.0], "the killer's screen names a recorded weapon and nothing for an empty hand")
 	client._on_killcam_cvar("mp_killview_camera", "1")
 	_check(kc.camera_mode_fn.call() == DotKillViewRules.Camera.BEHIND, "mp_killview_camera 1 puts the killcam camera behind the killer")
 	var framing := DotKillcamFraming.new(null, 1)
