@@ -47,6 +47,8 @@ const END_KILLS := &"dr.end_kills"
 const DEATHS := &"dr.deaths"
 ## Caught by a trap, a pit or the drop.
 const TRAP_DEATHS := &"dr.trap_deaths"
+## The published skill figure the site orders by (dot-stats' DotStatsRank).
+const RANK_SCORE := &"rank_score"
 
 signal earned(player_id: StringName, title: String, points: int)
 
@@ -56,6 +58,8 @@ var _report_timer: Timer
 var stats: DotStatsTracker = null
 var achievements: DotAchievementTracker = null
 var link: DotAchievementStatsLink = null
+## The skill rank, built on lifetime totals (baseline loaded when counting begins).
+var rank: DotStatsRank = null
 
 ## Kills and hits by body zone through dot-stats' event feed; ids are world entity ids, resolved by [member entity_key_fn].
 var feed: DotStatsEventFeed = null
@@ -88,7 +92,7 @@ var _ids: Dictionary = {}
 static func ids() -> Array[StringName]:
 	return [
 		ROUNDS_PLAYED, ROUNDS_WON, RUNS_FINISHED, RUNS_FIRST, ACTIVATOR_ROUNDS, PRESSES,
-		TRAP_KILLS, BEST_ROUND_TRAP_KILLS, END_KILLS, DEATHS, TRAP_DEATHS,
+		TRAP_KILLS, BEST_ROUND_TRAP_KILLS, END_KILLS, DEATHS, TRAP_DEATHS, RANK_SCORE,
 	]
 
 
@@ -108,6 +112,7 @@ static func schema() -> DotStatsSchema:
 	_add(out, END_KILLS, DotStatsDef.Kind.COUNTER, "End arena knockouts", "kills", true)
 	_add(out, DEATHS, DotStatsDef.Kind.COUNTER, "Deaths", "deaths", false)
 	_add(out, TRAP_DEATHS, DotStatsDef.Kind.COUNTER, "Caught by a trap", "deaths", true)
+	var _rank := DotStatsRank.declare(out, RANK_SCORE, "Rank score")
 	return out
 
 
@@ -264,6 +269,20 @@ func setup(directory: String, report: bool) -> DotResult:
 	link.stats = stats
 	add_child(link)
 
+	rank = DotStatsRank.new()
+	rank.stat_id = RANK_SCORE
+	# Both ends of a trap course: running it to the end and winning, or springing traps and knocking out runners.
+	rank.terms = [
+		{"stat": String(RUNS_FINISHED), "weight": 1.0},
+		{"stat": String(RUNS_FIRST), "weight": 2.0},
+		{"stat": String(ROUNDS_WON), "weight": 3.0},
+		{"stat": String(TRAP_KILLS), "weight": 1.0},
+		{"stat": String(END_KILLS), "weight": 1.0},
+		{"stat": String(DEATHS), "weight": -0.25},
+	]
+	rank.record_fn = func(who: Variant, stat: StringName, value: float) -> void: record(StringName(str(who)), stat, value)
+	rank.key_fn = func(who: Variant) -> StringName: return _key(StringName(str(who)))
+
 	return link.start().wrap("deathrun's stats-to-achievements link")
 
 
@@ -288,6 +307,7 @@ func record(player_id: StringName, stat: StringName, value: float = 1.0) -> void
 	var key := _key(player_id)
 
 	if not stats.has_player(key):
+		_load_baseline(player_id)
 		stats.begin(key, body.display_name)
 		_begin(key)
 
@@ -317,6 +337,7 @@ func _feed_key(entity_id: Variant) -> StringName:
 	var key := _key(player_id)
 
 	if not stats.has_player(key):
+		_load_baseline(player_id)
 		stats.begin(key, body.display_name)
 		_begin(key)
 
@@ -350,6 +371,22 @@ func _key(player_id: StringName) -> StringName:
 	_keys[player_id] = key
 	_ids[key] = player_id
 	return key
+
+
+## Reads the player's stored lifetime totals before this session's figures are flushed into the store (reading later would count them twice). The file store answers without suspending.
+func _load_baseline(player_id: StringName) -> void:
+	if rank != null and stats.store != null:
+		rank.load_baseline(stats.store, player_id)
+
+
+## Republishes the rank score from the stored lifetime plus this session.
+func _publish_rank(player_id: StringName) -> void:
+	if rank == null or rank.mode != DotStatsRank.MODE_WEIGHTED or stats == null:
+		return
+	var body: DrPlayer = players.get(player_id)
+	if body == null or body.is_bot or not stats.has_player(_key(player_id)):
+		return
+	var _s := rank.publish_lifetime(player_id, session_values(player_id), stats.schema)
 
 
 ## Loads somebody's lifetime progress. A statement call, never assigned: the tracker's
@@ -388,6 +425,8 @@ func leave(player_id: StringName) -> void:
 		return
 
 	var _values := stats.end(key)
+	if rank != null:
+		rank.forget(player_id)
 	link.forget(String(key))
 	_end(key)
 
@@ -423,6 +462,8 @@ func on_finished(player_id: StringName, place: int, _seconds: float) -> void:
 	if place == 1:
 		record(player_id, RUNS_FIRST)
 
+	_publish_rank(player_id)
+
 
 ## An activator pressed a button that did something.
 func on_pressed(player_id: StringName) -> void:
@@ -445,6 +486,8 @@ func on_round_over(winner: int) -> void:
 		if trapped > 0:
 			record(id, BEST_ROUND_TRAP_KILLS, float(trapped))
 
+		_publish_rank(id)
+
 	_in_round.clear()
 	_round_trap_kills.clear()
 
@@ -459,6 +502,8 @@ func on_died(player_id: StringName, by: StringName, why: StringName) -> void:
 	if trapped:
 		record(player_id, TRAP_DEATHS)
 
+	_publish_rank(player_id)
+
 	if by == &"" or by == player_id or not players.has(by):
 		return
 
@@ -470,6 +515,8 @@ func on_died(player_id: StringName, by: StringName, why: StringName) -> void:
 		_round_trap_kills[by] = int(_round_trap_kills.get(by, 0)) + 1
 	else:
 		record(by, END_KILLS)
+
+	_publish_rank(by)
 
 
 func _on_unlocked(player: String, achievement: DotAchievement) -> void:
