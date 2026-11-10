@@ -1621,6 +1621,7 @@ func _weapon_pool() -> Array[StringName]:
 func arm(player: DrPlayer, weapon_id: StringName) -> bool:
 	if player.weapons == null:
 		var rig := ZeeWeaponRig.new()
+		rig.catalogue = DrPlayer.weapon_catalogue()
 		rig.name = "Weapons"
 		# SERVER on a server: the role only decides what is DRAWN, and a headless process has
 		# no art to draw a view model from.
