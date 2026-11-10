@@ -1,8 +1,7 @@
 {
   "format": 1,
   "addons": {
-    "dot_player_char": 11,
-    "dot_replay": 4,
+    "dot_player_char": 3,
     "dot_ui": 13
   }
 }
