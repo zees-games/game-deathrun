@@ -38,7 +38,7 @@ There are three requests and none is a per-tick intent. Firing and pressing a tr
 
 ## DrToyNet (game/net/dr_toy_net.gd)
 
-The toy is the server's physics, never predicted, because Godot's rigid-body solver is not the same on two machines. The client's toy is frozen and posed from the wire (`DotPropBody.show_state`), so a see-saw a person stands on is the plank the server tipped, an interpolation behind. Toys are paired by index: both ends build the same toys in the same order from the map, so the TOYS event carries only net ids in toy order. A use count rather than a use event: a honk, a switch and a bounce each move `net_count` by one (eight bits, it wraps) and a client plays the sound when it sees it move, so a joiner and a lost packet cost nothing but a late sound. game-hide-n-seek, game-playground and game-arena carry the same file.
+The toy is the server's physics, never predicted, because Godot's rigid-body solver is not the same on two machines. The client's toy is frozen and posed from the wire (`DotPropBody.show_state`), so a see-saw a person stands on is the plank the server tipped, an interpolation behind. Toys are paired by index: both ends build the same toys in the same order from the map, so the TOYS event carries only net ids in toy order. A use count rather than a use event: a honk, a switch and a bounce each move `net_count` by one (eight bits, it wraps) and a client plays the sound when it sees it move, so a joiner and a lost packet cost nothing but a late sound. game-hide-n-seek, game-playlot and game-arena carry the same file.
 
 ## DrNetCommand (game/net/dr_net_command.gd)
 
