@@ -1,4 +1,5 @@
 extends "headless_run_flashlight.gd"
+const DrTestToys := preload("dr_test_toys.gd")
 
 ## The simulation, headless: documents, the trap timeline, the draw, the buttons, every shape
 ## of trap killing somebody, the end, and how a round is decided.

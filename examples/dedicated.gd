@@ -1,4 +1,5 @@
 extends "dedicated_base.gd"
+const DRTestPorts := preload("test_ports.gd")
 
 const DrAmbience := preload("../game/dr_ambience.gd")
 const DrAudio := preload("../game/dr_audio.gd")

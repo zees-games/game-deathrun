@@ -1,4 +1,3 @@
-class_name DrTestToys
 extends RefCounted
 
 ## Test-only physics props (toys) for the practice course, which places none in play: a ball in
