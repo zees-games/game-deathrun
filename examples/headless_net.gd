@@ -1,4 +1,5 @@
 extends "headless_net_base.gd"
+const DrTestToys := preload("dr_test_toys.gd")
 
 
 ## The real path minus the socket: two worlds, two managers, two bridges, two links with the
