@@ -67,7 +67,7 @@ var net_watching: bool = false
 # declared by hand — and the one call a game should make is `ZeeWeaponNet.all_specs()`,
 # because concatenating dot-weapon's three with the pack's four by hand is the same work
 # and one more place to forget the second half. Forgetting it presents as weapons that are
-# silent for everybody except the person holding them, which is what game-playground
+# silent for everybody except the person holding them, which is what game-playlot
 # shipped.
 #
 # The magazine and the reserve are `owner_only`: exact ammunition is information an opponent
@@ -168,7 +168,7 @@ func _register_net_vars() -> void:
 	# received it would know the moment somebody could not see — the same reason the magazine
 	# and the reserve above are the owner's.
 	#
-	# [b]No relevance change for a beacon, where game-arena makes one.[/b] Every player here
+	# [b]No relevance change for a beacon, where game-fatal-contact makes one.[/b] Every player here
 	# is already always relevant (`DrNetBridge`: the map is open air), so a beacon reaches
 	# every client however far away they are without asking — and a beacon turned OFF that
 	# set `always_relevant` back to false would take the player out of everybody's snapshot.

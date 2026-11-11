@@ -43,7 +43,7 @@ enum Role {
 ## grid.[/b] Kenney's numbering is not the same pattern in every colour folder and several
 ## of the `texture_13`s have `WALL / 1 x 1 meter / 1024 x 1024` painted into the corner of
 ## the image. Tiled across a map that is a label repeating every eight metres, and the
-## number on it is wrong here anyway. game-g2gfast checked this per file rather than per
+## number on it is wrong here anyway. game-airdrift checked this per file rather than per
 ## number and wrote down why; these are the same choices.
 const ROLE_FILES := {
 	Role.DECK: "deck.png",
@@ -58,7 +58,7 @@ const ROLE_FILES := {
 ##
 ## [b]Only the two roles a runner must react to keep a colour tile of their own[/b]: the
 ## orange of something that moves and the red of something that kills. Everything else is
-## the light deck under a pastel, the family's sunny look (game-arena's built-in maps), so
+## the light deck under a pastel, the family's sunny look (game-fatal-contact's built-in maps), so
 ## the traps are the saturated things on screen and nothing competes with them. Multiplying
 ## the light grey is not the double tint `surface` warns about, because the grey has no
 ## colour to muddy. A course's theme `deck` colour multiplies the deck on top of this.
@@ -91,7 +91,7 @@ const ROLE_COLOURS := {
 ## How many squares are across one tile of the installed set.
 ##
 ## [b]Eight, measured rather than assumed, and the wrong answer was plausible.[/b]
-## game-g2gfast measured `ramp.png` and found lines on rows 0, 128, 256, 384, 512, 640,
+## game-airdrift measured `ramp.png` and found lines on rows 0, 128, 256, 384, 512, 640,
 ## 768, 896 and 1023 of 1024 — but they alternate STRONG and FAINT, ninety-seven luma
 ## steps every 256 pixels and ten every 128, so a threshold picked to ignore compression
 ## noise finds four and draws every surface at half scale.
@@ -112,7 +112,7 @@ const GENERATED_PIXELS_PER_SQUARE := 128
 ## How much darker an alternate square is in the composited checker.
 ##
 ## [b]Ink is the only thing that survives a mipmap, and Kenney's tile has almost
-## none.[/b] Measured by game-g2gfast: their tile is a flat field with a one-pixel line on
+## none.[/b] Measured by game-airdrift: their tile is a flat field with a one-pixel line on
 ## a 128-pixel square, so 1.4% to 3.5% of the image is anything but the field colour —
 ## and a tile that is 97% one colour IS that colour a few metres away. On a platform seen
 ## from the far side of a gap, which is the angle a course is played at, the grid is
