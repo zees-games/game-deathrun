@@ -1138,7 +1138,7 @@ func _build_markers() -> void:
 ## The sky, the sun, the fog and the void. Client side.
 ##
 ## [b]The light is a dot-lighting document made from the course's theme[/b]
-## ([method light_document]), so the family's look (game-arena's built-in maps: a warm sun
+## ([method light_document]), so the family's look (game-fatal-contact's built-in maps: a warm sun
 ## with soft shadows, a pale cool fill, filmic tone map, glow) and each course's own sky,
 ## horizon, sun colour and void are one thing rather than two that can disagree.
 ## dot-lighting's contact shade (API 4) where the course's still boxes meet: a wall on a deck, a

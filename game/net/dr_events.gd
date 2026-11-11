@@ -98,7 +98,7 @@ const AVATAR_BYTES := 1024
 ##
 ## [b]Read from [DrGame], not written here.[/b] A quantised position is decoded against this
 ## range, so two files holding two numbers do not lose precision — they put the thing
-## somewhere else. game-arena had exactly this, 256 against 128, in two files that each
+## somewhere else. game-fatal-contact had exactly this, 256 against 128, in two files that each
 ## looked right on its own.
 const WORLD_EXTENT := DrGame.NET_WORLD_EXTENT
 const POS_BITS := 24

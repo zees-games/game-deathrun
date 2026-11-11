@@ -42,7 +42,7 @@ Players are drawn as the family's animated people: `DrFigure` wraps dot-player-c
 
 ## Colour and light
 
-The family's sunny look (game-arena's built-in maps) with each course's theme kept and the traps the only saturated things on screen: moving parts are Kenney's orange, lethal parts and the spike plates Kenney's red, and nothing else competes with them.
+The family's sunny look (game-fatal-contact's built-in maps) with each course's theme kept and the traps the only saturated things on screen: moving parts are Kenney's orange, lethal parts and the spike plates Kenney's red, and nothing else competes with them.
 
 - **Surfaces** are roles (`DrTextures`): the deck, walls and supports, starts and finishes, and the end arena all draw Kenney's light grid under a pastel (`INSTALLED_TINTS`: a hair-under-white deck, light lavender walls, mint safe ground, lavender arena), and the theme's `deck` colour multiplies the deck on top. A white deck clipped under the sun and lost the grid, which is how far a jump is; charcoal walls made every corridor a dark tunnel; Kenney's purple arena was a magenta floor. A spike plate in the walls' colour hid a spike wall in the wall it slides out of, so plates are the hazard red.
 - **A surface skin** (theme `surface`, `DrTextures.skin`, set by `DrCourse.build` for the length of the build): a CC0 photograph set from `textures/surfaces/<name>/` (credits in its LICENSE.txt) replaces the grid on still decks and walls only, 4 m a tile with a one-metre checker composited over it; movers and hazards keep their colour tile so the traps stay the saturated things. The key is written into a normalised theme only when present, so no baked course's fingerprint moves.
