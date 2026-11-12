@@ -1808,7 +1808,7 @@ func _advance_flashlights() -> void:
 		return
 
 	var cfg := flashlight_conf()
-	var course_id := str(course_doc.get("id", ""))
+	var course_id := String(course_doc.get("id", ""))
 
 	if course_id != _flashlight_course:
 		_flashlight_course = course_id
