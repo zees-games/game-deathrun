@@ -636,7 +636,8 @@ func _stand_in_the_end(doc: Dictionary) -> void:
 			if not space.intersect_shape(query, 1).is_empty():
 				stuck.append("%s %d at %s" % [toy.def["id"], toy.index, toy.global_position.snapped(Vector3.ONE * 0.1)])
 				break
-	_check(box.count() == placed and placed > 0 and box.missing.is_empty() and stuck.is_empty(),
+	# Courses place no toys in play (38ea755), so a course with none passes when none were built.
+	_check(box.count() == placed and box.missing.is_empty() and stuck.is_empty(),
 		"%d toys, every one dot-props', standing clear" % placed, "; ".join(stuck))
 	var strayed: Array = []
 	for toy in box.toys:
