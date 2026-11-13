@@ -1754,14 +1754,23 @@ func current_tick() -> int:
 	return _tick
 
 
+## Each part of the tick is a `dr.*` span ([DotFrameCost]: free while no profiler listens), so a
+## bench pins a slow tick on one of them and not on "physics scripts".
 func _step(delta: float) -> void:
+	var t := DotFrameCost.now()
 	_advance_phase(delta)
+	DotFrameCost.add(&"dr.phase", t)
 
+	t = DotFrameCost.now()
 	if stage != null:
 		stage.pose_at(_tick)
+	DotFrameCost.add(&"dr.pose", t)
 
+	t = DotFrameCost.now()
 	_drive_bots()
+	DotFrameCost.add(&"dr.bots", t)
 
+	t = DotFrameCost.now()
 	for id: StringName in players:
 		var player: DrPlayer = players[id]
 
@@ -1769,26 +1778,33 @@ func _step(delta: float) -> void:
 		# and one standing in a corridor would be a body the next runner collides with.
 		if player.is_alive() and not player.watching:
 			player.simulate(_tick, delta)
+	DotFrameCost.add(&"dr.players", t)
 
+	t = DotFrameCost.now()
 	_advance_flashlights()
 	_advance_buttons()
+	DotFrameCost.add(&"dr.buttons", t)
+
+	t = DotFrameCost.now()
 	_watch_course()
+	DotFrameCost.add(&"dr.watch_course", t)
+
+	t = DotFrameCost.now()
 	_advance_grace()
 	_advance_weapons()
-
 	if authoritative:
 		_advance_toys(delta)
-
 	if combat != null:
 		combat.tick(_tick, delta)
+	DotFrameCost.add(&"dr.combat", t)
 
+	t = DotFrameCost.now()
 	if spectate != null:
 		spectate.advance(_tick)
 
-	if not sides_are_playable() and phase == Phase.IDLE:
-		return
-
-	match_node.tick(_tick)
+	if sides_are_playable() or phase != Phase.IDLE:
+		match_node.tick(_tick)
+	DotFrameCost.add(&"dr.match", t)
 
 
 # --- The flashlight --------------------------------------------------------------

@@ -104,6 +104,18 @@ var pieces: Array[Dictionary] = []
 ## One per trap, in document order: `{spec, node, parts: [{spec, node, moving, carrier}], button}`.
 var traps: Array[Dictionary] = []
 
+## What [method lethal_at] and [method teleport_at] ask of [member pieces] every tick for every
+## player, read once per build (both were a walk over every piece with a [code]str()[/code] per
+## piece): the kill boxes as `[frame, size]` and the teleport specs, both in document order.
+## [member _piece_index_size] is the [member pieces] size they were read at; -1 is unread.
+var _kill_boxes: Array = []
+var _teleport_specs: Array[Dictionary] = []
+var _piece_index_size: int = -1
+
+## [method route_touches_trap]'s answer per trap, computed once per build (-1 unread): the
+## route and the zones are the document's, and the bots ask it several times a tick.
+var _route_touches: PackedInt32Array = PackedInt32Array()
+
 ## trap index -> the tick its button was last pressed on, or -1. THE state of a course; see
 ## the class note.
 var fired: PackedInt32Array = PackedInt32Array()
@@ -218,6 +230,7 @@ func clear() -> void:
 
 	pieces.clear()
 	traps.clear()
+	_forget_lookups()
 	fired = PackedInt32Array()
 	_by_collider.clear()
 	doc = {}
@@ -1492,13 +1505,10 @@ func lethal_at(feet: Vector3, crouched: bool, tick: int) -> int:
 			if _capsule_in_box(bottom, top, part_transform(spec, e, running), spec["size"]):
 				return index
 
-	for piece in pieces:
-		if str(piece["kind"]) != "kill":
-			continue
+	_index_pieces()
 
-		var spec: Dictionary = piece["spec"]
-
-		if _capsule_in_box(bottom, top, Transform3D(_yaw_basis(float(spec["yaw"])), spec["at"]), spec["size"]):
+	for box: Array in _kill_boxes:
+		if _capsule_in_box(bottom, top, box[0], box[1]):
 			return KILLED_BY_COURSE
 
 	return KILLED_BY_NOTHING
@@ -1513,11 +1523,9 @@ func lethal_at(feet: Vector3, crouched: bool, tick: int) -> int:
 ## mg-wipeout's; dot-map is where a shared one belongs once it is free to take it.
 ## [param runner] picks the pads meant for that side.
 func teleport_at(feet: Vector3, runner: bool = true) -> Array:
-	for piece in pieces:
-		if str(piece["kind"]) != "teleport":
-			continue
+	_index_pieces()
 
-		var spec: Dictionary = piece["spec"]
+	for spec in _teleport_specs:
 		var side := str(spec.get("for", ""))
 
 		if (side == "runners" and not runner) or (side == "activators" and runner):
@@ -1527,6 +1535,34 @@ func teleport_at(feet: Vector3, runner: bool = true) -> Array:
 			return [spec["to"], float(spec.get("heading", 0.0)), bool(spec.get("keep", false))]
 
 	return []
+
+
+## Reads [member _kill_boxes] and [member _teleport_specs] off [member pieces] when they are
+## unread or the pieces have changed count since.
+func _index_pieces() -> void:
+	if _piece_index_size == pieces.size():
+		return
+
+	_kill_boxes.clear()
+	_teleport_specs.clear()
+
+	for piece in pieces:
+		var spec: Dictionary = piece["spec"]
+
+		match str(piece["kind"]):
+			"kill":
+				_kill_boxes.append([Transform3D(_yaw_basis(float(spec["yaw"])), spec["at"]), spec["size"]])
+			"teleport":
+				_teleport_specs.append(spec)
+
+	_piece_index_size = pieces.size()
+
+
+func _forget_lookups() -> void:
+	_kill_boxes.clear()
+	_teleport_specs.clear()
+	_piece_index_size = -1
+	_route_touches = PackedInt32Array()
 
 
 ## Whether a capsule from [param bottom] to [param top] (both sphere centres) touches a box.
@@ -1658,6 +1694,18 @@ func route_progress(point: Vector3) -> int:
 ## the route (sampled every half metre) lies in the zone. A course without a route, or one where no
 ## trap's zone touches it, says yes for every trap, so a stand-in activator keeps its old choice.
 func route_touches_trap(index: int) -> bool:
+	if _route_touches.size() != traps.size():
+		_route_touches = PackedInt32Array()
+		_route_touches.resize(traps.size())
+		_route_touches.fill(-1)
+
+	if _route_touches[index] < 0:
+		_route_touches[index] = 1 if _route_touches_trap(index) else 0
+
+	return _route_touches[index] == 1
+
+
+func _route_touches_trap(index: int) -> bool:
 	var points := route()
 
 	if points.size() < 2:
