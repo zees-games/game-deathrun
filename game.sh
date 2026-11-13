@@ -36,7 +36,7 @@
 GAME_NAME="Deathrun"
 PACK="deathrun"
 EXTRA_PACKS="deathrun_maps:mg-deathrun-maps"
-SUITES="headless_config headless_workbench headless_mapcfg headless_run headless_workshop headless_courses headless_net dedicated headless_touch headless_weapondrop"
+SUITES="headless_config headless_workbench headless_mapcfg headless_run headless_workshop headless_courses headless_net dedicated headless_touch headless_weapondrop headless_native_motor"
 # --------------------------------------------------------------------------------
 
 set -uo pipefail
