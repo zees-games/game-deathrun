@@ -2,7 +2,7 @@ This is a game to demonstrate the capabilities of the [**Dot collection**](https
 
 **This project and the assets under it are COMPLETELY OPEN SOURCE**. You are free to use, modify, and distribute them under the terms of the MIT license. The only thing not open source is the back-end web infrastructure. So if you opt into using your own authentication backend instead of integrating with TMC, you will need to build and integrate your own back-end infrastructure.
 
-**Please treat this as partially tested.** The game was built with Claude Code. Its headless test suite passes, but little of it has been in front of real players. Please report anything you run into.
+This game was built with Claude Code and has had little testing with real players, so please report anything odd you run into.
 
 ## How it plays
 Everybody starts at once: the runners behind the start gate, the activators at the start of a walkway that runs beside the course. When the gate drops:
@@ -11,11 +11,11 @@ Everybody starts at once: the runners behind the start gate, the activators at t
 - **Activators** walk along their walkway and press **E** at a button while somebody is in that trap: trapdoors, closing spike walls, a crusher, a rolling log, sinking ice, saws and fire. Most traps work once a round. The list on the right of the screen shows which are left.
 - **The end.** The first runner across the finish gets a weapon in the end arena, and the activators are called down to fight them (armed, and a little tougher, since it's one against several). Anybody who makes it after them arrives armed too.
 
-The runners win if every activator is killed or leaves. The activators win if every runner is caught, or if the clock runs out. A new set of activators is drawn each round, one for every eight players by default, from people who weren't one last round. Some stretches of the courses are bunny-hop jumps.
+The runners win if every activator is killed or leaves. The activators win if every runner is caught, or if the clock runs out. A new set of activators is drawn each round, from people who weren't one last round. By default there is one activator for every 8 players, and never more than 6 (both are settings, see below). Some stretches of the courses are bunny-hop jumps.
 
 Partway through each course, players vote for the next one (`!vote 2`, `!rtv`, `!nominate dr_foundry`).
 
-There are three courses: a short practice run built into the game, and **Ice Works** and **The Foundry** from [mg-deathrun-maps](https://github.com/zees-games/mg-deathrun-maps).
+The game has a short practice course built in. Many more courses (Ice Works, The Foundry, The Temple and others) come in the separate [mg-deathrun-maps](https://github.com/zees-games/mg-deathrun-maps) pack, which lists them all. A server holds 24 players by default (`max_players` in `game.yml`).
 
 ## Controls
 
@@ -69,7 +69,7 @@ Settings are cvars. Set them in the server's config, on the command line, or liv
 ```
 dr_round_seconds 300           // the longest a round runs (a course may ask for less)
 dr_players_per_activator 8     // one activator for every this many players
-dr_max_activators 6            // never more than this many
+dr_max_activators 6            // most activators a round has (default 6; the setting accepts 1 to 8)
 dr_activator_repeat 0          // 1 = last round's activator may be drawn again
 dr_timeout_winner 2            // who wins when the clock runs out: 0 draw, 1 runners, 2 activators
 dr_activator_health 1.5        // how much tougher activators are at the end
@@ -105,7 +105,7 @@ Console commands:
 These come from [dot-moderation](https://github.com/modcommunity/dot-moderation): `noclip`, `freeze`, `speed`, `gravity`, `god`, `buddha`, `hp`, `slay`, `slap`, `rename`, the teleports, `blind` and `beacon`. `respawn` puts somebody back at the start of their side. `give` and `strip` are turned off, because the weapons are what the end hands out.
 
 ## Writing a course
-A course is a JSON file: a start, a corridor of pieces and traps, a walkway with a button for every trap, a finish and an end arena. The courses are in [mg-deathrun-maps](https://github.com/zees-games/mg-deathrun-maps), whose `tools/build_courses.py` writes them section by section (so the corridor and the walkway always line up). That is also the easiest way to write a new one. [`courses/README.md`](courses/README.md) describes the format. The server sends the course to each player when the round starts, so players don't need the course files.
+A course is a JSON file: a start, a corridor of pieces and traps, a walkway with a button for every trap, a finish and an end arena. The courses are in [mg-deathrun-maps](https://github.com/zees-games/mg-deathrun-maps), whose `tools/build_courses.py` writes them section by section (so the corridor and the walkway always line up). That is also the easiest way to write a new one. [`courses/README.md`](https://github.com/zees-games/mg-deathrun-maps/blob/main/courses/README.md) in that repository describes the format. The server sends the course to each player when the round starts, so players don't need the course files.
 
 ## Testing
 
@@ -123,11 +123,7 @@ A course is a JSON file: a start, a corridor of pieces and traps, a walkway with
 
 [`CLAUDE.md`](CLAUDE.md) has the design decisions and the reasoning behind them.
 
-## Known gaps
-- Traps give no warning before they go off.
-- Every trap makes the same sound.
-- The bots are simple: a bot runner follows the course and ignores the activator, and a bot activator presses the trap the nearest runner is in.
-- There is no settings menu.
+[`docs/not-yet.md`](docs/not-yet.md) lists what the game does not do yet.
 
 ## Credits
 
@@ -146,6 +142,14 @@ If you made one of these assets and want it removed, open an issue.
 ## License
 MIT. See [LICENSE](LICENSE). The Kenney art is CC0, which is public domain.
 
-## Which courses rotate: cfg/game/mg-deathrun/dot_map/maps.yml
+## Choosing which courses are played
+The file `cfg/game/mg-deathrun/dot_map/maps.yml` says which installed courses are drawn, voted on and nominated. A server operator can replace it with `cfg/server/addons/dot_map/maps.yml` in the `--config` directory. Start that file with `merge: true` to add to the shipped list, and use `remove: [ids]` to drop courses.
 
-`cfg/game/mg-deathrun/dot_map/maps.yml` (dot-map's `DotMapRotationFile`, in the shape of the server's content.yml: `defaults:` for every game, `games: mg-deathrun:` for this one) says which installed courses are drawn, balloted and nominated. It ships in the game's `cfg/game/mg-deathrun/dot_map/`; an operator's `cfg/server/addons/dot_map/maps.yml` (in the `--config` directory) replaces it, or starts `merge: true` to add to it, with `remove: [ids]` to drop courses (the old flat `cfg/maps.yml` still works until 2026-12-31); `sv_map_rotation_file` names another file. The sample shipped here has a plain `maps:` list (rotation `main`, every course) and one named rotation, `short`, that uses a wildcard and plays in written order (`mode: cycle`). `dr_rotation short` switches to it, `dr_maps_reload` re-reads the file, and its `commands:` block renames the vote commands (`names: {rtv: rockthevote}`, commented out in the sample) and `dr_courses` / `dr_reload`. Pack courses and the Workshop's are filtered by the same file. A course left out stays installed: the map menu and an admin's change still load it, marked "not in rotation". A file that names rotations replaces `dr_shuffle_courses`; with no file nothing changes.
+| Setting or command | What it does |
+| --- | --- |
+| `map_rotation_file` in `config_courses/game.yml` | Names a different rotation file |
+| `dr_rotation <name>` | Switches to a named rotation (the shipped file has `main`, every course, and `short`, which plays in written order); with no name it lists them |
+| `dr_maps_reload` | Reads the file again |
+| `shuffle_courses` in `config_courses/game.yml` | Random or in-order choice when no rotation file names rotations (default on) |
+
+A course left out of the rotation stays installed: the map menu and an admin can still load it, marked "not in rotation". The file can also rename the vote commands. The format is dot-map's `DotMapRotationFile`.
