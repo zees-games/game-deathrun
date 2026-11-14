@@ -13,7 +13,7 @@ const DrTestToys := preload("dr_test_toys.gd")
 
 const SECTIONS := 34
 
-const CHECKS := 180
+const CHECKS := 183
 
 
 
@@ -82,6 +82,14 @@ func _test_config() -> void:
 	_check(config.activators_for(40) == 5, "and five at forty, which the brief asked for")
 	_check(config.activators_for(200) == config.max_activators, "never more than the most",
 		"%d" % config.activators_for(200))
+	var open := DrConfig.new()
+	open.max_activators = 0
+	_check(open.activators_for(200) == 25 and open.activators_for(2) == 1, "0 is no limit: one per eight, never everybody",
+		"%d" % open.activators_for(200))
+	open.max_activators = 30
+	_check(open.validate().ok and open.activators_for(400) == 30, "and any count is a count", "%d" % open.activators_for(400))
+	open.max_activators = -1
+	_check(not open.validate().ok, "a negative most is refused")
 
 	config.timeout_winner = 5
 	_check(not config.validate().ok, "a timeout winner that is no side is refused")

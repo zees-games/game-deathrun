@@ -24,7 +24,7 @@
 # button_cone: 0.5
 
 # --- Bots
-# How many players the server keeps in the round by adding stand-ins. [0..24]
+# How many players the server keeps in the round by adding stand-ins. [0..]
 # minimum_players: 3
 # Deprecated: what `dr_bot_spread` last set `bot_aim_error` to. A stand-in's aim is dot-bot's ([DotBotAim] on... [0.0..45.0]
 # bot_aim_spread_degrees: 7.0

@@ -18,9 +18,9 @@
 # timeout_winner: 2
 
 # --- The sides
-# One activator for every this many players, and always at least one. [2..64]
+# One activator for every this many players, and always at least one. [2..]
 # players_per_activator: 8
-# The most activators a round has, whatever the count above asks for. More than six and the buttons are fough... [1..8]
+# The most activators a round has, whatever the count above asks for. More than six and the buttons are fough... [0..]
 # max_activators: 6
 # Whether somebody who was an activator last round may be drawn again this round.
 # activator_may_repeat: false

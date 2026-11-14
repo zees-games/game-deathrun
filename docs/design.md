@@ -4,7 +4,7 @@ The second asymmetric game in the family and the first where **the hazards are a
 
 ## The sides are drawn
 
-Two fixed sides, `RUNNERS` (1) and `ACTIVATORS` (2). At the top of every round `DrGame._draw_sides` draws `config.activators_for(players)`: one per `players_per_activator` (8), at least one, at most `max_activators` (6), never everybody, **from everybody who was not an activator last round**, shuffled on the round's own seed. A rotation is fairer on paper and gamed in practice (leave and rejoin to move up it); a draw that repeats reads as favouritism. `activator_may_repeat` turns the exclusion off.
+Two fixed sides, `RUNNERS` (1) and `ACTIVATORS` (2). At the top of every round `DrGame._draw_sides` draws `config.activators_for(players)`: one per `players_per_activator` (8), at least one, at most `max_activators` (6 by default, any value, 0 = no limit), never everybody, **from everybody who was not an activator last round**, shuffled on the round's own seed. A rotation is fairer on paper and gamed in practice (leave and rejoin to move up it); a draw that repeats reads as favouritism. `activator_may_repeat` turns the exclusion off.
 
 **A player may choose** (`allow_side_choice`): `!activator`, `!runner`, `!any` in chat, as module commands. The draw orders volunteers, then the undecided, then those who asked to run, who are drawn only when the round would otherwise have no activator, because it must have one.
 

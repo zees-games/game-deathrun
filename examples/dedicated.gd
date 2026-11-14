@@ -17,7 +17,7 @@ const DrNetLink := preload("../game/net/dr_net_link.gd")
 ## nothing but the stand-ins the module seats itself.
 
 const SECTIONS := 13
-const CHECKS := 113
+const CHECKS := 115
 
 var PORT := DRTestPorts.free_port(2)
 var QUERY_PORT := PORT + 1
@@ -195,9 +195,15 @@ func _test_the_commands() -> void:
 	var _set := _run_command("dr_round_seconds 45")
 	_check(is_equal_approx(game.config.round_seconds, 45.0), "and setting it writes through to the world",
 		"%.1f" % game.config.round_seconds)
-	var _back := _run_command("dr_max_activators 0")
-	_check(game.config.max_activators == 1, "a round with no activator is not one: it is taken as one",
+	var _many := _run_command("dr_max_activators 40")
+	_check(game.config.max_activators == 40, "the most activators takes any count, not a ceiling",
 		"%d" % game.config.max_activators)
+	var _none := _run_command("dr_max_activators 0")
+	_check(game.config.max_activators == 0, "and 0 is no limit", "%d" % game.config.max_activators)
+	var _below := _run_command("dr_max_activators -1")
+	_check(game.config.max_activators == 0, "a negative count is refused, not clamped",
+		"%d" % game.config.max_activators)
+	var _back := _run_command("dr_max_activators 6")
 	# And it is REPLICATED: dot-server sends it to every client before its scene loads and on
 	# every change, so a client's own combat manager (following its link) predicts tracers
 	# under the server's level rather than its default.

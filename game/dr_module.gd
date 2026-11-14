@@ -387,11 +387,11 @@ func _add_tunables(world: DrGame) -> void:
 		"Seconds the runners wait behind the gate",
 		func(value: float) -> void: config.countdown_seconds = clampf(value, 0.0, 30.0))
 	_tunable("dr_players_per_activator", float(config.players_per_activator),
-		"One activator for every this many players, from the next round",
-		func(value: float) -> void: config.players_per_activator = clampi(int(value), 2, 64))
+		"One activator for every this many players, from the next round (2 or more)",
+		func(value: float) -> void: config.players_per_activator = int(value), 2.0)
 	_tunable("dr_max_activators", float(config.max_activators),
-		"The most activators a round has, from the next round",
-		func(value: float) -> void: config.max_activators = clampi(int(value), 1, 8))
+		"The most activators a round has, from the next round (0 = no limit)",
+		func(value: float) -> void: config.max_activators = int(value), 0.0)
 	_tunable("dr_activator_repeat", 1.0 if config.activator_may_repeat else 0.0,
 		"Whether last round's activator may be drawn again",
 		func(value: float) -> void: config.activator_may_repeat = value > 0.5)
@@ -559,19 +559,32 @@ static func _number(value: float) -> String:
 ## `defaults < JSON < environment < argv` has already decided — so an operator who set
 ## `DR_ROUND_SECONDS=240` would see `dr_round_seconds` report 300 and, worse, would reset
 ## their own setting the moment anything wrote the value back.
+##
+## [param at_least], when given, refuses a lower value (and anything not a number) with the
+## reason, rather than clamping it: a count typed wrong is said so, not quietly changed.
 func _tunable(
-	cvar_name: String, current: float, description: String, apply: Callable
+	cvar_name: String, current: float, description: String, apply: Callable, at_least: float = NAN
 ) -> void:
 	var cvar := add_cvar(cvar_name, _number(current), description)
 
 	if cvar == null:
 		return
 
+	if not is_nan(at_least):
+		var _v := cvar.with_validator(_at_least.bind(cvar_name, at_least))
+
 	# The handler must not capture `cvar`: it would be a reference cycle the engine never frees.
 	cvar.changed.connect(func(_old: String, new_value: String) -> void:
 		apply.call(new_value.to_float())
 		log_info("a tunable changed", {"cvar": cvar_name, "now": new_value})
 	)
+
+
+static func _at_least(value: String, cvar_name: String, least: float) -> DotResult:
+	if not value.is_valid_float() or value.to_float() < least:
+		return DotResult.fail(DotError.CODE_INVALID,
+			"%s is %s; it takes a number of %s or more." % [cvar_name, value, _number(least)])
+	return DotResult.success(value)
 
 
 ## [b]Nothing to undo.[/b] The commands are the module's own and [DotModule] removes them;

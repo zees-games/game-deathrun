@@ -68,8 +68,8 @@ Settings are cvars. Set them in the server's config, on the command line, or liv
 
 ```
 dr_round_seconds 300           // the longest a round runs (a course may ask for less)
-dr_players_per_activator 8     // one activator for every this many players
-dr_max_activators 6            // most activators a round has (default 6; the setting accepts 1 to 8)
+dr_players_per_activator 8     // one activator for every this many players (default 8, any value of 2 or more)
+dr_max_activators 6            // most activators a round has (default 6, any value; 0 = no limit)
 dr_activator_repeat 0          // 1 = last round's activator may be drawn again
 dr_timeout_winner 2            // who wins when the clock runs out: 0 draw, 1 runners, 2 activators
 dr_activator_health 1.5        // how much tougher activators are at the end

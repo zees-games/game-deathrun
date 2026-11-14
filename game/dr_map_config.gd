@@ -4,8 +4,8 @@ extends RefCounted
 const KEYS := {
 	"dr_round_seconds": {"type": "int", "min": 30, "max": 1800},
 	"dr_countdown_seconds": {"type": "int", "min": 0, "max": 60},
-	"dr_players_per_activator": {"type": "int", "min": 1, "max": 64},
-	"dr_max_activators": {"type": "int", "min": 1, "max": 16},
+	"dr_players_per_activator": {"type": "int", "min": 2},
+	"dr_max_activators": {"type": "int", "min": 0},
 	"dr_activator_health": {"type": "float", "min": 0.5, "max": 10.0},
 	"dr_gravity": {"type": "float", "min": 1.0, "max": 60.0},
 	"dr_autobhop": {"type": "bool"},

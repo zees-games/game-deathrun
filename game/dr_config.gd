@@ -66,11 +66,12 @@ extends DotConfig
 ## person with every button on a crowded server cannot keep up with a course's worth of
 ## runners spread along it. It was ten (at most three) until 2026-10-06; the brief asked for
 ## about five activators to forty runners, which ten and three could never reach.
-@export_range(2, 64, 1) var players_per_activator: int = 8
+@export_range(2, 64, 1, "or_greater") var players_per_activator: int = 8
 
 ## The most activators a round has, whatever the count above asks for. More than six and the
-## buttons are fought over.
-@export_range(1, 8, 1) var max_activators: int = 6
+## buttons are fought over, but that is a server's call: any value, 0 for no limit beyond the
+## count above (and never everybody). Below 0 is refused by [method validate].
+@export_range(0, 8, 1, "or_greater") var max_activators: int = 6
 
 ## Whether somebody who was an activator last round may be drawn again this round.
 ##
@@ -211,7 +212,7 @@ extends DotConfig
 ## [b]Three by default:[/b] an activator and two runners is the smallest round that is a
 ## round, and one person on an empty server is then a runner with somebody pressing buttons
 ## at them — or the activator, with somebody to press them at.
-@export_range(0, 24, 1) var minimum_players: int = 3
+@export_range(0, 24, 1, "or_greater") var minimum_players: int = 3
 
 ## Deprecated: what `dr_bot_spread` last set `bot_aim_error` to. A stand-in's aim is dot-bot's
 ## ([DotBotAim] on `bot_difficulty`); nothing reads this but the alias.
@@ -285,15 +286,17 @@ func activators_for(players: int) -> int:
 
 	var wanted := maxi(players / maxi(players_per_activator, 2), 1)
 	# Never everybody: a round with no runner in it is a round nobody can lose.
-	return clampi(wanted, 1, mini(max_activators, players - 1))
+	var most := players - 1 if max_activators <= 0 else mini(max_activators, players - 1)
+	return clampi(wanted, 1, most)
 
 
 func validate() -> DotResult:
 	if round_seconds <= 0.0:
 		return DotResult.fail(DotError.CODE_INVALID, "A round has to last some time.")
 
-	if max_activators < 1:
-		return DotResult.fail(DotError.CODE_INVALID, "A round needs at least one activator.")
+	if max_activators < 0:
+		return DotResult.fail(DotError.CODE_INVALID,
+			"max_activators is %d; it is a count, or 0 for no limit." % max_activators)
 
 	if timeout_winner < 0 or timeout_winner > 2:
 		return DotResult.fail(
@@ -314,7 +317,8 @@ func validate() -> DotResult:
 func describe() -> Dictionary:
 	return {
 		"round": "%.0f s" % round_seconds,
-		"activators": "1 per %d, at most %d" % [players_per_activator, max_activators],
+		"activators": ("1 per %d, at most %d" % [players_per_activator, max_activators]
+			if max_activators > 0 else "1 per %d, no limit" % players_per_activator),
 		"timeout": ["draw", "runners", "activators"][timeout_winner],
 		"courses": "all" if course_ids.is_empty() else ",".join(course_ids),
 		"gravity": "%.1f m/s2" % gravity,
