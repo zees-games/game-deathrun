@@ -1,0 +1,195 @@
+{
+	"format": "dot-achievement-defs",
+	"version": 1,
+	"achievements": [
+		{
+			"key": "dr.made_it",
+			"name": "Made It",
+			"description": "Run a course to its end.",
+			"points": 10,
+			"category": "",
+			"icon": "",
+			"hidden": false,
+			"secret": false,
+			"series": "dr.runner",
+			"tier": 1,
+			"requireAll": true,
+			"rules": [
+				{
+					"stat": "dr.runs_finished",
+					"op": "at_least",
+					"value": 1.0,
+					"merge": "sum"
+				}
+			]
+		},
+		{
+			"key": "dr.old_hand",
+			"name": "Old Hand",
+			"description": "Run twenty-five courses to their end.",
+			"points": 30,
+			"category": "",
+			"icon": "",
+			"hidden": false,
+			"secret": false,
+			"series": "dr.runner",
+			"tier": 2,
+			"requireAll": true,
+			"rules": [
+				{
+					"stat": "dr.runs_finished",
+					"op": "at_least",
+					"value": 25.0,
+					"merge": "sum"
+				}
+			]
+		},
+		{
+			"key": "dr.first_through",
+			"name": "First Through",
+			"description": "Be the first runner to the end.",
+			"points": 20,
+			"category": "",
+			"icon": "",
+			"hidden": false,
+			"secret": false,
+			"series": "",
+			"tier": 0,
+			"requireAll": true,
+			"rules": [
+				{
+					"stat": "dr.runs_first",
+					"op": "at_least",
+					"value": 1.0,
+					"merge": "sum"
+				}
+			]
+		},
+		{
+			"key": "dr.at_the_buttons",
+			"name": "At the Buttons",
+			"description": "Spend a round as the activator.",
+			"points": 10,
+			"category": "",
+			"icon": "",
+			"hidden": false,
+			"secret": false,
+			"series": "",
+			"tier": 0,
+			"requireAll": true,
+			"rules": [
+				{
+					"stat": "dr.activator_rounds",
+					"op": "at_least",
+					"value": 1.0,
+					"merge": "sum"
+				}
+			]
+		},
+		{
+			"key": "dr.got_one",
+			"name": "Got One",
+			"description": "Catch a runner with a trap.",
+			"points": 10,
+			"category": "",
+			"icon": "",
+			"hidden": false,
+			"secret": false,
+			"series": "dr.trapper",
+			"tier": 1,
+			"requireAll": true,
+			"rules": [
+				{
+					"stat": "dr.trap_kills",
+					"op": "at_least",
+					"value": 1.0,
+					"merge": "sum"
+				}
+			]
+		},
+		{
+			"key": "dr.trap_master",
+			"name": "Trap Master",
+			"description": "Catch fifty runners with traps.",
+			"points": 30,
+			"category": "",
+			"icon": "",
+			"hidden": false,
+			"secret": false,
+			"series": "dr.trapper",
+			"tier": 2,
+			"requireAll": true,
+			"rules": [
+				{
+					"stat": "dr.trap_kills",
+					"op": "at_least",
+					"value": 50.0,
+					"merge": "sum"
+				}
+			]
+		},
+		{
+			"key": "dr.turned_tables",
+			"name": "Turned the Tables",
+			"description": "Put ten people down in the end arena.",
+			"points": 25,
+			"category": "",
+			"icon": "",
+			"hidden": false,
+			"secret": false,
+			"series": "",
+			"tier": 0,
+			"requireAll": true,
+			"rules": [
+				{
+					"stat": "dr.end_kills",
+					"op": "at_least",
+					"value": 10.0,
+					"merge": "sum"
+				}
+			]
+		},
+		{
+			"key": "dr.full_house",
+			"name": "Full House",
+			"description": "Catch five runners with traps in one round.",
+			"points": 30,
+			"category": "",
+			"icon": "",
+			"hidden": false,
+			"secret": false,
+			"series": "",
+			"tier": 0,
+			"requireAll": true,
+			"rules": [
+				{
+					"stat": "dr.best_round_trap_kills",
+					"op": "at_least",
+					"value": 5.0,
+					"merge": "highest"
+				}
+			]
+		},
+		{
+			"key": "dr.pincushion",
+			"name": "Pincushion",
+			"description": "Be caught by a trap fifty times.",
+			"points": 10,
+			"category": "",
+			"icon": "",
+			"hidden": false,
+			"secret": true,
+			"series": "",
+			"tier": 0,
+			"requireAll": true,
+			"rules": [
+				{
+					"stat": "dr.trap_deaths",
+					"op": "at_least",
+					"value": 50.0,
+					"merge": "sum"
+				}
+			]
+		}
+	]
+}
