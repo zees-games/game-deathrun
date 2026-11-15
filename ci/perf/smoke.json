@@ -2,6 +2,6 @@
   "scene": "res://game/dr.tscn",
   "load_ms": 1872.4,
   "frame_ms": 6.004,
-  "nodes": 1270,
-  "mem_mb": 182.6
+  "nodes": 3315,
+  "mem_mb": 269.6
 }
