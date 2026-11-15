@@ -103,10 +103,15 @@ const AVATAR_BYTES := 1024
 const WORLD_EXTENT := DrGame.NET_WORLD_EXTENT
 const POS_BITS := 24
 
-## The round clock, in seconds. Well past anything the configuration allows, because the
-## extra bit is cheaper than the bug of a clock that wraps.
-const CLOCK_MAX := 1800.0
-const CLOCK_BITS := 15
+## A clock reading, in seconds, goes out as whole milliseconds in a varint: it has no ceiling,
+## so `dr_round_seconds` has none either (it was a 15-bit range of 0..1800 s and a silent
+## clamp). A negative reading goes out as zero; a server clock does not run backwards.
+static func write_secs(w: DotNetWriter, seconds: float) -> void:
+	w.write_varint(maxi(roundi(seconds * 1000.0), 0))
+
+
+static func read_secs(r: DotNetReader) -> float:
+	return r.read_varint() / 1000.0
 
 ## A side, which is 1 or 2, in three bits so a third side is not a change to the wire.
 const TEAM_BITS := 3
@@ -145,7 +150,7 @@ static func write_hello(
 	# Whole milliseconds as a varint: the countdown is shown to the tenth and a client's must end
 	# on the server's tick, and a varint has no ceiling (it was 0..120 s in 14 bits).
 	w.write_varint(maxi(roundi(countdown_seconds * 1000.0), 0))
-	w.write_float_range(round_seconds, 0.0, CLOCK_MAX, CLOCK_BITS)
+	write_secs(w, round_seconds)
 	return w.to_bytes()
 
 
@@ -154,7 +159,7 @@ static func read_hello(r: DotNetReader) -> Dictionary:
 	var tick_rate := r.read_uint(9)
 	var server_tick := r.read_varint()
 	var countdown := r.read_varint() / 1000.0
-	var round_seconds := r.read_float_range(0.0, CLOCK_MAX, CLOCK_BITS)
+	var round_seconds := read_secs(r)
 	return {
 		"player_id": player_id,
 		"tick_rate": tick_rate,
@@ -334,8 +339,8 @@ static func write_clock(
 ) -> PackedByteArray:
 	var w := _w()
 	w.write_varint(round_number)
-	w.write_float_range(clampf(elapsed, 0.0, CLOCK_MAX), 0.0, CLOCK_MAX, CLOCK_BITS)
-	w.write_float_range(clampf(run_elapsed, 0.0, CLOCK_MAX), 0.0, CLOCK_MAX, CLOCK_BITS)
+	write_secs(w, elapsed)
+	write_secs(w, run_elapsed)
 	w.write_uint(clampi(phase, 0, 7), PHASE_BITS)
 	w.write_uint(clampi(runners, 0, 255), 8)
 	w.write_uint(clampi(activators, 0, 255), 8)
@@ -345,8 +350,8 @@ static func write_clock(
 
 static func read_clock(r: DotNetReader) -> Dictionary:
 	var round_number := r.read_varint()
-	var elapsed := r.read_float_range(0.0, CLOCK_MAX, CLOCK_BITS)
-	var run_elapsed := r.read_float_range(0.0, CLOCK_MAX, CLOCK_BITS)
+	var elapsed := read_secs(r)
+	var run_elapsed := read_secs(r)
 	var phase := r.read_uint(PHASE_BITS)
 	var runners := r.read_uint(8)
 	var activators := r.read_uint(8)
@@ -452,14 +457,14 @@ static func write_finished(player_id: int, place: int, seconds: float) -> Packed
 	var w := _w()
 	w.write_varint(player_id)
 	w.write_varint(maxi(place, 0))
-	w.write_float_range(clampf(seconds, 0.0, CLOCK_MAX), 0.0, CLOCK_MAX, 20)
+	write_secs(w, seconds)
 	return w.to_bytes()
 
 
 static func read_finished(r: DotNetReader) -> Dictionary:
 	var player_id := r.read_varint()
 	var place := r.read_varint()
-	var seconds := r.read_float_range(0.0, CLOCK_MAX, 20)
+	var seconds := read_secs(r)
 	return {"player_id": player_id, "place": place, "seconds": seconds, "ok": r.ok()}
 
 

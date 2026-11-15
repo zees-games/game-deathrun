@@ -60,6 +60,15 @@ func _test_the_codec() -> void:
 	_check(absf(float(long_hello["countdown_seconds"]) - 600.25) < 0.001,
 		"a countdown past the old two-minute wire ceiling arrives whole", str(long_hello))
 
+	# The round clock has no ceiling: a round of two hours (the old wire was 0..1800 s and clamped).
+	var big_hello := DrEvents.read_hello(DotNetReader.new(DrEvents.write_hello(SESSION, 64, 1234, 5.0, 7200.0)))
+	_check(absf(float(big_hello["round_seconds"]) - 7200.0) < 0.001, "a 7200 s round arrives whole, not clamped to 1800", str(big_hello))
+	var big_clock := DrEvents.read_clock(DotNetReader.new(DrEvents.write_clock(1, 5000.5, 4000.25, DrGame.Phase.SHOWDOWN, 3, 1, true)))
+	_check(absf(float(big_clock["elapsed"]) - 5000.5) < 0.001 and absf(float(big_clock["run_elapsed"]) - 4000.25) < 0.001,
+		"a clock past 1800 s arrives whole", str(big_clock))
+	var big_fin := DrEvents.read_finished(DotNetReader.new(DrEvents.write_finished(SESSION, 1, 3601.5)))
+	_check(absf(float(big_fin["seconds"]) - 3601.5) < 0.001, "a finish time past 1800 s arrives whole", str(big_fin))
+
 	var doc := DrCatalogue.practice()
 	var stage := DrEvents.read_stage(DotNetReader.new(DrEvents.write_stage(DrCourseDoc.encode(doc))))
 	var decoded := DrCourseDoc.decode(stage["encoded"]) if bool(stage["ok"]) else DotResult.fail(DotError.CODE_PARSE, "no stage")
