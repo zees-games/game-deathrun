@@ -915,8 +915,6 @@ func _build_chat() -> void:
 	add_child(chat)
 
 
-## Walking off and on: typing, or the settings screen up. Both samplers, because offline the
-## player samples for themselves and connected the client does.
 ## dot-team's block rules followed from the server, and the F9 tuning panel where this process hosts the game.
 func _add_noblock_and_workbench() -> void:
 	if link != null:
@@ -924,6 +922,7 @@ func _add_noblock_and_workbench() -> void:
 		return
 	var wb := DotGameWorkbench.new()
 	wb.name = "Workbench"
+	wb.lazy_panel = true
 	wb.listen_host_fn = func() -> bool: return true
 	wb.config = {"enabled": false}
 	if game.config_binder != null:
@@ -969,6 +968,7 @@ func _start_remote_workbench() -> void:
 	platform.add_workbench(wb)
 
 
+## Walking off and on: typing, or the settings screen up. Both samplers, because offline the player samples for themselves and connected the client does.
 func _suspend_input(suspended: bool) -> void:
 	if suspended:
 		# The button's release goes to the menu, so the aim is let go here or it sticks up.
