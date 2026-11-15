@@ -243,3 +243,30 @@ func _said(lines: PackedStringArray, text: String) -> bool:
 			return true
 
 	return false
+
+
+## Takes the server down before quitting: a booted [DotServer]'s listener holds the main loop,
+## and a run that only called `quit()` prints its results and hangs. See mg-smash-copter.
+func _shut_down() -> void:
+	if server == null:
+		return
+
+	if server.modules != null:
+		server.modules.unload_all()
+
+	server.shutdown("the dedicated test is finished")
+
+	for _i in range(10):
+		await get_tree().process_frame
+
+	if is_instance_valid(game):
+		remove_child(game)
+		game.free()
+		game = null
+
+	if is_instance_valid(server):
+		remove_child(server)
+		server.free()
+		server = null
+
+	await get_tree().process_frame
