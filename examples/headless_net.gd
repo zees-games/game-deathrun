@@ -18,7 +18,7 @@ const DrTestToys := preload("dr_test_toys.gd")
 ## Sections and checks are both counted; mg-smash-copter's notes say why the second matters.
 
 const SECTIONS := 19
-const CHECKS := 109
+const CHECKS := 110
 
 
 func _ready() -> void:
@@ -119,6 +119,9 @@ func _test_the_codec() -> void:
 	_check(bool(hello["ok"]) and int(hello["player_id"]) == SESSION
 		and absf(float(hello["round_seconds"]) - 300.0) < 0.1
 		and absf(float(hello["countdown_seconds"]) - 5.0) < 0.01, "HELLO", str(hello))
+	var long_hello := DrEvents.read_hello(DotNetReader.new(DrEvents.write_hello(SESSION, 64, 1234, 600.25, 300.0)))
+	_check(absf(float(long_hello["countdown_seconds"]) - 600.25) < 0.001,
+		"a countdown past the old two-minute wire ceiling arrives whole", str(long_hello))
 
 	var doc := DrCatalogue.practice()
 	var stage := DrEvents.read_stage(DotNetReader.new(DrEvents.write_stage(DrCourseDoc.encode(doc))))

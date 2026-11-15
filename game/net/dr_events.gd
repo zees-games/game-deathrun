@@ -142,9 +142,9 @@ static func write_hello(
 	w.write_varint(player_id)
 	w.write_uint(tick_rate, 9)
 	w.write_varint(server_tick)
-	# Fourteen bits over two minutes is seven milliseconds: the countdown is shown to the tenth
-	# and a client's must end on the server's tick, not a tenth of a second either side.
-	w.write_float_range(countdown_seconds, 0.0, 120.0, 14)
+	# Whole milliseconds as a varint: the countdown is shown to the tenth and a client's must end
+	# on the server's tick, and a varint has no ceiling (it was 0..120 s in 14 bits).
+	w.write_varint(maxi(roundi(countdown_seconds * 1000.0), 0))
 	w.write_float_range(round_seconds, 0.0, CLOCK_MAX, CLOCK_BITS)
 	return w.to_bytes()
 
@@ -153,7 +153,7 @@ static func read_hello(r: DotNetReader) -> Dictionary:
 	var player_id := r.read_varint()
 	var tick_rate := r.read_uint(9)
 	var server_tick := r.read_varint()
-	var countdown := r.read_float_range(0.0, 120.0, 14)
+	var countdown := r.read_varint() / 1000.0
 	var round_seconds := r.read_float_range(0.0, CLOCK_MAX, CLOCK_BITS)
 	return {
 		"player_id": player_id,

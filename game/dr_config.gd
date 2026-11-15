@@ -19,12 +19,12 @@ extends DotConfig
 
 @export_group("The round")
 
-## Seconds the runners stand behind the start gate before it drops.
+## Seconds the runners stand behind the start gate before it drops; default 5, any length.
 ##
 ## [b]Not zero, and the activator is the reason.[/b] The activator is put in their own
 ## corridor in the same tick the runners are put on the pad, and a gate that dropped at once
 ## would have the fastest runner past the first trap before the activator had turned round.
-@export_range(0.0, 30.0, 0.5) var countdown_seconds: float = 5.0
+@export_range(0.0, 30.0, 0.5, "or_greater") var countdown_seconds: float = 5.0
 
 ## Seconds a round runs before it is called on the clock.
 ##

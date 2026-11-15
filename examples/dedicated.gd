@@ -17,7 +17,7 @@ const DrNetLink := preload("../game/net/dr_net_link.gd")
 ## nothing but the stand-ins the module seats itself.
 
 const SECTIONS := 13
-const CHECKS := 115
+const CHECKS := 117
 
 var PORT := DRTestPorts.free_port(2)
 var QUERY_PORT := PORT + 1
@@ -204,6 +204,14 @@ func _test_the_commands() -> void:
 	_check(game.config.max_activators == 0, "a negative count is refused, not clamped",
 		"%d" % game.config.max_activators)
 	var _back := _run_command("dr_max_activators 6")
+	var was_countdown := game.config.countdown_seconds
+	var _long := _run_command("dr_countdown_seconds 90")
+	_check(is_equal_approx(game.config.countdown_seconds, 90.0), "the countdown takes any length, not a ceiling",
+		"%.1f" % game.config.countdown_seconds)
+	var _neg := _run_command("dr_countdown_seconds -1")
+	_check(is_equal_approx(game.config.countdown_seconds, 90.0), "a negative countdown is refused, not clamped",
+		"%.1f" % game.config.countdown_seconds)
+	var _restore := _run_command("dr_countdown_seconds %s" % was_countdown)
 	# And it is REPLICATED: dot-server sends it to every client before its scene loads and on
 	# every change, so a client's own combat manager (following its link) predicts tracers
 	# under the server's level rather than its default.

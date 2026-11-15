@@ -384,8 +384,8 @@ func _add_tunables(world: DrGame) -> void:
 		"The most seconds a round runs (a course may ask for less)",
 		func(value: float) -> void: config.round_seconds = clampf(value, 30.0, 1800.0))
 	_tunable("dr_countdown_seconds", config.countdown_seconds,
-		"Seconds the runners wait behind the gate",
-		func(value: float) -> void: config.countdown_seconds = clampf(value, 0.0, 30.0))
+		"Seconds the runners wait behind the gate (0 or more)",
+		func(value: float) -> void: config.countdown_seconds = value, 0.0)
 	_tunable("dr_players_per_activator", float(config.players_per_activator),
 		"One activator for every this many players, from the next round (2 or more)",
 		func(value: float) -> void: config.players_per_activator = int(value), 2.0)

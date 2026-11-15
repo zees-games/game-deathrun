@@ -2,7 +2,7 @@
 # an operator overrides in cfg/server/game/mg-deathrun/config_round/game.yml. Layers: defaults < this < env < argv.
 
 # --- The round
-# Seconds the runners stand behind the start gate before it drops. [0.0..30.0]
+# Seconds the runners stand behind the start gate before it drops; default 5, any length. [0.0..]
 # countdown_seconds: 5.0
 # Seconds a round runs before it is called on the clock. [30.0..1800.0]
 # round_seconds: 300.0
