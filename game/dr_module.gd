@@ -286,7 +286,7 @@ func _bind_rule_cvars(world: DrGame) -> void:
 		DotConVar.FLAG_ARCHIVE | DotConVar.FLAG_NOTIFY | DotConVar.FLAG_REPLICATED)
 	if killcam != null:
 		killcam.changed.connect(func(_old: String, new_value: String) -> void:
-			world.config.killcam_seconds = clampf(new_value.to_float(), 0.0, 30.0)
+			world.config.killcam_seconds = maxf(new_value.to_float(), 0.0)
 			world.apply_intermission())
 
 	# REPLICATED: where the clients' killcam camera sits (0 the killer's eye, 1 behind the killer).
@@ -378,7 +378,7 @@ func _add_tunables(world: DrGame) -> void:
 
 	_tunable("dr_round_seconds", config.round_seconds,
 		"The most seconds a round runs (a course may ask for less)",
-		func(value: float) -> void: config.round_seconds = clampf(value, 30.0, 1800.0))
+		func(value: float) -> void: config.round_seconds = value, 30.0)
 	_tunable("dr_countdown_seconds", config.countdown_seconds,
 		"Seconds the runners wait behind the gate (0 or more)",
 		func(value: float) -> void: config.countdown_seconds = value, 0.0)
@@ -393,10 +393,10 @@ func _add_tunables(world: DrGame) -> void:
 		func(value: float) -> void: config.activator_may_repeat = value > 0.5)
 	_tunable("dr_timeout_winner", float(config.timeout_winner),
 		"Who wins a round the clock ends: 0 nobody, 1 the runners, 2 the activators",
-		func(value: float) -> void: config.timeout_winner = clampi(int(value), 0, 2))
+		func(value: float) -> void: config.timeout_winner = int(value), 0.0, 2.0)
 	_tunable("dr_activator_health", config.activator_health_scale,
 		"An activator's health at the end, as a multiple",
-		func(value: float) -> void: config.activator_health_scale = clampf(value, 0.5, 10.0))
+		func(value: float) -> void: config.activator_health_scale = value, 0.5)
 	_tunable("dr_autobhop", 1.0 if config.auto_bunny_hop else 0.0,
 		"Whether holding jump hops again on landing, from the next round",
 		func(value: float) -> void:
@@ -408,34 +408,34 @@ func _add_tunables(world: DrGame) -> void:
 	_tunable("dr_bot_spread", config.bot_aim_spread_degrees,
 		"Deprecated, sets bot_aim_error: degrees a stand-in's first shots are off",
 		func(value: float) -> void:
-			config.bot_aim_spread_degrees = clampf(value, 0.0, 45.0)
+			config.bot_aim_spread_degrees = value
 			var _set := DotBotSettings.of(world).set_value("aim_error", str(config.bot_aim_spread_degrees)))
 	_tunable("dr_bot_fumble", config.bot_fumble_chance,
 		"Chance in a hundred a stand-in runner misses a jump",
-		func(value: float) -> void: config.bot_fumble_chance = clampf(value, 0.0, 100.0))
+		func(value: float) -> void: config.bot_fumble_chance = value, 0.0, 100.0)
 	_tunable("dr_bot_trap_delay", config.bot_trap_delay,
 		"Seconds a stand-in activator waits after a runner is in a trap before pressing",
-		func(value: float) -> void: config.bot_trap_delay = clampf(value, 0.0, 3.0))
+		func(value: float) -> void: config.bot_trap_delay = value, 0.0)
 	_tunable("dr_gravity", config.gravity, "Metres per second squared, for everything",
 		func(value: float) -> void: config.gravity = value)
 	_tunable("dr_spectate_camera", float(config.spectate_camera),
 		"Deprecated, sets mp_forcecamera. Who somebody who is out may watch: 0 anybody, 1 their own side, 2 nobody",
 		func(value: float) -> void:
-			config.spectate_camera = clampi(int(value), 0, 2)
+			config.spectate_camera = int(value)
 			# Through the cvar, so what `mp_forcecamera` reports is what is in force.
 			if _force_camera_cvar != null:
 				var _set: Variant = _force_camera_cvar.set_value(str(config.spectate_camera))
 			elif world.spectate != null:
-				world.spectate.set_force_camera(config.spectate_camera))
+				world.spectate.set_force_camera(config.spectate_camera), 0.0, 2.0)
 	# [b]Deprecated: the count is `bot_quota` now[/b], and this forwards to it. Kept rather than
 	# removed because every shipped server config sets it; left as its own number it would be
 	# a second cvar deciding the same count, and whichever was read last would win.
 	_tunable("dr_min_players", float(config.minimum_players),
 		"Deprecated, sets bot_quota. How many players the server keeps in a round with stand-ins",
 		func(value: float) -> void:
-			config.minimum_players = clampi(int(value), 0, 24)
+			config.minimum_players = int(value)
 			if _quota != null and _quota.quota_cvar != null:
-				var _set := _quota.quota_cvar.set_value(str(config.minimum_players)))
+				var _set := _quota.quota_cvar.set_value(str(config.minimum_players)), 0.0)
 
 
 ## Config fields whose hand-written cvar is not `dr_<field>`; the binder makes no second cvar for them and a workbench edit is pushed through the hand one.

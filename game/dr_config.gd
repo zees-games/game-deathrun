@@ -29,9 +29,9 @@ extends DotConfig
 ## Seconds a round runs before it is called on the clock.
 ##
 ## A course document may ask for less (`round_seconds` in the document); this is the
-## ceiling, so a mapper cannot make a server run one course for an hour. Five minutes is
+## ceiling (any length of 30 or more, the server operator decides). Five minutes is
 ## what the round-based servers this game is modelled on give a course.
-@export_range(30.0, 1800.0, 5.0) var round_seconds: float = 300.0
+@export_range(30.0, 1800.0, 5.0, "or_greater") var round_seconds: float = 300.0
 
 ## Seconds a player is untouchable after being put in the end arena.
 ##
@@ -44,7 +44,7 @@ extends DotConfig
 @export_range(0.0, 60.0, 1.0) var intermission_seconds: float = 6.0
 
 ## Seconds of the round's final killcam, added to the intermission (`mp_killcam_time`); 0 is off. Not added when the intermission is 0.
-@export_range(0.0, 30.0, 0.5) var killcam_seconds: float = 7.0
+@export_range(0.0, 30.0, 0.5, "or_greater") var killcam_seconds: float = 7.0
 
 ## Seconds of warmup before the first round. 0 starts immediately.
 @export_range(0.0, 300.0, 1.0) var warmup_seconds: float = 8.0
@@ -121,7 +121,7 @@ extends DotConfig
 ## [b]Here rather than in `project.godot`, because a project setting does not travel with
 ## a delivered game.[/b] A pack mounted into the server tool's project runs at ITS setting.
 ## Applied to the world's own physics space by [DrGame].
-@export_range(1.0, 60.0, 0.5) var gravity: float = 20.0
+@export_range(1.0, 60.0, 0.5, "or_greater") var gravity: float = 20.0
 
 ## Whether holding jump hops again the moment a player lands.
 ##
@@ -201,7 +201,7 @@ extends DotConfig
 ## [b]Above one, because it is one against several.[/b] The first runner across fights alone,
 ## but every runner after joins in, and an activator at the same health as each of them is
 ## not a fight the last few runners have to finish.
-@export_range(0.5, 10.0, 0.1) var activator_health_scale: float = 1.5
+@export_range(0.5, 10.0, 0.1, "or_greater") var activator_health_scale: float = 1.5
 
 # --- Bots ------------------------------------------------------------------
 
@@ -226,7 +226,7 @@ extends DotConfig
 ## [b]Not zero.[/b] A bot that pressed on the tick a runner entered would be a reflex no person
 ## has, and a trap that always fires at its earliest moment is a trap a runner learns to
 ## stand outside of. A quarter of a second is a quick person.
-@export_range(0.0, 3.0, 0.05) var bot_trap_delay: float = 0.25
+@export_range(0.0, 3.0, 0.05, "or_greater") var bot_trap_delay: float = 0.25
 
 # --- Watching --------------------------------------------------------------
 

@@ -10,7 +10,7 @@
 # walk_speed_scale: 0.45
 # Metres a standing jump rises. [0.1..5.0]
 # jump_height: 1.2
-# Metres per second squared, for everything. [1.0..60.0]
+# Metres per second squared, for everything. [1.0..]
 # gravity: 20.0
 # Whether holding jump hops again the moment a player lands.
 # auto_bunny_hop: false
@@ -30,5 +30,5 @@
 # bot_aim_spread_degrees: 7.0
 # How likely a stand-in runner is to mistime a jump, in a hundred. [0.0..100.0]
 # bot_fumble_chance: 8.0
-# How late a stand-in activator presses a button, in seconds after a runner is in the trap. [0.0..3.0]
+# How late a stand-in activator presses a button, in seconds after a runner is in the trap. [0.0..]
 # bot_trap_delay: 0.25

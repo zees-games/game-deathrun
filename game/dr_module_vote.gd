@@ -18,7 +18,8 @@ static func _number(value: float) -> String:
 ## undo `defaults < JSON < environment < argv` (`DR_ROUND_SECONDS=240` reported as 300, then reset).
 ## [param at_least] refuses a lower value or a non-number with the reason; it never clamps.
 func _tunable(
-	cvar_name: String, current: float, description: String, apply: Callable, at_least: float = NAN
+	cvar_name: String, current: float, description: String, apply: Callable, at_least: float = NAN,
+	at_most: float = NAN
 ) -> void:
 	var cvar := add_cvar(cvar_name, _number(current), description)
 
@@ -26,7 +27,9 @@ func _tunable(
 		return
 
 	if not is_nan(at_least):
-		var _v := cvar.with_validator(_at_least.bind(cvar_name, at_least))
+		var _v := cvar.with_validator(_between.bind(cvar_name, at_least, INF if is_nan(at_most) else at_most))
+	elif not is_nan(at_most):
+		var _v := cvar.with_validator(_between.bind(cvar_name, -INF, at_most))
 
 	# The handler must not capture `cvar`: it would be a reference cycle the engine never frees.
 	cvar.changed.connect(func(_old: String, new_value: String) -> void:
@@ -35,10 +38,12 @@ func _tunable(
 	)
 
 
-static func _at_least(value: String, cvar_name: String, least: float) -> DotResult:
-	if not value.is_valid_float() or value.to_float() < least:
-		return DotResult.fail(DotError.CODE_INVALID,
-			"%s is %s; it takes a number of %s or more." % [cvar_name, value, _number(least)])
+## Refuses (with the reason) a value outside [param least]..[param most]; either may be infinite. Never clamps.
+static func _between(value: String, cvar_name: String, least: float, most: float) -> DotResult:
+	if not value.is_valid_float() or value.to_float() < least or value.to_float() > most:
+		var want := "a number of %s or more" % _number(least) if is_inf(most) \
+			else "a number from %s to %s" % [_number(least), _number(most)]
+		return DotResult.fail(DotError.CODE_INVALID, "%s is %s; it takes %s." % [cvar_name, value, want])
 	return DotResult.success(value)
 
 

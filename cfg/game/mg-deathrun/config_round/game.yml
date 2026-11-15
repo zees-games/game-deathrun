@@ -4,13 +4,13 @@
 # --- The round
 # Seconds the runners stand behind the start gate before it drops; default 5, any length. [0.0..]
 # countdown_seconds: 5.0
-# Seconds a round runs before it is called on the clock. [30.0..1800.0]
+# Seconds a round runs before it is called on the clock. [30.0..]
 # round_seconds: 300.0
 # Seconds a player is untouchable after being put in the end arena. [0.0..10.0]
 # arrival_grace_seconds: 1.5
 # Seconds between rounds. [0.0..60.0]
 # intermission_seconds: 6.0
-# Seconds of the round's final killcam, added to the intermission (`mp_killcam_time`); 0 is off. Not added wh... [0.0..30.0]
+# Seconds of the round's final killcam, added to the intermission (`mp_killcam_time`); 0 is off. Not added wh... [0.0..]
 # killcam_seconds: 7.0
 # Seconds of warmup before the first round. 0 starts immediately. [0.0..300.0]
 # warmup_seconds: 8.0
@@ -42,5 +42,5 @@
 # weapon_pool: []
 # The weapon every activator is handed when they are called to the end. Empty draws one from the pool like a ...
 # activator_weapon: ""
-# How much more health an activator has in the end arena, as a multiple. [0.5..10.0]
+# How much more health an activator has in the end arena, as a multiple. [0.5..]
 # activator_health_scale: 1.5
