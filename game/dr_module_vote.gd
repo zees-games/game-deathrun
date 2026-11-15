@@ -19,6 +19,20 @@ static func _number(value: float) -> String:
 ## [param at_least] refuses a lower value or a non-number with the reason; it never clamps.
 func _tunable(
 	cvar_name: String, current: float, description: String, apply: Callable, at_least: float = NAN
+) -> void:
+	var cvar := add_cvar(cvar_name, _number(current), description)
+
+	if cvar == null:
+		return
+
+	if not is_nan(at_least):
+		var _v := cvar.with_validator(_at_least.bind(cvar_name, at_least))
+
+	# The handler must not capture `cvar`: it would be a reference cycle the engine never frees.
+	cvar.changed.connect(func(_old: String, new_value: String) -> void:
+		apply.call(new_value.to_float())
+		log_info("a tunable changed", {"cvar": cvar_name, "now": new_value})
+	)
 
 
 static func _at_least(value: String, cvar_name: String, least: float) -> DotResult:

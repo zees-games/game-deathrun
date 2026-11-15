@@ -537,22 +537,6 @@ func _on_config_field(key: String, _value: Variant, source: String) -> void:
 	console.set_cvar(hand, str(text))
 
 
-) -> void:
-	var cvar := add_cvar(cvar_name, _number(current), description)
-
-	if cvar == null:
-		return
-
-	if not is_nan(at_least):
-		var _v := cvar.with_validator(_at_least.bind(cvar_name, at_least))
-
-	# The handler must not capture `cvar`: it would be a reference cycle the engine never frees.
-	cvar.changed.connect(func(_old: String, new_value: String) -> void:
-		apply.call(new_value.to_float())
-		log_info("a tunable changed", {"cvar": cvar_name, "now": new_value})
-	)
-
-
 ## [b]Nothing to undo.[/b] The commands are the module's own and [DotModule] removes them;
 ## the netcode, the bridge and the roster are [DotGameModule]'s and it tears them down in
 ## the reverse order it built them. The world is NOT this module's to free: it was in the
