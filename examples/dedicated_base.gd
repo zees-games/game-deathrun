@@ -214,3 +214,32 @@ func _test_stats_hooks(live: DrProgress) -> void:
 	a.free()
 	b.free()
 	bot.free()
+
+
+func _until(condition: Callable, seconds: float) -> bool:
+	var deadline := Time.get_ticks_msec() + int(seconds * 1000.0)
+	while Time.get_ticks_msec() < deadline:
+		if bool(condition.call()):
+			return true
+		await get_tree().physics_frame
+	return bool(condition.call())
+
+
+func _module() -> DotModule:
+	return server.modules.get_module("deathrun") if server != null and server.modules != null else null
+
+
+func _run_command(line: String) -> PackedStringArray:
+	var captured: Array[String] = []
+	var context := DotCmdContext.console("", PackedStringArray())
+	context.reply_sink = func(text: String) -> void: captured.append(text)
+	server.console.execute(line, context)
+	return PackedStringArray(captured)
+
+
+func _said(lines: PackedStringArray, text: String) -> bool:
+	for line in lines:
+		if line.findn(text) >= 0:
+			return true
+
+	return false

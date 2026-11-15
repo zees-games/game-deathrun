@@ -1058,6 +1058,36 @@ func _ask(kind: int, body: PackedByteArray) -> void:
 	net.send(DrRequest.new(kind, body), 1)
 
 
+## A death: the fall goes on the player before anybody hears of it, so the client that draws it
+## reads the server's pick.
+func _apply_death(reader: DotNetReader) -> void:
+	var death := DrEvents.read_death(reader)
+
+	if not bool(death["ok"]):
+		return
+	var fell: DrPlayer = game.players.get(player_key(int(death["player_id"]))) \
+		if game != null else null
+	if fell != null and death.has("death"):
+		fell.death = death["death"]
+	death_received.emit(
+		int(death["player_id"]), int(death["by"]), death["why"], death["weapon_id"]
+	)
+
+
+## A weapon dealt, noted on the player here rather than by whoever listens, so every client draws
+## the gun in a watched player's hand: see `DrPlayer.dealt`.
+func _apply_armed(reader: DotNetReader) -> void:
+	var armed := DrEvents.read_armed(reader)
+
+	if not bool(armed["ok"]):
+		return
+	var dealt_to: DrPlayer = game.players.get(player_key(int(armed["player_id"]))) \
+		if game != null else null
+	if dealt_to != null:
+		dealt_to.note_dealt(armed["weapon_id"], game.round_number)
+	armed_received.emit(int(armed["player_id"]), armed["weapon_id"])
+
+
 func _on_event(message: DotNetMessage) -> void:
 	var event := message as DrEvent
 
@@ -1131,34 +1161,14 @@ func _on_event(message: DotNetMessage) -> void:
 
 				phase_received.emit(int(moved["phase"]))
 		DrEvents.Kind.DEATH:
-			var death := DrEvents.read_death(reader)
-
-			if bool(death["ok"]):
-				# The fall goes on the player before anybody hears of the death, so the client
-				# that draws it reads the server's pick.
-				var fell: DrPlayer = game.players.get(player_key(int(death["player_id"]))) \
-					if game != null else null
-				if fell != null and death.has("death"):
-					fell.death = death["death"]
-				death_received.emit(
-					int(death["player_id"]), int(death["by"]), death["why"], death["weapon_id"]
-				)
+			_apply_death(reader)
 		DrEvents.Kind.HIT:
 			var hit := DrEvents.read_hit(reader)
 
 			if bool(hit["ok"]):
 				hit_received.emit(hit["point"], bool(hit["killed"]), bool(hit["headshot"]))
 		DrEvents.Kind.ARMED:
-			var armed := DrEvents.read_armed(reader)
-
-			if bool(armed["ok"]):
-				# Noted on the player here rather than by whoever listens, so every client
-				# draws the gun in a watched player's hand: see `DrPlayer.dealt`.
-				var dealt_to: DrPlayer = game.players.get(player_key(int(armed["player_id"]))) \
-					if game != null else null
-				if dealt_to != null:
-					dealt_to.note_dealt(armed["weapon_id"], game.round_number)
-				armed_received.emit(int(armed["player_id"]), armed["weapon_id"])
+			_apply_armed(reader)
 		DrEvents.Kind.CHAT:
 			var wire := DrEvents.read_chat(reader)
 
