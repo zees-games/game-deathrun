@@ -29,25 +29,25 @@ extends DotConfig
 ## Seconds a round runs before it is called on the clock.
 ##
 ## A course document may ask for less (`round_seconds` in the document); this is the
-## ceiling (any length of 30 or more, the server operator decides). Five minutes is
+## ceiling (any length above zero, the server operator decides; no upper cap). Five minutes is
 ## what the round-based servers this game is modelled on give a course.
-@export_range(30.0, 1800.0, 5.0, "or_greater") var round_seconds: float = 300.0
+@export_range(1.0, 1800.0, 5.0, "or_greater") var round_seconds: float = 300.0
 
 ## Seconds a player is untouchable after being put in the end arena.
 ##
 ## [b]Not zero, for the teleport.[/b] A runner who crosses the finish lands in a room with
 ## somebody already holding a gun, and dying on the tick you arrive is a death nobody could
 ## have done anything about.
-@export_range(0.0, 10.0, 0.25) var arrival_grace_seconds: float = 1.5
+@export_range(0.0, 10.0, 0.25, "or_greater") var arrival_grace_seconds: float = 1.5
 
 ## Seconds between rounds.
-@export_range(0.0, 60.0, 1.0) var intermission_seconds: float = 6.0
+@export_range(0.0, 60.0, 1.0, "or_greater") var intermission_seconds: float = 6.0
 
 ## Seconds of the round's final killcam, added to the intermission (`mp_killcam_time`); 0 is off. Not added when the intermission is 0.
 @export_range(0.0, 30.0, 0.5, "or_greater") var killcam_seconds: float = 7.0
 
 ## Seconds of warmup before the first round. 0 starts immediately.
-@export_range(0.0, 300.0, 1.0) var warmup_seconds: float = 8.0
+@export_range(0.0, 300.0, 1.0, "or_greater") var warmup_seconds: float = 8.0
 
 ## Who wins a round the clock ends: 2 the activators, 1 the runners, 0 nobody.
 ##
@@ -92,29 +92,29 @@ extends DotConfig
 
 ## Points for each player on the side that wins a round, and for the first runner across.
 ## They add up over a match and show on the Tab board.
-@export_range(0, 100, 1) var winner_points: int = 10
-@export_range(0, 100, 1) var first_across_points: int = 5
+@export_range(0, 100, 1, "or_greater") var winner_points: int = 10
+@export_range(0, 100, 1, "or_greater") var first_across_points: int = 5
 
 ## Whether shots hurt a player's own side (runners shooting runners, activators shooting activators).
 @export var friendly_fire: bool = false
 
 ## Seconds after a runner leaves a running trap's reach that a death on the floor is still credited to whoever pressed it.
-@export_range(0.0, 30.0, 0.25) var credit_seconds: float = 4.0
+@export_range(0.0, 30.0, 0.25, "or_greater") var credit_seconds: float = 4.0
 
 # --- The players -----------------------------------------------------------
 
 @export_group("The players")
 
-@export_range(1.0, 400.0, 1.0) var player_health: float = 100.0
+@export_range(1.0, 400.0, 1.0, "or_greater") var player_health: float = 100.0
 
 ## How fast a player runs, in m/s.
-@export_range(1.0, 20.0, 0.1) var run_speed: float = 7.0
+@export_range(1.0, 20.0, 0.1, "or_greater") var run_speed: float = 7.0
 
 ## What fraction of [member run_speed] holding the walk key gives.
 @export_range(0.1, 1.0, 0.01) var walk_speed_scale: float = 0.45
 
 ## Metres a standing jump rises.
-@export_range(0.1, 5.0, 0.05) var jump_height: float = 1.2
+@export_range(0.1, 5.0, 0.05, "or_greater") var jump_height: float = 1.2
 
 ## Metres per second squared, for everything.
 ##
@@ -133,14 +133,14 @@ extends DotConfig
 
 ## How much a player can steer in the air. The round-based shooters' feel at the default:
 ## enough to strafe round a corner mid-jump, not enough to turn back.
-@export_range(0.0, 200.0, 1.0) var air_accelerate: float = 30.0
+@export_range(0.0, 200.0, 1.0, "or_greater") var air_accelerate: float = 30.0
 
 # --- The traps -------------------------------------------------------------
 
 @export_group("The traps")
 
 ## Metres from an activator's eyes a button can be pressed from.
-@export_range(0.5, 6.0, 0.1) var button_reach: float = 2.2
+@export_range(0.5, 6.0, 0.1, "or_greater") var button_reach: float = 2.2
 
 ## How directly an activator has to look at a button to press it, as the cosine of the most
 ## the aim may be off. 0.5 is sixty degrees either side.
@@ -160,7 +160,7 @@ extends DotConfig
 ## Seconds between a button being pressed and its trap moving, added to every trap's own delay:
 ## the tell. The trap's parts flash red for it, so a runner who is watching can read the
 ## activator and jump. 0 fires on the press, as it did before 2026-10-06.
-@export_range(0.0, 3.0, 0.05) var trap_tell_seconds: float = 0.35
+@export_range(0.0, 3.0, 0.05, "or_greater") var trap_tell_seconds: float = 0.35
 
 ## Whether the next course is drawn at random (seeded) rather than taken in order.
 @export var shuffle_courses: bool = true
@@ -216,7 +216,7 @@ extends DotConfig
 
 ## Deprecated: what `dr_bot_spread` last set `bot_aim_error` to. A stand-in's aim is dot-bot's
 ## ([DotBotAim] on `bot_difficulty`); nothing reads this but the alias.
-@export_range(0.0, 45.0, 0.5) var bot_aim_spread_degrees: float = 7.0
+@export_range(0.0, 45.0, 0.5, "or_greater") var bot_aim_spread_degrees: float = 7.0
 
 ## How likely a stand-in runner is to mistime a jump, in a hundred.
 @export_range(0.0, 100.0, 1.0) var bot_fumble_chance: float = 8.0
@@ -236,10 +236,10 @@ extends DotConfig
 @export_enum("anybody", "own side", "nobody") var spectate_camera: int = 0
 
 ## Seconds the death camera holds on the spot a person fell from, then the freeze camera. Client-side only (no replicated state).
-@export_range(0.0, 10.0, 0.1) var death_cam_seconds: float = 1.5
+@export_range(0.0, 10.0, 0.1, "or_greater") var death_cam_seconds: float = 1.5
 
 ## Seconds the freeze camera holds on whoever put a player out before the free one.
-@export_range(0.0, 10.0, 0.1) var freeze_cam_seconds: float = 1.5
+@export_range(0.0, 10.0, 0.1, "or_greater") var freeze_cam_seconds: float = 1.5
 
 # --- Progress --------------------------------------------------------------
 

@@ -4,7 +4,7 @@
 # --- The courses
 # Which courses this server may play, by id. Empty means every one it has.
 # course_ids: []
-# Seconds between a button being pressed and its trap moving, added to every trap's own delay: the tell. The ... [0.0..3.0]
+# Seconds between a button being pressed and its trap moving, added to every trap's own delay: the tell. The ... [0.0..]
 # trap_tell_seconds: 0.35
 # Whether the next course is drawn at random (seeded) rather than taken in order.
 # shuffle_courses: true
@@ -18,9 +18,9 @@
 # --- Watching
 # Who somebody who is out may watch: 0 anybody, 1 their own side, 2 nobody.
 # spectate_camera: 0
-# Seconds the death camera holds on the spot a person fell from, then the freeze camera. Client-side only (no... [0.0..10.0]
+# Seconds the death camera holds on the spot a person fell from, then the freeze camera. Client-side only (no... [0.0..]
 # death_cam_seconds: 1.5
-# Seconds the freeze camera holds on whoever put a player out before the free one. [0.0..10.0]
+# Seconds the freeze camera holds on whoever put a player out before the free one. [0.0..]
 # freeze_cam_seconds: 1.5
 
 # --- Progress

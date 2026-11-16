@@ -9,7 +9,7 @@ const DrConfig := preload("../game/dr_config.gd")
 const ROOT_ARG := "--cfgroot="
 var ROOT := _root()
 const GAME := "mg-deathrun"
-const CHECKS := 31
+const CHECKS := 37
 
 
 func _ready() -> void:
@@ -59,6 +59,7 @@ func _run() -> void:
 	_check(not strict.load_layers().ok, "strict: an unknown key is refused")
 	DirAccess.remove_absolute(ROOT + "_config_bad.json")
 
+	_no_caps(binder, console, config)
 	_layers()
 	_templates(binder)
 
@@ -149,3 +150,27 @@ func _templates(binder: DotGameConfigBinder) -> void:
 		if not FileAccess.file_exists("res://" + path) or FileAccess.get_file_as_string("res://" + path) != files[path]:
 			stale.append(path)
 	_check(stale.is_empty(), "the shipped files match the config (run addons/dot_game/qa/dot_game_cfg_templates.gd)", ",".join(stale))
+
+
+## No hard caps: only a bound that is a unit (a fraction, a percentage, a cosine) has an upper limit; every other number
+## is open-ended, a cvar takes a far larger value, and a value below a lower bound is refused loudly, never clamped.
+func _no_caps(binder: DotGameConfigBinder, console: DotConsole, config: Object) -> void:
+	const UNIT_BOUNDS := ["walk_speed_scale", "button_cone", "bot_fumble_chance"]
+	var capped := PackedStringArray()
+	for e: Dictionary in binder.schema():
+		if e.has("max") and not UNIT_BOUNDS.has(e["key"]):
+			capped.append(e["key"])
+	_check(capped.is_empty(), "no field has an upper cap but the unit bounds", ",".join(capped))
+	console.set_cvar("dr_round_seconds", "86400")
+	_check(is_equal_approx(config.round_seconds, 86400.0), "a round may last a day (the old 1800 s cap is gone)")
+	console.set_cvar("dr_winner_points", "100000")
+	_check(config.winner_points == 100000, "points have no cap")
+	var before: float = config.gravity
+	console.set_cvar("dr_gravity", "-3")
+	_check(is_equal_approx(config.gravity, before), "a value below the floor is refused, not clamped")
+	var zero := DrConfig.new()
+	zero.round_seconds = 0.0
+	_check(not zero.validate().ok, "a round of zero seconds fails validation loudly")
+	zero.round_seconds = 300.0
+	zero.max_activators = 0
+	_check(zero.validate().ok and zero.activators_for(200) == 25, "max_activators 0 means no limit")
