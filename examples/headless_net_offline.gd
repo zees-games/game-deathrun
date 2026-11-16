@@ -16,11 +16,8 @@ func _test_neutralise() -> void:
 	_finished()
 
 
-## Every encoder against its decoder. Nothing checks that two ends of a serialisation are
-## inverses for you: dot-moderation once wrote "voice muted" and read back a warning.
-func _test_the_codec() -> void:
-	_section("every event decodes to what was encoded")
-
+## The command codec: the aim bit and the batch it rides in.
+func _check_command_codec() -> void:
 	# The command: the aim bit rides after `use`, alone and in a batch with commands that do not carry it.
 	var sent_commands: Array = []
 	for i in range(3):
@@ -51,6 +48,14 @@ func _test_the_codec() -> void:
 	plain._write(bits_aim)
 	_check(bits_plain.to_bytes().size() == bits_aim.to_bytes().size() and plain._equals(plain) and not plain._equals(DrNetCommand.new()),
 		"the bit costs no byte, and a command with it is not equal to one without", "%d bytes" % bits_aim.to_bytes().size())
+
+
+## Every encoder against its decoder. Nothing checks that two ends of a serialisation are
+## inverses for you: dot-moderation once wrote "voice muted" and read back a warning.
+func _test_the_codec() -> void:
+	_section("every event decodes to what was encoded")
+
+	_check_command_codec()
 
 	var hello := DrEvents.read_hello(DotNetReader.new(DrEvents.write_hello(SESSION, 64, 1234, 5.0, 300.0)))
 	_check(bool(hello["ok"]) and int(hello["player_id"]) == SESSION
