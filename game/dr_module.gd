@@ -285,8 +285,9 @@ func _bind_rule_cvars(world: DrGame) -> void:
 		"Seconds the killcam of a round's last moment plays, added to the intermission (0 for none)",
 		DotConVar.FLAG_ARCHIVE | DotConVar.FLAG_NOTIFY | DotConVar.FLAG_REPLICATED)
 	if killcam != null:
+		var _floor := killcam.with_min(0.0)  # no ceiling; below 0 is refused
 		killcam.changed.connect(func(_old: String, new_value: String) -> void:
-			world.config.killcam_seconds = maxf(new_value.to_float(), 0.0)
+			world.config.killcam_seconds = new_value.to_float()
 			world.apply_intermission())
 
 	# REPLICATED: where the clients' killcam camera sits (0 the killer's eye, 1 behind the killer).
