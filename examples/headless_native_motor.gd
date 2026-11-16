@@ -9,7 +9,7 @@ const DrPlayer := preload("../game/dr_player.gd")
 ## wall and pillar, give the same bytes every tick, whole and in two halves, so a web client and a native server agree.
 
 # Hit registration and lag compensation are not touched. With no library the native half is
-# skipped; DOT_SIM_REQUIRE_NATIVE=1 (CI) fails instead.
+# skipped; GS_SIM_REQUIRE_NATIVE=1 (CI) fails instead.
 
 const SECTIONS := 3
 const CHECKS := 7
@@ -36,7 +36,7 @@ func _run() -> void:
 	var loaded := DotFpsPhysicsBody.native_full_available()
 	if not loaded:
 		print("  dot-sim's motor module is not loaded: the native half is skipped")
-		_check(OS.get_environment("DOT_SIM_REQUIRE_NATIVE") != "1", "the library is loaded (DOT_SIM_REQUIRE_NATIVE=1)")
+		_check((OS.get_environment("GS_SIM_REQUIRE_NATIVE") if OS.has_environment("GS_SIM_REQUIRE_NATIVE") else OS.get_environment("DOT_SIM_REQUIRE_NATIVE")) != "1", "the library is loaded (GS_SIM_REQUIRE_NATIVE=1)")
 		_finished += 1
 		_report_sections(_entered, _finished, SECTIONS - 2, 3)
 		return
