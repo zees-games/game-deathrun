@@ -19,14 +19,20 @@ const CLIPS_OBJECT: PackedStringArray = ["approach"]
 const PRESS_AT := 0.6
 ## A trap that stays out, or runs very long, is filmed this long after the press (seconds).
 const TRAP_TAIL := 4.0
-const RUN_SPEED := 5.0
-const RUN_FROM := 7.0
+## A sprint, the pace the stride clips are authored at (the person run clip is judged at 6.5 too); slower and the
+## sprint clip's planted feet slide against the ground.
+const RUN_SPEED := 6.5
+const RUN_FROM := 9.1
 const OBJECT_SECONDS := 3.0
 ## The piece kinds filmed; everything else a runner sees is in the course around them.
 const PIECE_KINDS: PackedStringArray = ["mover", "turntable", "ramp", "ball", "cylinder", "kill", "teleport"]
 
 var entries: Dictionary = {}
 var course: DrCourse = null
+## The runner's height last frame, and when: a step in the ground is climbed at STEP_MPS, as a body steps up a kerb.
+var _y := 0.0
+var _y_at := -1.0
+const STEP_MPS := 4.0
 
 var _entry: Dictionary = {}
 var _clip := ""
@@ -122,7 +128,28 @@ func _trap_runner(t: float) -> Dictionary:
 	if _clip == "watch":
 		return {"at": stand, "speed": 0.0}
 	# Arrives at the victim point at 1.4 s, and runs on past it.
-	return {"at": Vector3(stand.x, stand.y, stand.z + RUN_FROM - RUN_SPEED * t), "speed": RUN_SPEED}
+	var z := stand.z + RUN_FROM - RUN_SPEED * t
+	return {"at": Vector3(stand.x, _smooth(_surface(Vector3(stand.x, stand.y, z), stand.y + 2.0, stand.y), t), z), "speed": RUN_SPEED}
+
+
+func _smooth(target: float, t: float) -> float:
+	if t <= _y_at or _y_at < 0.0:
+		_y = target
+	else:
+		_y = move_toward(_y, target, STEP_MPS * (t - _y_at))
+	_y_at = t
+	return _y
+
+
+## The surface under [param at] found by a ray from [param top] down, or [param fallback] when nothing is there, so a
+## runner follows a slope or stairs (a helix, a ramp) instead of sinking into it or hovering over it.
+func _surface(at: Vector3, top: float, fallback: float) -> float:
+	var world := course.get_world_3d() if course != null and course.is_inside_tree() else null
+	if world == null:
+		return fallback
+	var query := PhysicsRayQueryParameters3D.create(Vector3(at.x, top, at.z), Vector3(at.x, top - 8.0, at.z))
+	var hit := world.direct_space_state.intersect_ray(query)
+	return float((hit["position"] as Vector3).y) if not hit.is_empty() else fallback
 
 
 func _victim(spec: Dictionary) -> Vector3:
@@ -160,9 +187,11 @@ func _piece_runner(t: float) -> Dictionary:
 	var extent := _footprint(spec)
 	# Walks up to 1.6 m short of its near (+Z) edge: a pit or a ball is looked at, a ramp is walked at.
 	var stop_z := centre.z + extent.z * 0.5 + 1.6
-	var z := maxf(stop_z, stop_z + 4.0 - RUN_SPEED * t)
+	# Sprints and reaches the spot as the clip ends; a stop inside the clip makes the stride clips slide their feet, a
+	# capture artefact (a runner never halts dead) and not a defect of the figure.
+	var z := stop_z + RUN_SPEED * maxf(OBJECT_SECONDS - t, 0.0)
 	var floor_y := _ground(Vector3(centre.x, centre.y, z), centre.y + 2.0)
-	return {"at": Vector3(centre.x, floor_y, z), "speed": RUN_SPEED if z > stop_z else 0.0}
+	return {"at": Vector3(centre.x, _smooth(floor_y, t), z), "speed": RUN_SPEED}
 
 
 ## The box a piece covers on the ground (x, y, z extent).
