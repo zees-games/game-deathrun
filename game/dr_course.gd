@@ -1020,6 +1020,21 @@ func button_for(eyes: Vector3, aim: Vector3, reach: float, cone: float) -> int:
 ## or every part's box at rest and at full extension, grown by a metre (and two upward, so
 ## somebody STANDING on a trapdoor is inside its zone). What a stand-in activator watches.
 func trap_zone(index: int) -> AABB:
+	if _zone_cache.size() != traps.size():
+		_zone_cache.clear()
+		_zone_cache.resize(traps.size())
+
+	if _zone_cache[index] == null:
+		_zone_cache[index] = _compute_trap_zone(index)
+
+	return _zone_cache[index]
+
+
+## The zones are pure functions of the trap specs, which only change in clear() and the build.
+var _zone_cache: Array = []
+
+
+func _compute_trap_zone(index: int) -> AABB:
 	var spec: Dictionary = traps[index]["spec"]
 
 	if spec.has("zone"):
@@ -1424,6 +1439,7 @@ func _index_pieces() -> void:
 
 
 func _forget_lookups() -> void:
+	_zone_cache.clear()
 	_kill_boxes.clear()
 	_teleport_specs.clear()
 	_piece_index_size = -1
