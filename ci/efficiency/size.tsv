@@ -7,8 +7,8 @@ examples/dedicated.gd::_test_the_course_vote	100
 examples/headless_courses.gd::_test_teleport_pad	110
 examples/headless_net.gd::_build	91
 examples/headless_net.gd::_test_a_hit_is_the_shooters	96
-game/dr_client.gd	1539
-game/dr_course.gd	1647
+game/dr_client.gd	1538
+game/dr_course.gd	1507
 game/dr_course_doc.gd::_piece	81
 game/dr_course_doc.gd::_trap	88
 game/dr_game.gd	2077
