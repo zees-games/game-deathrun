@@ -1522,6 +1522,9 @@ static func new_chat() -> DotGameChatClient:
 	]
 	box.max_length = DrServices.chat_rules().max_length
 	box.voice_config = DrServices.voice_format()
+	# A phone: three narrow rows in the corner, so a log line is not drawn across the thumbstick and the buttons.
+	if DotPlatform.has_touch():
+		box.window_settings = {"max_lines": 3, "width": 200.0, "margin_left": 12.0, "margin_bottom": 8.0}
 	return box
 
 
