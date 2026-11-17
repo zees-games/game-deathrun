@@ -464,7 +464,7 @@ static func practice() -> Dictionary:
 		"pieces": pieces,
 		"traps": traps,
 		# No physics props (toys) of its own: only prop hunt, murder mystery, hide n seek and
-		# the playground keep them. Tests set [member practice_toys].
+		# Playlot keep them. Tests set [member practice_toys].
 		"toys": practice_toys.duplicate(true),
 		"start": {"at": [0.0, 0.0, 4.5], "size": [6.0, 3.0, 6.0], "yaw": 0.0},
 		"activators": {"at": [6.25, 3.0, 5.0], "size": [4.0, 3.0, 4.0], "yaw": 0.0},
