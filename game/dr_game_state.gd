@@ -169,6 +169,8 @@ var ads_rules: ZeeAdsRules = ZeeAdsRules.load_config()
 ## (do players and stand-ins block each other). Bound by the module (REPLICATED) and followed by a
 ## client, which places its camera under the first and predicts its own player under the second.
 var view_rules: DotPlayerViewRules = DotPlayerViewRules.new()
+## dot-mobile's `sv_mobile_*`, `sv_aim_assist*` and `sv_autofire*`: what a phone player may use. Bound REPLICATED by the module, followed by the client.
+var mobile_rules: DotMobileRules = DotMobileRules.new()
 var body_rules: DotPlayerBodyRules = DotPlayerBodyRules.new()
 ## The ambience cvars (`dr_ambient*`): bound by the module (REPLICATED), followed by a client through its link.
 var ambient_rules: DotAmbienceRules = DrAmbience.make_rules()

@@ -247,16 +247,11 @@ static func tunables_for(config: DrConfig) -> DotFpsTunables:
 	return t
 
 
-## Set by the client's touch buttons, so a finger on one does not also drag the view.
-static var touch_ignore_fn: Callable = Callable()
-
-
 ## A [DotFpsTouchSampler] on a touch device (it still reads keys), else the plain sampler, with the actions registered.
 static func new_sampler(p_tunables: DotFpsTunables) -> DotFpsSampler:
 	var made: DotFpsSampler
 	if DotPlatform.has_touch():
 		var touch := DotFpsTouchSampler.new(p_tunables)
-		touch.ignore_fn = touch_ignore_fn
 		made = touch
 	else:
 		made = DotFpsSampler.new(p_tunables)

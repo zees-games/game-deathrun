@@ -200,6 +200,8 @@ func _follow_cvars() -> void:
 		# The server's mp_forceview and mp_solidplayers: this end places its own camera and
 		# predicts its own player.
 		var _view := game.view_rules.follow_cvars(link)
+		# sv_mobile_*: the touch controls this end draws.
+		var _mobile := game.mobile_rules.follow_cvars(link)
 		var _solid := game.body_rules.follow_cvars(link)
 		var _ambient := game.ambient_rules.follow_cvars(link)
 		if link.has_method(&"replicated_cvar"):
@@ -869,36 +871,28 @@ func _build_hud() -> void:
 	_build_touch()
 
 
-## On a touch device: use (held, like the key), jump and duck (held on the sampler). Offsets are from the bottom-right.
+## On a touch device: dot-mobile's overlay (see [DrTouch]): use (held, like the key), jump and duck (held on the sampler).
 func _build_touch() -> void:
 	if not DotPlatform.has_touch():
 		return
-	_touch = DotTouchButtons.new()
-	_touch.name = "TouchButtons"
-	_touch.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_touch.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	touch_layout().apply(_touch, platform)
-	_touch.button_down.connect(_touch_button.bind(true))
-	_touch.button_up.connect(_touch_button.bind(false))
-	hud.add_child(_touch)
-	DrPlayer.touch_ignore_fn = _touch.contains_point
-	if _sampler is DotFpsTouchSampler:
-		(_sampler as DotFpsTouchSampler).ignore_fn = _touch.contains_point
-		(_sampler as DotFpsTouchSampler).set_screen_width(get_viewport().get_visible_rect().size.x)
+	_touch = DrTouch.new()
+	_touch.use_fn = func(down: bool) -> void: _use = down and not _covered()
+	_touch.sampler_fn = func() -> DotFpsSampler:
+		return _sampler if not _offline else (player.sampler if player != null else null)
+	_touch.busy_fn = func() -> bool:
+		return _covered() or is_spectating() or (platform != null and platform.is_input_blocked())
+	_touch.live_fn = func() -> bool: return player != null and player.is_alive() and not _covered() and not is_spectating()
+	_touch.menu_button_fn = func() -> Button:
+		var menu: Object = settings.menu if settings != null else null
+		return menu.menu_button if menu != null else null
+	_touch.build(hud, game.mobile_rules, touch_layout().buttons(), platform)
+	_touch.sync()
 
 
-func _touch_button(id: StringName, down: bool) -> void:
-	if id == &"use":
-		_use = down and not _covered()
-		return
-	var bit := DotFpsCommand.BUTTON_JUMP if id == &"jump" else (DotFpsCommand.BUTTON_CROUCH if id == &"crouch" else 0)
-	var live: DotFpsSampler = _sampler if not _offline else (player.sampler if player != null else null)
-	if bit != 0 and live is DotFpsTouchSampler:
-		(live as DotFpsTouchSampler).hold(bit, down and not _covered())
-
-
-## Screen touches go to the sampler before any Control can take them.
+## Screen touches the overlay does not hold (it is down, or paused) go to the sampler before any Control can take them.
 func _input(event: InputEvent) -> void:
+	if _touch != null and _touch.takes(event):
+		return
 	if event is InputEventScreenTouch or event is InputEventScreenDrag:
 		var live: DotFpsSampler = _sampler if not _offline else (player.sampler if player != null else null)
 		if live != null and not _covered():
@@ -1119,6 +1113,8 @@ func _on_hit(point: Vector3, killed: bool, headshot: bool) -> void:
 
 func _process(delta: float) -> void:
 	_pose_stage()
+	if _touch != null:
+		_touch.sync()
 
 	var _shown := present_frame(
 		net, game, player, not third_person, delta, -1.0, _watched_through_eyes()

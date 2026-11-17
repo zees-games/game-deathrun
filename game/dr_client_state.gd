@@ -3,6 +3,7 @@ extends "dr_client_flashlight.gd"
 ## The client's constants, settings and plain state, and its touch layout: what its parts share. No `class_name`; [code]dr_client.gd[/code] extends this.
 
 const DrBindings := preload("dr_bindings.gd")
+const DrTouch := preload("dr_touch.gd")
 const DrWeaponIcons := preload("dr_weapon_icons.gd")
 const DrSettings := preload("dr_settings.gd")
 const DrServices := preload("dr_services.gd")
@@ -102,7 +103,7 @@ var base_fov: float = 92.0
 ## The use key, held. Presses the button in front of an activator; see `DrGame._advance_buttons`.
 var _use: bool = false
 
-var _touch: DotTouchButtons = null
+var _touch: DrTouch = null
 
 ## dot-game's platformer preset without sprint, board and chat (a runner has no sprint key and the board and chat are not routed from the touch cluster).
 static func touch_layout() -> DotGameTouchLayout:

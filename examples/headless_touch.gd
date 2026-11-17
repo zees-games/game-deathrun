@@ -1,12 +1,13 @@
 extends DotGameCheckSuite
 
-## The touch layout: three buttons that fit a phone without overlapping, the sampler a touch device gets, and a finger on a button kept off the look stick.
+## The touch layout: three buttons that fit a phone without overlapping, the sampler a touch device gets, and dot-mobile's overlay driving that sampler (stick, look, use, jump, duck, a menu pausing it).
 ## Run: `godot --headless --path . res://examples/headless_touch.tscn`
 
 const DrClient := preload("../game/dr_client.gd")
 const DrPlayer := preload("../game/dr_player.gd")
 const DrSettings := preload("../game/dr_settings.gd")
-const CHECKS := 14
+const DrTouch := preload("../game/dr_touch.gd")
+const CHECKS := 26
 
 
 func _ready() -> void:
@@ -45,11 +46,7 @@ func _run() -> void:
 			var use_pos := buttons.centre_of(&"use")
 			_check(buttons.contains_point(use_pos), "a point on use is the button's")
 			_check(not buttons.contains_point(Vector2(100, 100)), "a point on the left half is the look stick's")
-			DrPlayer.touch_ignore_fn = buttons.contains_point
-			var made := DrPlayer.new_sampler(DotFpsTunables.new()) as DotFpsTouchSampler
-			_check(made.ignore_fn.is_valid() and made.ignore_fn.call(use_pos), "the sampler ignores a finger on a button")
 		buttons.free()
-	DrPlayer.touch_ignore_fn = Callable()
 	sampler = null
 
 	var settings := DrSettings.new()
@@ -66,4 +63,63 @@ func _run() -> void:
 	_check(not off.visible, "no touch: the buttons are hidden")
 	off.free()
 	DotPlatform.touch_override = -1
+	await _overlay()
 	_report(CHECKS)
+
+
+## dot-mobile's overlay over a HUD of the real type (a CanvasLayer, as DrHud is), driving a touch sampler.
+func _overlay() -> void:
+	DotPlatform.touch_override = 1
+	var hud := CanvasLayer.new()
+	add_child(hud)
+	var sampler := DotFpsTouchSampler.new(DotFpsTunables.new())
+	var state := {"use": false, "busy": false}
+	var touch := DrTouch.new()
+	touch.use_fn = func(down: bool) -> void: state["use"] = down
+	touch.sampler_fn = func() -> DotFpsSampler: return sampler
+	touch.busy_fn = func() -> bool: return state["busy"]
+	touch.live_fn = func() -> bool: return true
+	touch.build(hud, DotMobileRules.new(), DrClient.touch_layout().buttons())
+	touch.sync()
+	await get_tree().process_frame
+	var controls := touch.controls
+	_check(controls != null and controls.touch and controls.sampler == sampler, "the overlay drives the client's own sampler", str(touch.describe()))
+	_check(controls.get_parent() == hud, "it hangs under the HUD")
+	var ids: Array[StringName] = []
+	for b: Dictionary in DrClient.touch_layout().buttons():
+		ids.append(b["id"])
+	var held := 0
+	for id: StringName in ids:
+		if controls.buttons.centre_of(id) != Vector2.ZERO:
+			held += 1
+	_check(held == ids.size(), "every layout button is on the overlay", str(held))
+	var tap := InputEventScreenTouch.new()
+	tap.pressed = true
+	var fake := InputEventMouseMotion.new()
+	fake.device = InputEvent.DEVICE_ID_EMULATION
+	_check(touch.takes(tap) and touch.takes(fake), "it takes touches and the mouse emulated from them")
+	var real := InputEventMouseMotion.new()
+	_check(not touch.takes(real), "a real mouse is the game's")
+	_check(controls.sampler.ignore_fn.is_valid(), "the sampler is told which fingers are buttons")
+	controls.buttons.button_down.emit(&"use")
+	_check(bool(state["use"]), "use is held while its button is")
+	controls.buttons.button_up.emit(&"use")
+	_check(not bool(state["use"]), "and let go with it")
+	var thumb := InputEventScreenTouch.new()
+	thumb.index = 3
+	thumb.pressed = true
+	thumb.position = controls.buttons.centre_of(&"jump")
+	controls.buttons._input(thumb)
+	_check(sampler._held == DotFpsCommand.BUTTON_JUMP, "jump is held on the sampler", str(sampler._held))
+	thumb.pressed = false
+	controls.buttons._input(thumb)
+	_check(sampler._held == 0, "and let go with the thumb", str(sampler._held))
+	state["busy"] = true
+	touch.sync()
+	_check(not controls.visible and not touch.active(), "a menu pauses it")
+	_check(not touch.takes(tap) and not touch.takes(fake), "and a paused overlay leaves touches and the emulated mouse to the menu")
+	state["busy"] = false
+	touch.sync()
+	_check(touch.active(), "closing the menu brings it back")
+	hud.free()
+	DotPlatform.touch_override = -1
