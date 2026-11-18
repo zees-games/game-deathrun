@@ -18,7 +18,7 @@ const DrTestToys := preload("dr_test_toys.gd")
 ## Sections and checks are both counted; mg-smash-copter's notes say why the second matters.
 
 const SECTIONS := 19
-const CHECKS := 113
+const CHECKS := 114
 
 
 func _ready() -> void:

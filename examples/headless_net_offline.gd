@@ -79,6 +79,14 @@ func _test_the_codec() -> void:
 	var decoded := DrCourseDoc.decode(stage["encoded"]) if bool(stage["ok"]) else DotResult.fail(DotError.CODE_PARSE, "no stage")
 	_check(decoded.ok and DrCourseDoc.digest(decoded.value) == DrCourseDoc.digest(doc), "STAGE carries the document whole")
 
+	var big_body := PackedByteArray()
+	big_body.resize(30000)
+	var sent := DotNetWriter.new()
+	preload("res://game/net/dr_event.gd").new(DrEvents.Kind.STAGE, big_body)._write(sent)
+	var arrived := preload("res://game/net/dr_event.gd").new()
+	arrived._read(DotNetReader.new(sent.to_bytes()))
+	_check(arrived.body.size() == big_body.size(), "an event carries a course-sized body (30 KB), not just 4 KB", str(arrived.body.size()))
+
 	var join := DrEvents.read_join(DotNetReader.new(DrEvents.write_join(SESSION, 9, "Ada", DrGame.ACTIVATORS, null)))
 	_check(bool(join["ok"]) and int(join["team"]) == DrGame.ACTIVATORS, "JOIN carries the side", str(join.get("team")))
 

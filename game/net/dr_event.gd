@@ -6,7 +6,9 @@ const DrEvents := preload("dr_events.gd")
 
 const NAME := &"dr.event"
 const KIND_BITS := 5
-const MAX_BODY := 4096
+## Room for a [constant DrEvents.STAGE_BYTES] course document and its length prefix: a course is the
+## largest thing an event carries, and a cap below it drops the body and leaves a client with no world.
+const MAX_BODY := DrEvents.STAGE_BYTES + 8
 
 var kind: int = 0
 var body: PackedByteArray = PackedByteArray()
