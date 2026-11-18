@@ -1283,8 +1283,7 @@ func _adopt_tick_rate(rate: int) -> void:
 ## WARN rather than a course with holes in it.
 func _apply_stage(reader: DotNetReader) -> void:
 	var told := DrEvents.read_stage(reader)
-
-	if not bool(told["ok"]) or game == null:
+	if game == null or not bool(told["ok"]):
 		return
 
 	var decoded := DrCourseDoc.decode(told["encoded"])
@@ -1296,9 +1295,10 @@ func _apply_stage(reader: DotNetReader) -> void:
 		return
 
 	var built := game.build_stage(decoded.value)
-
 	if built.ok:
 		stage_received.emit(game.stage.id())
+	else:
+		DotLog.warn(CHANNEL, "the course arrived but could not be built", {"why": built.error.message, "detail": built.error.detail})
 
 
 func _apply_join(reader: DotNetReader) -> void:

@@ -205,7 +205,12 @@ static func write_stage(encoded: PackedByteArray) -> PackedByteArray:
 
 static func read_stage(r: DotNetReader) -> Dictionary:
 	var encoded := r.read_bytes(STAGE_BYTES)
-	return {"encoded": encoded, "ok": r.ok() and not encoded.is_empty()}
+	var ok := r.ok() and not encoded.is_empty()
+	if not ok:
+		DotLog.warn("dr_events", "the STAGE event could not be read; this client will have no course", {
+			"bytes_read": encoded.size(), "reader_ok": r.ok(), "limit": STAGE_BYTES,
+		})
+	return {"encoded": encoded, "ok": ok}
 
 
 # --- Players ---------------------------------------------------------------
