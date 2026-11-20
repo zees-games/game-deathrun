@@ -1,6 +1,6 @@
-This is a game to demonstrate the capabilities of the [**Gamespice collection**](https://gamespice.net) built on-top of [Godot 4](https://godotengine.org/) and [Gamespice](https://gamespice.net). In this 3D game, most players are **runners** racing down a long course full of traps, while one or more **activators** stand beside it with a button for every trap and try to kill them. Whoever makes it to the end gets a weapon and fights the activators. This is inspired by the classic deathrun minigame maps!
+This is a game to demonstrate the capabilities of the [**GameSpice collection**](https://gamespice.net) built on-top of [Godot 4](https://godotengine.org/) and [**GameSpice**](https://gamespice.net). In this 3D game, most players are **runners** racing down a long course full of traps, while one or more **activators** stand beside it with a button for every trap and try to kill them. Whoever makes it to the end gets a weapon and fights the activators. This is inspired by the classic deathrun minigame maps!
 
-**This project and the assets under it are COMPLETELY OPEN SOURCE**. You are free to use, modify, and distribute them under the terms of the MIT license. The only thing not open source is the back-end web infrastructure. So if you opt into using your own authentication backend instead of integrating with Gamespice, you will need to build and integrate your own back-end infrastructure.
+**This project and the assets under it are COMPLETELY OPEN SOURCE**. You are free to use, modify, and distribute them under the terms of the MIT license. The only thing not open source is the back-end web infrastructure. So if you opt into using your own authentication backend instead of integrating with GameSpice, you will need to build and integrate your own back-end infrastructure.
 
 This game was built with Claude Code and has had little testing with real players, so please report anything odd you run into.
 
@@ -35,7 +35,7 @@ The game has a short practice course built in. Many more courses (Ice Works, The
 | **Esc** | Menu: settings (every key above can be rebound), help, and leave |
 
 ## Getting started
-You need [Godot 4.7](https://godotengine.org/download). The game is built from many Gamespice addons, each in its own repository, so the easiest way to get everything is [dot-bootstrap](https://github.com/gamespice-platform/bootstrap). It clones every project and links the addons into each one:
+You need [Godot 4.7](https://godotengine.org/download). The game is built from many GameSpice addons, each in its own repository, so the easiest way to get everything is [dot-bootstrap](https://github.com/gamespice-platform/bootstrap). It clones every project and links the addons into each one:
 
 ```bash
 git clone https://github.com/gamespice-platform/bootstrap.git
