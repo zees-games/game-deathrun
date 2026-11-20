@@ -10,4 +10,3 @@ game/dr_hud.gd::_draw_traps::string_build	1
 game/dr_hud.gd::_phase_line::string_build	2
 game/dr_hud.gd::_process::string_build	2
 game/dr_hud.gd::_trap_lines::string_build	1
-tools/load_probe.gd::_process::string_build	2
