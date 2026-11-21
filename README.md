@@ -6,6 +6,26 @@ This is a game to demonstrate the capabilities of the [**GameSpice collection**]
 
 This game was built with Claude Code and has had little testing with real players, so please report anything odd you run into.
 
+## Screenshots
+
+<table>
+<tr>
+<td align="center"><img src="https://raw.githubusercontent.com/zees-games/game-deathrun/main/docs/screenshots/runner-course.png" width="400" alt="A runner's view down The Temple, blades and pits ahead"><br><sub>A runner's view down The Temple, blades and pits ahead</sub></td>
+<td align="center"><img src="https://raw.githubusercontent.com/zees-games/game-deathrun/main/docs/screenshots/trap-in-action.png" width="400" alt="Ice Works: the jaws close on a runner"><br><sub>Ice Works: the jaws close on a runner</sub></td>
+</tr>
+<tr>
+<td align="center"><img src="https://raw.githubusercontent.com/zees-games/game-deathrun/main/docs/screenshots/activator-view.png" width="400" alt="The activator on the walkway, with the list of traps still to spring"><br><sub>The activator on the walkway, with the list of traps still to spring</sub></td>
+<td align="center"><img src="https://raw.githubusercontent.com/zees-games/game-deathrun/main/docs/screenshots/course-overview.png" width="400" alt="Ice Works from above: one long corridor of traps and the end arena"><br><sub>Ice Works from above: one long corridor of traps and the end arena</sub></td>
+</tr>
+<tr>
+<td align="center"><img src="https://raw.githubusercontent.com/zees-games/game-deathrun/main/docs/screenshots/round-start.png" width="400" alt="Round start: the runners wait behind the gate as the countdown ends"><br><sub>Round start: the runners wait behind the gate as the countdown ends</sub></td>
+<td align="center"><img src="https://raw.githubusercontent.com/zees-games/game-deathrun/main/docs/screenshots/scoreboard.png" width="400" alt="The Tab scoreboard: runners against activators"><br><sub>The Tab scoreboard: runners against activators</sub></td>
+</tr>
+<tr>
+<td align="center"><img src="https://raw.githubusercontent.com/zees-games/game-deathrun/main/docs/screenshots/temple-overview.png" width="400" alt="The Temple from above, with its blades and the walkway beside the course"><br><sub>The Temple from above, with its blades and the walkway beside the course</sub></td>
+</tr>
+</table>
+
 ## How it plays
 Everybody starts at once: the runners behind the start gate, the activators at the start of a walkway that runs beside the course. When the gate drops:
 
