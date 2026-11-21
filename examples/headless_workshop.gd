@@ -1,10 +1,10 @@
-extends DotGameCheckSuite
+extends GSGameCheckSuite
 
 const DrCourseDoc := preload("../game/dr_course_doc.gd")
 const DrCatalogue := preload("../game/dr_catalogue.gd")
 const DrVote := preload("../game/dr_vote.gd")
 
-## What a subscribed map pack does to this game's lists, against a fixture [DotContentIndex]:
+## What a subscribed map pack does to this game's lists, against a fixture [GSContentIndex]:
 ## a solo pack map is listed and choosable, an online session lists none, an unaccepted kind is
 ## left out, and the game's own ids win. The pack's map is written to `user://`.
 
@@ -17,7 +17,7 @@ var _completed := 0
 
 
 func _ready() -> void:
-	DotLog.set_level(DotLog.Level.ERROR)
+	GSLog.set_level(GSLog.Level.ERROR)
 	_run.call_deferred()
 
 
@@ -47,8 +47,8 @@ func _write_fixture() -> void:
 
 ## A pack with a deathrun course, a map of a kind the game does not accept, and a map that claims
 ## the id of the built-in.
-func _index(session: StringName) -> DotContentIndex:
-	var index := DotContentIndex.new()
+func _index(session: StringName) -> GSContentIndex:
+	var index := GSContentIndex.new()
 	index.set_session(session)
 	var added := index.add_pack({
 		"content_id": "fixture/pits", "version": "1.0.0", "prefix": DIR,
@@ -63,7 +63,7 @@ func _index(session: StringName) -> DotContentIndex:
 	return index
 
 
-func _catalogue(index: DotContentIndex) -> DrCatalogue:
+func _catalogue(index: GSContentIndex) -> DrCatalogue:
 	var catalogue := DrCatalogue.new()
 	var _loaded := catalogue.load_from("courses")
 	catalogue.follow_content(index, DrCatalogue.accepted_map_kinds())
@@ -86,7 +86,7 @@ func _test_solo() -> void:
 	_entered += 1
 	print("")
 	print("solo")
-	var catalogue := _catalogue(_index(DotContentIndex.SESSION_SOLO))
+	var catalogue := _catalogue(_index(GSContentIndex.SESSION_SOLO))
 	_check(catalogue.playable_courses(PackedStringArray()).has(MAP), "the accepted map is playable")
 	_check(catalogue.label_of(MAP) == "Fixture Pit [Fixture Pack]", "its label names the pack", catalogue.label_of(MAP))
 	_check(not catalogue.courses.has(&"fixture_run"), "a map kind the game does not accept is filtered out")
@@ -102,16 +102,16 @@ func _test_online() -> void:
 	_entered += 1
 	print("")
 	print("online")
-	var index := _index(DotContentIndex.SESSION_SOLO)
+	var index := _index(GSContentIndex.SESSION_SOLO)
 	var catalogue := _catalogue(index)
 	_check(catalogue.playable_courses(PackedStringArray()).has(MAP), "listed while the index is solo")
-	index.set_session(DotContentIndex.SESSION_ONLINE)
+	index.set_session(GSContentIndex.SESSION_ONLINE)
 	_check(not catalogue.playable_courses(PackedStringArray()).has(MAP), "gone from the same catalogue when the session turns online")
 	_check(not catalogue.courses.has(MAP), "and from its documents")
-	index.set_session(DotContentIndex.SESSION_SOLO)
+	index.set_session(GSContentIndex.SESSION_SOLO)
 	_check(catalogue.playable_courses(PackedStringArray()).has(MAP), "back when it turns solo again")
-	var late := _index(DotContentIndex.SESSION_SOLO)
-	late.set_session(DotContentIndex.SESSION_ONLINE)
+	var late := _index(GSContentIndex.SESSION_SOLO)
+	late.set_session(GSContentIndex.SESSION_ONLINE)
 	_check(not _catalogue(late).playable_courses(PackedStringArray()).has(MAP), "a catalogue built online never lists it")
 	_completed += 1
 
@@ -120,7 +120,7 @@ func _test_ids() -> void:
 	_entered += 1
 	print("")
 	print("the game's own ids")
-	var catalogue := _catalogue(_index(DotContentIndex.SESSION_SOLO))
+	var catalogue := _catalogue(_index(GSContentIndex.SESSION_SOLO))
 	_check(catalogue.courses[DrCatalogue.PRACTICE].get("name") == "Practice Run" and not catalogue.is_workshop(DrCatalogue.PRACTICE),
 		"a pack map claiming dr_practice does not replace the built-in")
 	_completed += 1
@@ -133,7 +133,7 @@ func _labels(vote: DrVote) -> PackedStringArray:
 	return out
 
 
-func _vote(index: DotContentIndex, catalogue: DrCatalogue) -> DrVote:
+func _vote(index: GSContentIndex, catalogue: DrCatalogue) -> DrVote:
 	var vote := DrVote.new()
 	vote.config_path = ""
 	vote.content_index = index
@@ -152,7 +152,7 @@ func _test_vote() -> void:
 	_entered += 1
 	print("")
 	print("the ballot")
-	var index := _index(DotContentIndex.SESSION_SOLO)
+	var index := _index(GSContentIndex.SESSION_SOLO)
 	var catalogue := _catalogue(index)
 	var vote := _vote(index, catalogue)
 	# The game's own map the ballot must still carry: whatever the catalogue plays first. A checkout
@@ -167,7 +167,7 @@ func _test_vote() -> void:
 	_check(labels.has(own), "beside the game's own courses, unlabelled", "%s in %s" % [own, str(labels)])
 	_check(not labels.has("Fixture Run [Fixture Pack]"), "and not a kind the game does not accept")
 	_check(labels.count("Fixture Pit [Fixture Pack]") == 1, "once")
-	index.set_session(DotContentIndex.SESSION_ONLINE)
+	index.set_session(GSContentIndex.SESSION_ONLINE)
 	labels = _labels(vote)
 	_check(not labels.has("Fixture Pit [Fixture Pack]"), "online the same ballot lists none of it", str(labels))
 	_check(labels.has(own), "and still has the game's own")

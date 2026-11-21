@@ -1,4 +1,4 @@
-extends DotGameCheckSuite
+extends GSGameCheckSuite
 
 ## The touch layout: three buttons that fit a phone without overlapping, the sampler a touch device gets, and dot-mobile's overlay driving that sampler (stick, look, use, jump, duck, a menu pausing it).
 ## Run: `godot --headless --path . res://examples/headless_touch.tscn`
@@ -11,7 +11,7 @@ const CHECKS := 26
 
 
 func _ready() -> void:
-	DotLog.set_level(DotLog.Level.ERROR)
+	GSLog.set_level(GSLog.Level.ERROR)
 	_run.call_deferred()
 
 
@@ -22,14 +22,14 @@ func _run() -> void:
 		ids.append(b["id"])
 	_check(ids.has(&"use") and ids.has(&"jump") and ids.has(&"crouch"), "use, jump and duck are on the layout")
 
-	DotPlatform.touch_override = 0
-	_check(not DrPlayer.new_sampler(DotFpsTunables.new()) is DotFpsTouchSampler, "no touch: the plain sampler")
-	DotPlatform.touch_override = 1
-	var sampler := DrPlayer.new_sampler(DotFpsTunables.new())
-	_check(sampler is DotFpsTouchSampler, "touch: the touch sampler")
+	GSPlatform.touch_override = 0
+	_check(not DrPlayer.new_sampler(GSFpsTunables.new()) is GSFpsTouchSampler, "no touch: the plain sampler")
+	GSPlatform.touch_override = 1
+	var sampler := DrPlayer.new_sampler(GSFpsTunables.new())
+	_check(sampler is GSFpsTouchSampler, "touch: the touch sampler")
 
 	for size: Vector2 in [Vector2(844, 390), Vector2(667, 375), Vector2(932, 430)]:
-		var buttons := DotTouchButtons.new()
+		var buttons := GSTouchButtons.new()
 		buttons.size = size
 		buttons.set_buttons(DrClient.touch_layout().buttons())
 		add_child(buttons)
@@ -57,29 +57,29 @@ func _run() -> void:
 		_check(true, "this dot-menu has no menu_button_corner; nothing to set")
 	config = null
 	settings.free()
-	DotPlatform.touch_override = 0
-	var off := DotTouchButtons.new()
+	GSPlatform.touch_override = 0
+	var off := GSTouchButtons.new()
 	add_child(off)
 	_check(not off.visible, "no touch: the buttons are hidden")
 	off.free()
-	DotPlatform.touch_override = -1
+	GSPlatform.touch_override = -1
 	await _overlay()
 	_report(CHECKS)
 
 
 ## dot-mobile's overlay over a HUD of the real type (a CanvasLayer, as DrHud is), driving a touch sampler.
 func _overlay() -> void:
-	DotPlatform.touch_override = 1
+	GSPlatform.touch_override = 1
 	var hud := CanvasLayer.new()
 	add_child(hud)
-	var sampler := DotFpsTouchSampler.new(DotFpsTunables.new())
+	var sampler := GSFpsTouchSampler.new(GSFpsTunables.new())
 	var state := {"use": false, "busy": false}
 	var touch := DrTouch.new()
 	touch.use_fn = func(down: bool) -> void: state["use"] = down
-	touch.sampler_fn = func() -> DotFpsSampler: return sampler
+	touch.sampler_fn = func() -> GSFpsSampler: return sampler
 	touch.busy_fn = func() -> bool: return state["busy"]
 	touch.live_fn = func() -> bool: return true
-	touch.build(hud, DotMobileRules.new(), DrClient.touch_layout().buttons())
+	touch.build(hud, GSMobileRules.new(), DrClient.touch_layout().buttons())
 	touch.sync()
 	await get_tree().process_frame
 	var controls := touch.controls
@@ -110,7 +110,7 @@ func _overlay() -> void:
 	thumb.pressed = true
 	thumb.position = controls.buttons.centre_of(&"jump")
 	controls.buttons._input(thumb)
-	_check(sampler._held == DotFpsCommand.BUTTON_JUMP, "jump is held on the sampler", str(sampler._held))
+	_check(sampler._held == GSFpsCommand.BUTTON_JUMP, "jump is held on the sampler", str(sampler._held))
 	thumb.pressed = false
 	controls.buttons._input(thumb)
 	_check(sampler._held == 0, "and let go with the thumb", str(sampler._held))
@@ -122,4 +122,4 @@ func _overlay() -> void:
 	touch.sync()
 	_check(touch.active(), "closing the menu brings it back")
 	hud.free()
-	DotPlatform.touch_override = -1
+	GSPlatform.touch_override = -1

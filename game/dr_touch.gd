@@ -1,18 +1,18 @@
 extends RefCounted
 
 ## The phone's controls: dot-mobile's stick, drag-look and buttons over the HUD, driving the client's own
-## [DotFpsTouchSampler]. A run has no weapon in hand to aim, so no crosshair, aim assist or auto-fire is wired; the
+## [GSFpsTouchSampler]. A run has no weapon in hand to aim, so no crosshair, aim assist or auto-fire is wired; the
 ## server's `sv_mobile_*` cvars still bound the rest. The buttons are the platformer preset of [method DrClient.touch_layout]:
 ## use (held, like the key), jump and duck (command bits held on the sampler). Stick and drag-look are dot-mobile's.
 
 const USE := &"use"
 ## The command bit the overlay holds on the sampler for a button.
-const HOLDS := {&"jump": DotFpsCommand.BUTTON_JUMP, &"crouch": DotFpsCommand.BUTTON_CROUCH}
+const HOLDS := {&"jump": GSFpsCommand.BUTTON_JUMP, &"crouch": GSFpsCommand.BUTTON_CROUCH}
 
-var controls: DotMobileControls = null
+var controls: GSMobileControls = null
 ## (down: bool): the client's use key, held.
 var use_fn: Callable = Callable()
-## () -> DotFpsSampler: the sampler the keys drive now (the player's own offline, the client's online).
+## () -> GSFpsSampler: the sampler the keys drive now (the player's own offline, the client's online).
 var sampler_fn: Callable = Callable()
 ## () -> bool: a menu, the console, the cover or spectating has the screen.
 var busy_fn: Callable = Callable()
@@ -27,8 +27,8 @@ var _use_down := false
 
 ## Builds the overlay under [param host] (the HUD), following [param rules] (the server's). [param rows] are the layout's
 ## buttons; the holds are added here. Set the callables first.
-func build(host: Node, rules: DotMobileRules, rows: Array[Dictionary], platform: Object = null) -> void:
-	controls = DotMobileControls.new()
+func build(host: Node, rules: GSMobileRules, rows: Array[Dictionary], platform: Object = null) -> void:
+	controls = GSMobileControls.new()
 	controls.name = "TouchControls"
 	controls.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if rules != null:
@@ -43,7 +43,7 @@ func build(host: Node, rules: DotMobileRules, rows: Array[Dictionary], platform:
 			made["hold"] = HOLDS[row["id"]]
 		_layout.append(made)
 	host.add_child(controls)
-	var sampler: DotFpsSampler = sampler_fn.call() if sampler_fn.is_valid() else null
+	var sampler: GSFpsSampler = sampler_fn.call() if sampler_fn.is_valid() else null
 	if sampler != null:
 		controls.setup(sampler, _layout)
 	if platform != null and platform.has_method(&"fit_touch_buttons") and controls.buttons != null:
@@ -54,7 +54,7 @@ func build(host: Node, rules: DotMobileRules, rows: Array[Dictionary], platform:
 func sync() -> void:
 	if controls == null:
 		return
-	var sampler: DotFpsSampler = sampler_fn.call() if sampler_fn.is_valid() else null
+	var sampler: GSFpsSampler = sampler_fn.call() if sampler_fn.is_valid() else null
 	if sampler != null and sampler != controls.sampler:
 		controls.setup(sampler, _layout)
 	controls.paused = busy_fn.is_valid() and bool(busy_fn.call())

@@ -11,7 +11,7 @@ func _ready() -> void:
 	var audio := DrAudio.new()
 	add_child(audio)
 	var ready_now := audio.setup()
-	var sink := audio.manager.sink as DotAudioSinkGodot
+	var sink := audio.manager.sink as GSAudioSinkGodot
 	var ok := ready_now.ok and sink != null
 	print("driver=%s sink=%s" % [AudioServer.get_driver_name(), sink != null])
 

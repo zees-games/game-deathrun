@@ -22,6 +22,6 @@ static func hash_of(id: StringName) -> float:
 ## The display name of the weapon an aux hash names, or empty.
 static func weapon_name(hash_value: float) -> String:
 	if _names.is_empty():
-		for def: DotWeaponDef in ZeeWeaponPack.weapons():
+		for def: GSWeaponDef in ZeeWeaponPack.weapons():
 			_names[int(hash_of(def.id))] = def.name_or_id()
 	return String(_names.get(int(hash_value), ""))

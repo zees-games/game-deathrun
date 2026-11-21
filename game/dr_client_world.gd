@@ -12,7 +12,7 @@ func _fall(who: DrPlayer) -> void:
 		# The course is on `world`; a body lands on it and on nothing else.
 		game.ragdoll_rules.collision_mask = game.physics.layer_mask(&"world")
 	var velocity := who.controller.state.velocity if who.controller != null else Vector3.ZERO
-	var _body := ragdolls.spawn(who.figure, who.death if who.death != null else DotPlayerDeath.new(), velocity)
+	var _body := ragdolls.spawn(who.figure, who.death if who.death != null else GSPlayerDeath.new(), velocity)
 
 
 func _on_phase(phase: int) -> void:

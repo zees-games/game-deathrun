@@ -94,7 +94,7 @@ func seconds(item: String) -> float:
 
 
 ## Builds [param item]'s course under [param holder], pressing the trap at [constant PRESS_AT].
-func stage(holder: Node3D, item: String, clip: String) -> DotResult:
+func stage(holder: Node3D, item: String, clip: String) -> GSResult:
 	_entry = entries[item]
 	_clip = clip
 	course = DrCourse.new()
@@ -108,7 +108,7 @@ func stage(holder: Node3D, item: String, clip: String) -> DotResult:
 	if str(_entry["kind"]) == "start":
 		course.gate_closed = true
 	course.pose_at_time(0.0)
-	return DotResult.success(item)
+	return GSResult.success(item)
 
 
 ## Poses the course at [param t] and returns {at, speed} for the runner (feet position, metres a second).

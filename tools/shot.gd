@@ -37,7 +37,7 @@ var _client: Node = null
 var _action: Array = []
 
 
-## --view=maps: a fixture course pack in the shared [DotContentIndex], as the solo shell leaves
+## --view=maps: a fixture course pack in the shared [GSContentIndex], as the solo shell leaves
 ## one after a subscribed pack mounts, so the M menu shows what a player would see. The pack's
 ## course is the practice course under another name, written to user://.
 func _subscribe_fixture() -> void:
@@ -50,11 +50,11 @@ func _subscribe_fixture() -> void:
 	var file := FileAccess.open(dir + "pit.json", FileAccess.WRITE)
 	file.store_string(DrCourseDoc.to_json(doc))
 	file.close()
-	var index := DotContentIndex.shared()
-	index.set_session(DotContentIndex.SESSION_SOLO)
+	var index := GSContentIndex.shared()
+	index.set_session(GSContentIndex.SESSION_SOLO)
 	var _added := index.add_pack({
 		"content_id": "fixture/pits", "version": "1.0.0", "prefix": dir,
-		"session": DotContentIndex.SESSION_SOLO, "source": &"subscription",
+		"session": GSContentIndex.SESSION_SOLO, "source": &"subscription",
 		"provides": {"schema": 1, "title": "Hilltop Pack", "kinds": ["map"], "entries": [
 			{"kind": "map", "id": "fixture_pit", "name": "Fixture Pit", "scene": "pit.json", "map_kind": "deathrun"},
 			{"kind": "map", "id": "fixture_run", "name": "Fixture Run", "scene": "pit.json", "map_kind": "surf"},
@@ -74,7 +74,7 @@ func _ready() -> void:
 		elif arg.begins_with("--view="):
 			_view = arg.trim_prefix("--view=")
 		elif arg == "--touch=1":
-			DotPlatform.touch_override = 1
+			GSPlatform.touch_override = 1
 		elif arg == "--spent":
 			_spent = true
 		elif arg == "--board":
@@ -108,11 +108,11 @@ func _ready() -> void:
 	_client.set("force_offline", true)
 	_client.set("third_person", _view == "third" or _view == "action")
 	add_child(_client)
-	# --view=cover: the loading cover dot-game's DotGameClient puts up first, before it lifts.
+	# --view=cover: the loading cover dot-game's GSGameClient puts up first, before it lifts.
 	if _view == "cover":
 		for _i in 2:
 			await RenderingServer.frame_post_draw
-		var platform: DotGameClient = _client.get("platform")
+		var platform: GSGameClient = _client.get("platform")
 		print("cover %s" % ("lifted" if platform.is_shown() else "up"))
 		var cover_path := ProjectSettings.globalize_path(_out)
 		DirAccess.make_dir_recursive_absolute(cover_path.get_base_dir())
@@ -131,7 +131,7 @@ func _pose_end(game: DrGame, local) -> void:
 	# its deploy is still running at 1.5 s.
 	await _seconds_of(maxf(1.5, _end_wait))
 	if _gun != &"":
-		var def: DotWeaponDef = null
+		var def: GSWeaponDef = null
 		for candidate in ZeeWeaponPack.weapons():
 			if candidate.id == _gun:
 				def = candidate
@@ -159,7 +159,7 @@ func _run() -> void:
 	# Into a round, with the person at this keyboard on the side the view is about.
 	await _until_a_round(game)
 	# Every view waits past the load cover (slow on a cold GPU box) before its own timing starts.
-	if not await DotShotGate.wait_lifted(get_tree(), _client.get("platform")):
+	if not await GSShotGate.wait_lifted(get_tree(), _client.get("platform")):
 		printerr("shot: load cover still up after the wait; shooting anyway")
 	var local = _client.get("player")
 	var activator := _view == "activator" or _view == "button"
@@ -229,7 +229,7 @@ func _run() -> void:
 		menu.handle_event(tab)
 
 	# The cover lifts a moment after the player exists; --view=cover is the one that wants it up.
-	if not await DotShotGate.wait_lifted(get_tree(), _client.get("platform")):
+	if not await GSShotGate.wait_lifted(get_tree(), _client.get("platform")):
 		printerr("shot: load cover still up after the wait; shooting anyway")
 	await _frames(3)
 	_report_view_model()
@@ -238,7 +238,7 @@ func _run() -> void:
 	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
 	var saved := image.save_png(path)
 	print("saved %s (%s): %s" % [_out, _view, error_string(saved)])
-	await DotShotSeq.new().record(get_tree(), path)
+	await GSShotSeq.new().record(get_tree(), path)
 	get_tree().quit(0 if saved == OK else 1)
 
 
@@ -316,10 +316,10 @@ func _stage_action(game: DrGame, me: Node3D) -> void:
 	await _seconds_of(1.0)
 	var figure: Object = _client.call("_avatar_figure", 0)
 	print("action %s/%s: figure=%s third_person=%s" % [_action[0], _action[1], figure != null, _client.get("third_person")])
-	var entry := DotAvatarActions.defaults().find(_action[0], _action[1])
-	var input: Object = (_client.get("platform") as DotGameClient).avatar_actions.input
+	var entry := GSAvatarActions.defaults().find(_action[0], _action[1])
+	var input: Object = (_client.get("platform") as GSGameClient).avatar_actions.input
 	input.emit_signal(&"action_requested", entry)
-	var yaw := deg_to_rad(float((me.get("controller") as DotFpsController).state.yaw))
+	var yaw := deg_to_rad(float((me.get("controller") as GSFpsController).state.yaw))
 	var ahead := Vector3(-sin(yaw), 0.0, -cos(yaw))
 	var feet: Vector3 = me.global_position
 	if figure is Node3D:

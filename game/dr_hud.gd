@@ -15,31 +15,31 @@ var game: DrGame = null
 var player: DrPlayer = null
 
 ## Bottom right while armed: the weapon in hand and `magazine | reserve`. See [method _draw_ammo].
-var ammo: DotAmmoCounter = null
+var ammo: GSAmmoCounter = null
 ## The held weapon's sprite over [member ammo]; hidden when it has none.
-var weapon_icon: DotWeaponIconPlate = null
+var weapon_icon: GSWeaponIconPlate = null
 
 ## The rig the counter reads: the gun this client draws (`DrClient.weapons`), which
 ## `DrClient.correct_drawn` brings to the server's count once quiet.
 var weapons_fn: Callable = Callable()
 
 ## Four ticks round the crosshair for a hit the server confirmed. See [method confirm_hit].
-var hit_fx: DotHitFeedback = null
-var hit_marker: DotHitMarker = null
+var hit_fx: GSHitFeedback = null
+var hit_marker: GSHitMarker = null
 
-## The clock with the phase line under it: dot-ui's [DotScoreStrip], clock alone.
-var strip: DotScoreStrip = null
+## The clock with the phase line under it: dot-ui's [GSScoreStrip], clock alone.
+var strip: GSScoreStrip = null
 var _role: Label = null
-## Health at the end: dot-ui's [DotVitals], bar and number on one plate, red at a quarter.
+## Health at the end: dot-ui's [GSVitals], bar and number on one plate, red at a quarter.
 ## Hidden on the course; see the class note.
-var vitals: DotVitals = null
+var vitals: GSVitals = null
 var _field: Label = null
 var _course: Label = null
 var _shout: Label = null
 var _traps: Label = null
-## What the use key would do now, at a button: dot-ui's [DotKeyPrompt], the trap's name
+## What the use key would do now, at a button: dot-ui's [GSKeyPrompt], the trap's name
 ## with the key drawn as a key, or "<trap> — spent" with none.
-var prompt: DotKeyPrompt = null
+var prompt: GSKeyPrompt = null
 
 ## The key that presses a button. `DrClient.USE_KEY`, handed over by the client so the prompt
 ## and the phase line name the key the client actually reads.
@@ -81,7 +81,7 @@ const COURSE_COLOUR := Color(0.80, 0.88, 0.98)
 ## so a light or high-contrast theme can change them. Static so a render tool can use it.
 static func piece_theme() -> Theme:
 	var t := Theme.new()
-	var type := DotHudPiece.THEME_TYPE
+	var type := GSHudPiece.THEME_TYPE
 	t.set_color(&"plate_edge", type, Color(COURSE_COLOUR, 0.3))
 	t.set_color(&"highlight", type, COURSE_COLOUR)
 	t.set_color(&"good", type, READY_COLOUR)
@@ -107,7 +107,7 @@ func _follow() -> void:
 ## in the spent colour, so it reads as unavailable before the missing key does.
 static func spent_theme() -> Theme:
 	var t := piece_theme()
-	t.set_color(&"text", DotHudPiece.THEME_TYPE, SPENT_COLOUR.lightened(0.3))
+	t.set_color(&"text", GSHudPiece.THEME_TYPE, SPENT_COLOUR.lightened(0.3))
 	return t
 
 
@@ -118,8 +118,8 @@ static var _spent: Theme = null
 ## The use key as the player has it bound.
 func use_label() -> String:
 	if use_action != &"" and InputMap.has_action(use_action):
-		var text := DotInputBinding.describe_action(use_action)
-		if text != DotInputBinding.UNBOUND:
+		var text := GSInputBinding.describe_action(use_action)
+		if text != GSInputBinding.UNBOUND:
 			return text
 	return key_text(use_key)
 
@@ -127,7 +127,7 @@ func use_label() -> String:
 static func key_text(physical: Key) -> String:
 	var event := InputEventKey.new()
 	event.physical_keycode = physical
-	return DotInputBinding.to_text(event)
+	return GSInputBinding.to_text(event)
 
 
 func bind(p_game: DrGame, p_player: DrPlayer) -> void:
@@ -182,7 +182,7 @@ func _build() -> void:
 
 	var size := 22
 
-	# The glance pieces read their colours from the theme on the type DotHudPiece; set on
+	# The glance pieces read their colours from the theme on the type GSHudPiece; set on
 	# the root, every piece under it inherits them. See [method piece_theme].
 	_root.theme = piece_theme()
 	_follow()
@@ -200,7 +200,7 @@ func _build() -> void:
 func _build_top(size: int) -> void:
 	# The clock, and the phase line under it. Full width, because the strip centres itself
 	# on its own middle; the course name sits under it.
-	strip = DotScoreStrip.new()
+	strip = GSScoreStrip.new()
 	strip.name = "Clock"
 	strip.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
 	strip.offset_top = 16.0
@@ -220,7 +220,7 @@ func _build_top(size: int) -> void:
 	_role.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
 	_role.offset_left = 30.0
 	# The phone's Menu button sits in this corner: drop below it.
-	var role_top := 72.0 if DotPlatform.has_touch() else 22.0
+	var role_top := 72.0 if GSPlatform.has_touch() else 22.0
 	_role.offset_top = role_top
 	_role.offset_right = 420.0
 	_role.offset_bottom = role_top + 38.0
@@ -239,7 +239,7 @@ func _build_top(size: int) -> void:
 func _build_lower(size: int) -> void:
 	# Under the crosshair, small: what E would do now. Close to where the eye already is,
 	# because an activator presses while watching the trap, not the corner of the screen.
-	prompt = DotKeyPrompt.new()
+	prompt = GSKeyPrompt.new()
 	prompt.name = "Prompt"
 	prompt.font_size = 19
 	prompt.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
@@ -261,7 +261,7 @@ func _build_lower(size: int) -> void:
 
 	# Above the chat box's full eight-row log, which reaches 202 pixels off the bottom: the plate
 	# is 56 tall and ends at 206 (checked in headless_run).
-	vitals = DotVitals.new()
+	vitals = GSVitals.new()
 	vitals.name = "Vitals"
 	vitals.bar_end = 220.0
 	vitals.fill_colour = READY_COLOUR
@@ -282,7 +282,7 @@ func _build_lower(size: int) -> void:
 	_field.offset_top = -80.0
 	_field.offset_bottom = -26.0
 	_field.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	if DotPlatform.has_touch():
+	if GSPlatform.has_touch():
 		# The bottom-right corner is the FIRE/USE cluster: park the line top right.
 		_field.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
 		_field.offset_left = -400.0
@@ -303,7 +303,7 @@ func _build_lower(size: int) -> void:
 
 ## Bottom right, above the field line: the ammo counter, the held gun's sprite and the hit marker.
 func _build_gun_pieces() -> void:
-	ammo = DotAmmoCounter.new()
+	ammo = GSAmmoCounter.new()
 	ammo.name = "Ammo"
 	ammo.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
 	ammo.offset_left = -420.0
@@ -313,7 +313,7 @@ func _build_gun_pieces() -> void:
 	ammo.visible = false
 	_root.add_child(ammo)
 
-	weapon_icon = DotWeaponIconPlate.new()
+	weapon_icon = GSWeaponIconPlate.new()
 	weapon_icon.name = "WeaponIcon"
 	weapon_icon.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
 	weapon_icon.offset_left = -204.0
@@ -323,14 +323,14 @@ func _build_gun_pieces() -> void:
 	weapon_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(weapon_icon)
 
-	hit_fx = DotHitFeedback.mount(_root)
+	hit_fx = GSHitFeedback.mount(_root)
 	hit_marker = hit_fx.marker
 
 
-## dot-ui's DotCrosshair as a plain dot (no arms, no spread) where the host has it (API 14), else the old square.
+## dot-ui's GSCrosshair as a plain dot (no arms, no spread) where the host has it (API 14), else the old square.
 func _make_crosshair() -> Control:
-	if DotAddonApi.build_level("dot_ui") >= 14:
-		var shape: Variant = DotCrosshair
+	if GSAddonApi.build_level("dot_ui") >= 14:
+		var shape: Variant = GSCrosshair
 		var cross := (shape as GDScript).new() as Control
 		cross.name = "Crosshair"
 		cross.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -418,7 +418,7 @@ func _process(delta: float) -> void:
 	# says the same thing twice. Red for the last ten seconds.
 	var running := game.phase != DrGame.Phase.IDLE and game.sides_are_playable()
 	strip.show_clock(
-		DotScoreStrip.clock_text(left) if running else "", left <= LOW_CLOCK_SEC, _phase_line()
+		GSScoreStrip.clock_text(left) if running else "", left <= LOW_CLOCK_SEC, _phase_line()
 	)
 	_course.text = str((game.stage.doc if game.stage != null else {}).get("name", ""))
 

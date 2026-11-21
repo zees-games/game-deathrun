@@ -1,4 +1,4 @@
-extends DotGameCheckSuite
+extends GSGameCheckSuite
 
 ## The counters, the exit probe and its helpers for dedicated.gd. No `class_name`; the suite extends this.
 
@@ -12,7 +12,7 @@ const EXIT_PROBE_CHECKS := 3
 ## A copy still running after this is hung; `-- --exit-probe-seconds N` lowers it to arm the deadline.
 const EXIT_PROBE_SECONDS := 300
 
-var server: DotServer = null
+var server: GSServer = null
 var game: DrGame = null
 var _stats_errors: PackedStringArray = []
 var _sections_entered := 0
@@ -143,13 +143,13 @@ func _last_lines(text: String, count: int) -> String:
 
 ## An ERROR from the stats layer would otherwise scroll past and leave a stat dead with every check green.
 func _on_log_record(rec: Dictionary) -> void:
-	if int(rec.get("level", 0)) >= DotLog.Level.ERROR and String(rec.get("channel", "")).begins_with("stats"):
+	if int(rec.get("level", 0)) >= GSLog.Level.ERROR and String(rec.get("channel", "")).begins_with("stats"):
 		_stats_errors.append(str(rec.get("message", rec)))
 
 
 ## The family cvar `stats_report` is registered, off, and turning it on makes the tracker report.
 func _test_stats_report() -> void:
-	var cv: DotConVar = server.console.find_cvar("stats_report")
+	var cv: GSConVar = server.console.find_cvar("stats_report")
 	var progress = game.progress if game != null else null
 	_check(cv != null and cv.get_string() == "0", "stats_report is registered and off by default")
 	_check(progress != null and progress.stats != null and not progress.stats.report_to_backbone,
@@ -164,13 +164,13 @@ func _test_stats_report() -> void:
 	script.source_code = "extends Node\nfunc post_integration(_a = null, _b = null, _c = null): return null\n"
 	var _reloaded := script.reload()
 	client.set_script(script)
-	DotRegistry.register(&"dot_backbone_client", client)
+	GSRegistry.register(&"dot_backbone_client", client)
 	var _r0 := cv.set_value("0")
 	var _r1 := cv.set_value("1")
 	_check(progress.stats.report_to_backbone, "on with a backbone client makes the tracker report")
 	var _r2 := cv.set_value("0")
 	_check(not progress.stats.report_to_backbone, "off stops it again")
-	DotRegistry.unregister_instance(&"dot_backbone_client", client)
+	GSRegistry.unregister_instance(&"dot_backbone_client", client)
 	client.free()
 	_test_stats_hooks(progress)
 
@@ -191,24 +191,24 @@ func _test_stats_hooks(live: DrProgress) -> void:
 	probe.players = {&"a": a, &"b": b, &"bot": bot}
 	probe.entity_key_fn = func(id: int) -> StringName: return [&"", &"a", &"b", &"bot"][id]
 	add_child(probe)
-	var _setup: DotResult = probe.setup(dir, false)
+	var _setup: GSResult = probe.setup(dir, false)
 
-	var zoned := DotDamage.make(1, 2, 5.0, null)
-	zoned.hit_group = DotHitGroup.NECK
+	var zoned := GSDamage.make(1, 2, 5.0, null)
+	zoned.hit_group = GSHitGroup.NECK
 	zoned.weapon_id = &"probe"
 	probe.report_damage(zoned)
-	_check(probe.session_values(&"a").get_cell(DotStatsHitzones.HITS, "zone:neck") >= 1.0,
+	_check(probe.session_values(&"a").get_cell(GSStatsHitzones.HITS, "zone:neck") >= 1.0,
 		"a hit with a hit_group is filed by body zone through the hitzone hook")
 
-	var before: float = probe.stats.session_values(&"a").get_cell(DotStatsHitzones.HITS, "zone:neck")
-	var botted := DotDamage.make(3, 2, 5.0, null)
-	botted.hit_group = DotHitGroup.HEAD
+	var before: float = probe.stats.session_values(&"a").get_cell(GSStatsHitzones.HITS, "zone:neck")
+	var botted := GSDamage.make(3, 2, 5.0, null)
+	botted.hit_group = GSHitGroup.HEAD
 	probe.report_damage(botted)
 	_check(not probe.stats.has_player(&"bot"), "a stand-in's hit begins nobody in the tracker")
 	probe.report_kill(1, 2, "probe")
 	probe.report_kill(0, 2, "trap")
 	_check(probe.stats.has_player(&"b") or true, "a kill and a world death file without error")
-	_check(probe.stats.session_values(&"a").get_cell(DotStatsHitzones.HITS, "zone:neck") == before, "and change no zone count")
+	_check(probe.stats.session_values(&"a").get_cell(GSStatsHitzones.HITS, "zone:neck") == before, "and change no zone count")
 	_check(_stats_errors.is_empty(), "the stats layer logged no error", str(_stats_errors))
 	probe.queue_free()
 	a.free()
@@ -225,13 +225,13 @@ func _until(condition: Callable, seconds: float) -> bool:
 	return bool(condition.call())
 
 
-func _module() -> DotModule:
+func _module() -> GSModule:
 	return server.modules.get_module("deathrun") if server != null and server.modules != null else null
 
 
 func _run_command(line: String) -> PackedStringArray:
 	var captured: Array[String] = []
-	var context := DotCmdContext.console("", PackedStringArray())
+	var context := GSCmdContext.console("", PackedStringArray())
 	context.reply_sink = func(text: String) -> void: captured.append(text)
 	server.console.execute(line, context)
 	return PackedStringArray(captured)
@@ -245,7 +245,7 @@ func _said(lines: PackedStringArray, text: String) -> bool:
 	return false
 
 
-## Takes the server down before quitting: a booted [DotServer]'s listener holds the main loop,
+## Takes the server down before quitting: a booted [GSServer]'s listener holds the main loop,
 ## and a run that only called `quit()` prints its results and hangs. See mg-smash-copter.
 func _shut_down() -> void:
 	if server == null:

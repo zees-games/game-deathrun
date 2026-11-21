@@ -1,4 +1,4 @@
-extends DotGameCheckSuite
+extends GSGameCheckSuite
 
 const DrConfig := preload("../game/dr_config.gd")
 const DrMapConfig := preload("../game/dr_map_config.gd")
@@ -11,13 +11,13 @@ const CHECKS := 9
 
 
 func _ready() -> void:
-	DotLog.set_level(DotLog.Level.ERROR)
+	GSLog.set_level(GSLog.Level.ERROR)
 	_run.call_deferred()
 
 
 func _run() -> void:
 	print("mg-deathrun: per-course rules from cfg/game/mg-deathrun/dot_map/map")
-	if not ResourceLoader.exists(DotGameMapConfig.SCRIPT_PATH):
+	if not ResourceLoader.exists(GSGameMapConfig.SCRIPT_PATH):
 		print("SKIPPED: dot-map is not linked at addons/dot_map")
 		get_tree().quit(0)
 		return
@@ -25,15 +25,15 @@ func _run() -> void:
 	var dir := root.path_join("server/game/%s/dot_map/map" % DrMapConfig.GAME)
 	DirAccess.make_dir_recursive_absolute(dir)
 	_write(dir.path_join("dr_icy.yml"), "dr_gravity: 12.0\ndr_round_seconds: 120\ndr_autobhop: false\nsv_gravity: 1\n")
-	DotAddonConfig.game = DrMapConfig.GAME
+	GSAddonConfig.game = DrMapConfig.GAME
 
-	var console := DotConsole.new()
+	var console := GSConsole.new()
 	add_child(console)
-	console.cvar("dr_gravity", "20", "", DotConVar.FLAG_ARCHIVE)
-	console.cvar("dr_round_seconds", "300", "", DotConVar.FLAG_ARCHIVE)
-	console.cvar("dr_autobhop", "1", "", DotConVar.FLAG_ARCHIVE)
-	console.cvar("sv_gravity", "800", "", DotConVar.FLAG_ARCHIVE)
-	var cfg := DotGameMapConfig.for_console(DrMapConfig.GAME, console, DrMapConfig.KEYS)
+	console.cvar("dr_gravity", "20", "", GSConVar.FLAG_ARCHIVE)
+	console.cvar("dr_round_seconds", "300", "", GSConVar.FLAG_ARCHIVE)
+	console.cvar("dr_autobhop", "1", "", GSConVar.FLAG_ARCHIVE)
+	console.cvar("sv_gravity", "800", "", GSConVar.FLAG_ARCHIVE)
+	var cfg := GSGameMapConfig.for_console(DrMapConfig.GAME, console, DrMapConfig.KEYS)
 	cfg.config_dir = root
 
 	var got := cfg.apply("dr_icy")
@@ -45,7 +45,7 @@ func _run() -> void:
 	_check(console.find_cvar("dr_gravity").get_float() == 20.0 and console.find_cvar("dr_autobhop").get_int() == 1, "the next course has the rules back")
 
 	var config := DrConfig.new()
-	var client := DotGameMapConfig.new()
+	var client := GSGameMapConfig.new()
 	client.game_id = DrMapConfig.GAME
 	client.config_dir = root
 	client.keys = DrMapConfig.client_keys()

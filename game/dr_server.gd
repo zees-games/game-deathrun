@@ -4,7 +4,7 @@ const DrConfig := preload("dr_config.gd")
 const DrGame := preload("dr_game.gd")
 const DrMapConfig := preload("dr_map_config.gd")
 
-## What a [DotServer] loads as its game scene. Never a client.
+## What a [GSServer] loads as its game scene. Never a client.
 ## Everything a dedicated server does is in `dr_module.gd`; this exists because dot-server loads a scene, and the world must be in the tree (under [constant DrGame.SERVICE]) before the module looks for it.
 ## It lives in `game/` because a game is vendored by copying `game/` and only the `.tscn` files of `scenes/`; a script under `scenes/` never reaches the build.
 
@@ -23,7 +23,7 @@ func _ready() -> void:
 	var loaded := binder.load_layers()
 
 	if not loaded.ok:
-		DotGameConfigBinder.fail_boot(get_tree(), loaded)
+		GSGameConfigBinder.fail_boot(get_tree(), loaded)
 		return
 
 	game = DrGame.new()
@@ -35,7 +35,7 @@ func _ready() -> void:
 	game.tick_rate = Engine.physics_ticks_per_second
 	add_child(game)
 
-	DotLog.info(CHANNEL, "the world is up", {
+	GSLog.info(CHANNEL, "the world is up", {
 		"tick_rate": game.tick_rate,
 		"courses": config.course_directory,
 		"round": config.round_seconds,

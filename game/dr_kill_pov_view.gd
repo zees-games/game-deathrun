@@ -6,7 +6,7 @@ const KillPov := preload("dr_kill_pov.gd")
 
 const WEAPON_FONT := 22
 
-var crosshair: DotCrosshair = null
+var crosshair: GSCrosshair = null
 var label: Label = null
 
 
@@ -34,7 +34,7 @@ func present(view: Dictionary) -> void:
 
 
 func _start() -> void:
-	crosshair = DotCrosshair.new()
+	crosshair = GSCrosshair.new()
 	crosshair.set_anchors_preset(Control.PRESET_FULL_RECT)
 	crosshair.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(crosshair)

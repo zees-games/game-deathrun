@@ -1,4 +1,4 @@
-extends DotGameNetIo
+extends GSGameNetIo
 
 ## The bridge's constants, signals and state, split out of `dr_net_bridge.gd` to keep it under the size budget. No `class_name`; the bridge extends this.
 
@@ -17,7 +17,7 @@ const DrPlayer := preload("../dr_player.gd")
 
 const CHANNEL := "dr.net"
 
-## Bytes of acknowledgement in front of every input packet. [method DotNetManager.encode_ack].
+## Bytes of acknowledgement in front of every input packet. [method GSNetManager.encode_ack].
 const ACK_BYTES := 4
 
 ## Commands in every input packet: this tick's and the four before it, so a lost packet costs no tick
@@ -55,7 +55,7 @@ signal hit_received(point: Vector3, killed: bool, headshot: bool)
 signal notice_received(text: String)
 
 ## Client side: the server moved this client's own camera. [param mode] is
-## [enum DotSpectatorView.Mode]; the view has already been adopted by the world's mirror.
+## [enum GSSpectatorView.Mode]; the view has already been adopted by the world's mirror.
 signal spectate_received(viewer: int, mode: int, target: int)
 
 ## Client side: somebody else used their weapon [param times] times since the last
@@ -74,11 +74,11 @@ signal finished_received(player_id: int, place: int, seconds: float)
 signal trap_received(index: int, tick: int, by: int)
 
 ## Somebody pressed Enter. Server side; the bridge carries chat and decides nothing, who may say
-## what is [DotChatRouter]'s.
+## what is [GSChatRouter]'s.
 signal say_requested(peer_id: int, channel_id: StringName, text: String)
 
 ## A voice frame arrived. Server side; the payload is unparsed and must not be trusted —
-## [method DotVoiceRouter.relay] is what stamps the speaker, from the peer id below.
+## [method GSVoiceRouter.relay] is what stamps the speaker, from the peer id below.
 signal voice_requested(peer_id: int, payload: PackedByteArray)
 
 ## Client side: one routed line, and one voice frame.
@@ -90,11 +90,11 @@ var game: DrGame = null
 ## Which session this process is. Zero on a server.
 var local_player_id: int = 0
 
-## Where a voice frame goes on the server. Assigned by [DotGameModule] to the services
+## Where a voice frame goes on the server. Assigned by [GSGameModule] to the services
 ## layer's `relay_voice`, because the bridge is the only thing that names both ends.
 var voice_relay_fn: Callable = Callable()
 
-## `func(session_id: int) -> DotAvatar`: what a player looks like, asked once as they are
+## `func(session_id: int) -> GSAvatar`: what a player looks like, asked once as they are
 ## seated. Assigned by the module, which is what has the identity layer; unset, or answering
 ## null, is the stock person, which is what everybody was before there was one.
 var avatar_fn: Callable = Callable()
@@ -114,7 +114,7 @@ var _player_of_peer: Dictionary = {}
 var _peer_of_player: Dictionary = {}
 var _ready_peers: Dictionary = {}
 ## Carries the game's profile runtime over this manager (rows down, for a remote admin's panel).
-var profile_link: DotNetProfileLink = null
+var profile_link: GSNetProfileLink = null
 ## Server: peers whose READY came before their seat ([method add_player]); over lossy ENet READY can
 ## overtake `loaded`. Admitted when seated.
 var _ready_unseated: Dictionary = {}
@@ -122,7 +122,7 @@ var _ready_unseated: Dictionary = {}
 var _tick: int = 0
 var _game_ticked_for: int = -1
 
-## Server only: whether [method DotNetManager.server_tick] is on the stack, and the net ids let go of
+## Server only: whether [method GSNetManager.server_tick] is on the stack, and the net ids let go of
 ## meanwhile. An entity freed mid-tick would get a fresh lag-compensation track recorded for it
 ## that nothing forgets; they are forgotten again once the manager lets go of its list.
 var _in_server_tick := false

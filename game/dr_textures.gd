@@ -284,7 +284,7 @@ static func installed(role: Role) -> Texture2D:
 	# shipped, so asking the filesystem for the source file answers "no" in exactly the
 	# build that matters.
 	if not ResourceLoader.exists(path, "Texture2D"):
-		DotLog.debug(CHANNEL, "no texture installed for a role", {
+		GSLog.debug(CHANNEL, "no texture installed for a role", {
 			"role": Role.keys()[role], "looked_at": path,
 		})
 		_installed[role] = null
@@ -386,7 +386,7 @@ static func grid_texture() -> ImageTexture:
 ##
 ## [b]Not called `reset_state`.[/b] `Resource` already has one and GDScript takes the
 ## redefinition without a warning, so every call would silently bind to the engine's — a
-## trap this family has already paid for once, in `DotRandomTable`.
+## trap this family has already paid for once, in `GSRandomTable`.
 static func forget_cache() -> void:
 	_materials.clear()
 	_installed.clear()

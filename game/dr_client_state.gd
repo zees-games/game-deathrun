@@ -40,53 +40,53 @@ const USE_KEY := KEY_E
 @export var third_person: bool = false
 
 ## Keeps the screen covered, and the local body and the input still, until the level, the
-## player and the camera are all in. See [member DotGameClient.gate].
-var gate: DotLoadGate = null
+## player and the camera are all in. See [member GSGameClient.gate].
+var gate: GSLoadGate = null
 
 ## dot-game's client platform: the cover, settings and menu, console, HUD theme, Tab, M, the
-## pointer and the input block. See [DotGameClient].
-var platform: DotGameClient = null
-var chat: DotGameChatClient = null
+## pointer and the input block. See [GSGameClient].
+var platform: GSGameClient = null
+var chat: GSGameChatClient = null
 
 ## The player's own settings and the screen Escape opens. See [DrSettings].
 var settings: DrSettings = null
 
-## The player's console. See [method DotConsoleKit.build].
-var console: DotConsoleController = null
+## The player's console. See [method GSConsoleKit.build].
+var console: GSConsoleController = null
 
 var view_model: ZeeViewModel = null
 
 ## Asks a server whether this player may edit it (sv_workbench_remote); null offline.
-var workbench_remote: DotGameWorkbenchRemoteClient = null
+var workbench_remote: GSGameWorkbenchRemoteClient = null
 ## The tuning panel's host: F9 solo, the admin's remote panel on a server that allows it.
-var workbench: DotGameWorkbench = null
+var workbench: GSGameWorkbench = null
 var link: Node = null
 ## Records every frame and replays the round's last moment ([DrKillcam]); then the reveal.
 var killcam: DrKillcam = null
-var winner_reveal: DotWinnerReveal = null
+var winner_reveal: GSWinnerReveal = null
 ## The server's `mp_killcam_time`; -1 until it has said, so the config's number stands.
 var _killcam_sec: float = -1.0
 
-## The server's `mp_killview_camera` ([enum DotKillViewRules.Camera]); the eye until it has said.
-var _killcam_camera: int = DotKillViewRules.Camera.EYE
+## The server's `mp_killview_camera` ([enum GSKillViewRules.Camera]); the eye until it has said.
+var _killcam_camera: int = GSKillViewRules.Camera.EYE
 var _round_ending: bool = false
 var _round_end_number: int = 0
 var _round_end_why: String = ""
 var _round_board_open: bool = false
 var _hud_was_visible: bool = true
 
-var _sampler: DotFpsSampler = null
+var _sampler: GSFpsSampler = null
 
 ## The spectator's free camera while roaming, and the mouse motion not yet turned into a look.
-var _free_cam: DotSpectatorFreeCam = null
+var _free_cam: GSSpectatorFreeCam = null
 var _roam_look: Vector2 = Vector2.ZERO
 
 ## The last [member DrPlayer.warps] this client re-aimed its mouse for.
 var _seen_warps: int = 0
 
 ## The camera rig, in third person. Null in first.
-var _arm: DotCameraBoom = null
-var _fade: DotCameraFade = null
+var _arm: GSCameraBoom = null
+var _fade: GSCameraFade = null
 
 ## How far above the player's feet the camera, or in third person the arm, is hung.
 var _rig_height: float = 0.0
@@ -106,15 +106,15 @@ var _use: bool = false
 var _touch: DrTouch = null
 
 ## dot-game's platformer preset without sprint, board and chat (a runner has no sprint key and the board and chat are not routed from the touch cluster).
-static func touch_layout() -> DotGameTouchLayout:
-	var res := DotGameTouchLayout.build(DotGameTouchLayout.PLATFORMER, {
-		DotGameTouchLayout.SPRINT: null, DotGameTouchLayout.BOARD: null, DotGameTouchLayout.CHAT: null,
+static func touch_layout() -> GSGameTouchLayout:
+	var res := GSGameTouchLayout.build(GSGameTouchLayout.PLATFORMER, {
+		GSGameTouchLayout.SPRINT: null, GSGameTouchLayout.BOARD: null, GSGameTouchLayout.CHAT: null,
 	})
 	if not res.ok:
 		push_error("mg-deathrun touch layout refused: %s" % str(res.error))
-		return DotGameTouchLayout.custom()
+		return GSGameTouchLayout.custom()
 	return res.value
 
 
 ## Where the dead lie: dot-player-char's ragdolls under the game's (the server's) rules.
-var ragdolls: DotPlayerRagdolls = null
+var ragdolls: GSPlayerRagdolls = null

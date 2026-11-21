@@ -1,6 +1,6 @@
-extends DotGameCheckSuite
+extends GSGameCheckSuite
 
-## DrConfig through DotGameConfigBinder: fields, cvars, strict refusal, the diff, a shipped yml loading back, and the workbench round trip.
+## DrConfig through GSGameConfigBinder: fields, cvars, strict refusal, the diff, a shipped yml loading back, and the workbench round trip.
 ## Run: `godot --headless --path . res://examples/headless_config.tscn`
 
 const DrConfig := preload("../game/dr_config.gd")
@@ -13,7 +13,7 @@ const CHECKS := 37
 
 
 func _ready() -> void:
-	DotLog.set_level(DotLog.Level.FATAL)
+	GSLog.set_level(GSLog.Level.FATAL)
 	_run.call_deferred()
 
 
@@ -41,9 +41,9 @@ func _run() -> void:
 			"players_per_activator", "max_activators", "winner_points", "first_across_points", "timeout_winner"]:
 		_check(keys.has(k), "%s is exposed" % k)
 
-	var console := DotConsole.new()
+	var console := GSConsole.new()
 	add_child(console)
-	binder.bind_cvars(console.cvar, DotConVar.FLAG_ARCHIVE, console.has_name)
+	binder.bind_cvars(console.cvar, GSConVar.FLAG_ARCHIVE, console.has_name)
 	console.set_cvar("dr_credit_seconds", "0.6")
 	_check(is_equal_approx(config.credit_seconds, 0.6) and binder.source_of("credit_seconds") == "cvar", "a cvar writes the field")
 	_check(binder.diff_yaml().contains("credit_seconds: 0.6"), "the diff names the edit")
@@ -63,17 +63,17 @@ func _run() -> void:
 	_layers()
 	_templates(binder)
 
-	var wb := DotGameWorkbench.new()
+	var wb := GSGameWorkbench.new()
 	wb.panel_mode = 1
 	wb.config = {"enabled": false}
-	for set: DotProfileSet in binder.profile_sets():
+	for set: GSProfileSet in binder.profile_sets():
 		wb.add_set(set, set.rel_path)
 	add_child(wb)
 	_check(wb.start().ok, "the workbench starts")
 	binder.attach(wb.api.runtime)
 	var listed := PackedStringArray()
 	for kind: String in wb.api.kinds():
-		var got: DotResult = wb.api.handle(DotGameWorkbench.LOCAL_ACTOR, {"op": "get", "kind": kind, "id": binder.profile_id})
+		var got: GSResult = wb.api.handle(GSGameWorkbench.LOCAL_ACTOR, {"op": "get", "kind": kind, "id": binder.profile_id})
 		if got.ok:
 			listed.append_array(PackedStringArray((got.value as Dictionary).get("values", {}).keys()))
 	var missing := PackedStringArray()
@@ -81,7 +81,7 @@ func _run() -> void:
 		if not listed.has(k):
 			missing.append(k)
 	_check(missing.is_empty() and binder.profile_sets().size() == 3, "the workbench lists all %d keys over %d files" % [keys.size(), binder.profile_sets().size()], ",".join(missing))
-	var res: DotResult = wb.api.handle(DotGameWorkbench.LOCAL_ACTOR, {"op": "set", "kind": "config_courses", "id": binder.profile_id, "key": "freeze_cam_seconds", "value": 0.3})
+	var res: GSResult = wb.api.handle(GSGameWorkbench.LOCAL_ACTOR, {"op": "set", "kind": "config_courses", "id": binder.profile_id, "key": "freeze_cam_seconds", "value": 0.3})
 	_check(res.ok and is_equal_approx(config.freeze_cam_seconds, 0.3), "a workbench edit reaches the live config")
 	var files: Dictionary = wb.exporter.call("collect")
 	var text: String = files.get("cfg/game/mg-deathrun/config_courses/game.yml", "")
@@ -99,9 +99,9 @@ func _probe() -> void:
 	binder.strict = true
 	binder.roots = PackedStringArray([ProjectSettings.globalize_path(ROOT)])
 	var loaded := binder.load_layers()
-	var console := DotConsole.new()
+	var console := GSConsole.new()
 	add_child(console)
-	binder.bind_cvars(console.cvar, DotConVar.FLAG_ARCHIVE, console.has_name)
+	binder.bind_cvars(console.cvar, GSConVar.FLAG_ARCHIVE, console.has_name)
 	print("PROBE ok=%s round=%s round_src=%s cam=%s cam_src=%s cvar=%s speed=%s speed_src=%s grav=%s grav_src=%s" % [
 		loaded.ok, config.round_seconds, binder.source_of("round_seconds"), config.death_cam_seconds, binder.source_of("death_cam_seconds"),
 		console.find_cvar("dr_death_cam_seconds").get_string(), config.run_speed, binder.source_of("run_speed"),
@@ -137,12 +137,12 @@ func _layers() -> void:
 	OS.unset_environment("DR_DEATH_CAM_SECONDS")
 	_write("game/%s/config_round/game.yml" % GAME, "death_cam_seconds: 0.9\n")
 	_check(_child().contains("PROBE ok=false"), "strict: a key in the wrong file is refused")
-	var removed := DotPaths.remove_tree(ProjectSettings.globalize_path(ROOT))
+	var removed := GSPaths.remove_tree(ProjectSettings.globalize_path(ROOT))
 	_check(removed.ok and not DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(ROOT)), "the per-process cfg fixture directory is removed", ROOT if removed.ok else str(removed.error))
 
 
 ## The shipped cfg files hold every key, in step with DrConfig, and change nothing as they are.
-func _templates(binder: DotGameConfigBinder) -> void:
+func _templates(binder: GSGameConfigBinder) -> void:
 	var files := binder.template_files()
 	_check(files.size() == 3, "three shipped cfg files", str(files.size()))
 	var stale := PackedStringArray()
@@ -154,7 +154,7 @@ func _templates(binder: DotGameConfigBinder) -> void:
 
 ## No hard caps: only a bound that is a unit (a fraction, a percentage, a cosine) has an upper limit; every other number
 ## is open-ended, a cvar takes a far larger value, and a value below a lower bound is refused loudly, never clamped.
-func _no_caps(binder: DotGameConfigBinder, console: DotConsole, config: Object) -> void:
+func _no_caps(binder: GSGameConfigBinder, console: GSConsole, config: Object) -> void:
 	const UNIT_BOUNDS := ["walk_speed_scale", "button_cone", "bot_fumble_chance"]
 	var capped := PackedStringArray()
 	for e: Dictionary in binder.schema():

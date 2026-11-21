@@ -37,7 +37,7 @@ const TEAM_COLOURS: Array[Color] = [
 	Color(0.88, 0.30, 0.26),
 ]
 
-## What the stand-ins are called, solo and on a server, through dot-bot's [DotBotNames]
+## What the stand-ins are called, solo and on a server, through dot-bot's [GSBotNames]
 ## (never doubled up, and numbered only past the end of the list). Not "Stand-in 2": a board of
 ## numbered stand-ins tells a player they are alone.
 const BOT_NAMES := ["Lever", "Pressure Plate", "Tripwire", "Pitfall", "Hinge", "Ratchet", "Sprocket", "Fuse"]
@@ -107,15 +107,15 @@ signal player_armed(player_id: StringName, weapon_id: StringName)
 signal hit_landed(player_id: StringName, point: Vector3, killed: bool, headshot: bool)
 
 ## The binder that layered [member config] (cfg/ yml, env, argv); null in a suite that built the config by hand.
-var config_binder: DotGameConfigBinder = null
+var config_binder: GSGameConfigBinder = null
 
 ## The workbench's profile rows, made on first ask: the bridge's profile link must exist before the netcode seals, the workbench after.
-var profile_runtime: DotProfileRuntime = null
+var profile_runtime: GSProfileRuntime = null
 
 
-func ensure_runtime() -> DotProfileRuntime:
+func ensure_runtime() -> GSProfileRuntime:
 	if profile_runtime == null:
-		profile_runtime = DotProfileRuntime.new()
+		profile_runtime = GSProfileRuntime.new()
 		profile_runtime.permit = func(actor: Variant, _flag: String) -> bool:
 			return typeof(actor) == TYPE_STRING_NAME and actor == &"local"
 	return profile_runtime
@@ -141,25 +141,25 @@ var hold_clock: Callable = Callable()
 @export var draw_world: bool = false
 
 var catalogue: DrCatalogue = null
-var combat: DotCombatManager = null
+var combat: GSCombatManager = null
 
 ## `func(player_id: StringName) -> bool`: whether a player may be hurt now, assigned by the
 ## module from dot-game's `can_peer_be_harmed`. Unset offline, and a bot is never loading.
 var harm_gate: Callable = Callable()
-var match_node: DotMatch = null
-var random: DotRandomManager = null
+var match_node: GSMatch = null
+var random: GSRandomManager = null
 ## What a dead body does, and which death reactions the server allows: dot-player-char's
 ## `sv_ragdoll*` cvars, bound by the module (REPLICATED) and followed by a client through its
 ## link, because the client draws the bodies. The game's, not the course's.
-var ragdoll_rules: DotPlayerRagdollRules = DotPlayerRagdollRules.new()
+var ragdoll_rules: GSPlayerRagdollRules = GSPlayerRagdollRules.new()
 
 ## dot-props' `sv_toys*` (whether a course's toys are there, how many simulate at once, how hard a
 ## walk pushes one). Bound by the module (REPLICATED) and followed by a client, which draws them.
-var toy_rules: DotPropBodyRules = DotPropBodyRules.new()
+var toy_rules: GSPropBodyRules = GSPropBodyRules.new()
 
 ## Guns lying about (`dr_weapon_layer.gd`), built on both ends, and the `sv_weapon_drop*` rules it runs under: bound by the module, REPLICATED.
 var weapon_layer: DrWeaponLayer = null
-var drop_rules: DotWeaponDropRules = _walk_over_drops()
+var drop_rules: GSWeaponDropRules = _walk_over_drops()
 
 ## Aim-down-sights numbers (`zee_ads_rules`, REPLICATED): the server's cfg over the shipped defaults, handed to every weapon
 ## rig. Bound by the module and followed by a client, so its prediction agrees. The aim bit (`DrNetCommand.aim`) sets BUTTON_AIM on the rig and scales the motor (`DrPlayer.step_controller`).
@@ -168,16 +168,16 @@ var ads_rules: ZeeAdsRules = ZeeAdsRules.load_config()
 ## dot-player-controller's `mp_forceview` (may a player switch to third person) and `mp_solidplayers`
 ## (do players and stand-ins block each other). Bound by the module (REPLICATED) and followed by a
 ## client, which places its camera under the first and predicts its own player under the second.
-var view_rules: DotPlayerViewRules = DotPlayerViewRules.new()
+var view_rules: GSPlayerViewRules = GSPlayerViewRules.new()
 ## dot-mobile's `sv_mobile_*`, `sv_aim_assist*` and `sv_autofire*`: what a phone player may use. Bound REPLICATED by the module, followed by the client.
-var mobile_rules: DotMobileRules = DotMobileRules.new()
-var body_rules: DotPlayerBodyRules = DotPlayerBodyRules.new()
+var mobile_rules: GSMobileRules = GSMobileRules.new()
+var body_rules: GSPlayerBodyRules = GSPlayerBodyRules.new()
 ## The ambience cvars (`dr_ambient*`): bound by the module (REPLICATED), followed by a client through its link.
-var ambient_rules: DotAmbienceRules = DrAmbience.make_rules()
+var ambient_rules: GSAmbienceRules = DrAmbience.make_rules()
 
 ## The flashlight's config and binder, made on first use so a suite that builds a game by hand still has one; the course id the lights were last set for.
-var flashlight_config: DotFlashlightConfig = null
-var flashlight_binder: DotGameConfigBinder = null
+var flashlight_config: GSFlashlightConfig = null
+var flashlight_binder: GSGameConfigBinder = null
 var _flashlight_course: String = ""
 
 
@@ -188,12 +188,12 @@ func _init() -> void:
 
 ## The weapon definitions by id, for the death reaction a weapon asks for. Built on first use.
 var _weapon_defs: Dictionary = {}
-var effects: DotFxManager = null
+var effects: GSFxManager = null
 var spectate: DrSpectate = null
 ## Who a spectator may watch and whether they may fly a free camera: dot-spectate's `mp_forcecamera`,
 ## `mp_freeroam` and `mp_freeroam_speed`. One object for the game's life, shared with [DrSpectate]'s
 ## manager so a cvar change reaches it. Bound by the module (REPLICATED); a client flies the camera.
-var spectate_rules: DotSpectatorRules = DotSpectatorRules.new()
+var spectate_rules: GSSpectatorRules = GSSpectatorRules.new()
 var progress: DrProgress = null
 
 ## The course the next round plays, set by the players' vote ([code]game/dr_vote.gd[/code]) or
@@ -211,7 +211,7 @@ var phase: int = Phase.IDLE
 ## The course this round is run on.
 var course_doc: Dictionary = {}
 
-var entities := DotEntityTable.new()
+var entities := GSEntityTable.new()
 
 ## What the server last said about numbers a client cannot count. Negative is "count it".
 var remote_runners: int = -1
@@ -251,7 +251,7 @@ var _bot_stuck: Dictionary = {}
 
 
 ## Players take a gun by walking over it: there is no use key to press at the end.
-static func _walk_over_drops() -> DotWeaponDropRules:
-	var rules := DotWeaponDropRules.new()
+static func _walk_over_drops() -> GSWeaponDropRules:
+	var rules := GSWeaponDropRules.new()
 	rules.auto_pickup = true
 	return rules

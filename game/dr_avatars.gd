@@ -31,12 +31,12 @@ const SKINS: Array[StringName] = [
 
 
 ## Built once per game; it is content, not state.
-static func schema() -> DotAvatarSchema:
-	var s := DotAvatarSchema.new()
+static func schema() -> GSAvatarSchema:
+	var s := GSAvatarSchema.new()
 	s.id = SCHEMA_ID
 	s.version = 1
 
-	var skin := DotAvatarSlot.new()
+	var skin := GSAvatarSlot.new()
 	skin.id = SLOT_SKIN
 	skin.display_name = "Person"
 	skin.required = true
@@ -44,7 +44,7 @@ static func schema() -> DotAvatarSchema:
 	s.slots.append(skin)
 
 	for id in SKINS:
-		var part := DotAvatarPart.new()
+		var part := GSAvatarPart.new()
 		part.id = id
 		part.slot = SLOT_SKIN
 		part.display_name = "Person %s" % String(id).trim_prefix("skin_").to_upper()
@@ -60,8 +60,8 @@ static func schema() -> DotAvatarSchema:
 ##
 ## [param player_id] is the game's own key — `u<session>` — and the hash is the one
 ## [code]DrPlayer[/code] used before there were documents. See the class note.
-static func stock_avatar(player_id: StringName) -> DotAvatar:
-	var avatar := DotAvatar.make(SCHEMA_ID)
+static func stock_avatar(player_id: StringName) -> GSAvatar:
+	var avatar := GSAvatar.make(SCHEMA_ID)
 	avatar.set_part(SLOT_SKIN, SKINS[stock_index(player_id)])
 	return avatar
 
@@ -75,7 +75,7 @@ static func stock_index(player_id: StringName) -> int:
 ## [b]-1 rather than a guess.[/b] A document for another schema, or naming a skin this
 ## build does not ship, is not this game's to reinterpret; the caller falls back to the
 ## stock one, which is a real person rather than a wrong one.
-static func skin_index(avatar: DotAvatar) -> int:
+static func skin_index(avatar: GSAvatar) -> int:
 	if avatar == null or avatar.schema_id != SCHEMA_ID:
 		return -1
 
@@ -83,18 +83,18 @@ static func skin_index(avatar: DotAvatar) -> int:
 
 
 ## A member's site avatar as one of this game's six people: their top's skin, when this
-## game ships it. See `DotPlatformIdentity.avatar_translate_fn`.
+## game ships it. See `GSPlatformIdentity.avatar_translate_fn`.
 ##
 ## Null for a skin this game does not draw, and for a document that is not the site's:
 ## the member is then their stock person, which is a real person rather than a wrong one.
-static func from_site(foreign: DotAvatar) -> DotAvatar:
+static func from_site(foreign: GSAvatar) -> GSAvatar:
 	var top := _site_skin(foreign, &"top")
 	var skin := StringName("skin_%s" % top)
 
 	if top == "" or not SKINS.has(skin):
 		return null
 
-	var avatar := DotAvatar.make(SCHEMA_ID)
+	var avatar := GSAvatar.make(SCHEMA_ID)
 	avatar.set_part(SLOT_SKIN, skin)
 	return avatar
 
@@ -103,7 +103,7 @@ static func from_site(foreign: DotAvatar) -> DotAvatar:
 ##
 ## The site's avatar is the Kenney kit's eighteen painted skins, `skin-a` to `skin-r`,
 ## chosen per face, top and legs — the same atlases this game draws, spelt the site's way.
-static func _site_skin(foreign: DotAvatar, slot: StringName) -> String:
+static func _site_skin(foreign: GSAvatar, slot: StringName) -> String:
 	if foreign == null or foreign.schema_id != &"builtin":
 		return ""
 

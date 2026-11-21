@@ -28,7 +28,7 @@ const EYE_HEIGHT := 1.6
 @export var display_name: String = "Player"
 
 ## What this player looks like, as a dot-user-avatar document; null is the stock person.
-var avatar: DotAvatar = null
+var avatar: GSAvatar = null
 
 ## Whether a command is sampled from the input devices each tick. The person at the keyboard.
 @export var samples_input: bool = false
@@ -43,8 +43,8 @@ var avatar: DotAvatar = null
 var config: DrConfig = null
 
 var controller: DrController = null
-var sampler: DotFpsSampler = null
-var health: DotHealth = null
+var sampler: GSFpsSampler = null
+var health: GSHealth = null
 
 ## The weapons, once the end has handed them one.
 var weapons: ZeeWeaponRig = null
@@ -110,14 +110,14 @@ var beacon: bool = false
 var flashlight: bool = false
 var flashlight_ready: bool = false
 
-var beacon_marker: DotFxBeacon = null
+var beacon_marker: GSFxBeacon = null
 
 ## What other people see this player as. Client side.
 var figure: DrFigure = null
 
 ## How this player's body falls on their death: the server's pick ([method DrGame.decide_death]),
 ## carried on DEATH and set here before anybody hears of it. Null before a first death.
-var death: DotPlayerDeath = null
+var death: GSPlayerDeath = null
 
 # --- What a watcher draws in their hand. Client side --------------------------
 #
@@ -147,11 +147,11 @@ var mirror_fire_kind: int = 0
 ## The rig's own counter as the figure last saw it, for a simulated player.
 var _seen_fire_seq: int = -1
 
-static var _weapon_catalogue: DotWeaponCatalogue = null
+static var _weapon_catalogue: GSWeaponCatalogue = null
 
 
 ## The weapon table, built once; every rig shares it so its behaviour scripts load once.
-static func weapon_catalogue() -> DotWeaponCatalogue:
+static func weapon_catalogue() -> GSWeaponCatalogue:
 	if _weapon_catalogue == null:
 		_weapon_catalogue = ZeeWeaponPack.catalogue()
 		# Built under the loading cover; the first spawn then loads no script.
@@ -170,7 +170,7 @@ var tick_rate: int = 64:
 			controller.tick_rate = value
 
 
-## The key [DotWeaponPlayerBridge] identifies this carrier by. Duck-typed: see mg-smash-
+## The key [GSWeaponPlayerBridge] identifies this carrier by. Duck-typed: see mg-smash-
 ## copter's note, where a misspelling made every shot come from entity zero.
 var player_key: String:
 	get:
@@ -183,7 +183,7 @@ func _ready() -> void:
 	controller.tick_rate = tick_rate
 	# EXTERNAL even offline: the world owns the tick, so "pose the course, move, then let the
 	# course act on the player" is explicit, and it is the shape a dedicated server needs.
-	controller.drive = DotFpsController.Drive.EXTERNAL
+	controller.drive = GSFpsController.Drive.EXTERNAL
 	controller.tunables = tunables_for(config)
 	controller.admin_abilities = true
 	controller.before_fn = _before_tick
@@ -204,9 +204,9 @@ func _ready() -> void:
 ## [b]Static, and it takes the config,[/b] for mg-smash-copter's reason: a connected client
 ## builds a sampler before it has a player, and a sampler built from different tunables than
 ## the controller it feeds is input clamped differently from the simulation that consumes it.
-static func tunables_for(config: DrConfig) -> DotFpsTunables:
+static func tunables_for(config: DrConfig) -> GSFpsTunables:
 	# Legacy, pinned: every gap on a course is measured against it, not the family's classic default.
-	var t := DotFpsTunables.with_profile("legacy")
+	var t := GSFpsTunables.with_profile("legacy")
 	t.max_speed = config.run_speed if config != null else 7.0
 	t.gravity = config.gravity if config != null else 20.0
 	t.jump_height = config.jump_height if config != null else 1.25
@@ -247,21 +247,21 @@ static func tunables_for(config: DrConfig) -> DotFpsTunables:
 	return t
 
 
-## A [DotFpsTouchSampler] on a touch device (it still reads keys), else the plain sampler, with the actions registered.
-static func new_sampler(p_tunables: DotFpsTunables) -> DotFpsSampler:
-	var made: DotFpsSampler
-	if DotPlatform.has_touch():
-		var touch := DotFpsTouchSampler.new(p_tunables)
+## A [GSFpsTouchSampler] on a touch device (it still reads keys), else the plain sampler, with the actions registered.
+static func new_sampler(p_tunables: GSFpsTunables) -> GSFpsSampler:
+	var made: GSFpsSampler
+	if GSPlatform.has_touch():
+		var touch := GSFpsTouchSampler.new(p_tunables)
 		made = touch
 	else:
-		made = DotFpsSampler.new(p_tunables)
+		made = GSFpsSampler.new(p_tunables)
 	register_actions(made)
 	return made
 
 
 ## Registers the movement actions, and binds the slow walk to shift. See mg-smash-copter.
-static func register_actions(p_sampler: DotFpsSampler = null) -> void:
-	var _added := DotFpsSampler.register_default_actions(p_sampler)
+static func register_actions(p_sampler: GSFpsSampler = null) -> void:
+	var _added := GSFpsSampler.register_default_actions(p_sampler)
 	var walk := &"dot_fps_walk"
 
 	if not InputMap.has_action(walk):
@@ -302,8 +302,8 @@ func simulate(tick: int, delta: float) -> void:
 
 	if sampler != null:
 		# Settling under the cover runs the body with its input off (falls, lands, no keys).
-		var gate := DotLoadGate.of(self) if is_inside_tree() else null
-		var sampled := sampler.sample(delta) if gate == null or gate.is_open() else DotFpsCommand.new()
+		var gate := GSLoadGate.of(self) if is_inside_tree() else null
+		var sampled := sampler.sample(delta) if gate == null or gate.is_open() else GSFpsCommand.new()
 
 		if command_stamp.is_valid():
 			command_stamp.call(sampled)
@@ -343,13 +343,13 @@ func _before_tick(tick: int) -> void:
 ## carry writes the STATE and the node together: the controller starts its next tick from
 ## `state.position`, so a displacement applied only to the node is undone by the very next
 ## move — mg-smash-copter found that as a player riding a platform for one frame each tick.
-func _after_tick(tick: int, state: DotFpsState) -> void:
+func _after_tick(tick: int, state: GSFpsState) -> void:
 	global_position = state.position
 
 	if stage == null or not is_instance_valid(stage) or watching:
 		return
 
-	if state.mode == DotFpsState.Mode.GROUND and state.ground_id != 0:
+	if state.mode == GSFpsState.Mode.GROUND and state.ground_id != 0:
 		var moved := stage.carry(state.ground_id, state.position, tick)
 
 		if moved != Vector3.ZERO:
@@ -387,7 +387,7 @@ const RUNNER_TEAM := 1
 ## copy a tick after the fact and left a predicting client to be corrected across the course.
 ## Here the client lands in the same tick as the server and reconciliation replays the same
 ## jump.
-func _go_through(state: DotFpsState, sent: Array) -> void:
+func _go_through(state: GSFpsState, sent: Array) -> void:
 	var carried := state.velocity
 	# The controller's own teleport, not a hand-written copy of it: it also resets the previous-state
 	# blend the render interpolates from (and the position two back), so the local view does not sweep
@@ -419,9 +419,9 @@ func eye_position() -> Vector3:
 ## leaves the player's feet pointing north; see mg-smash-copter.
 func component(type_name: StringName) -> Object:
 	match String(type_name):
-		"DotPlayerController", "DotFpsController":
+		"GSPlayerController", "GSFpsController":
 			return controller
-		"DotHealth":
+		"GSHealth":
 			return health
 		"ZeeWeaponRig":
 			return weapons
@@ -451,7 +451,7 @@ func place_at(at: Vector3, yaw_degrees: float) -> void:
 	if sampler != null:
 		sampler.look_at_angles(yaw_degrees, 0.0)
 
-	var facing := DotFpsCommand.new()
+	var facing := GSFpsCommand.new()
 	facing.yaw = yaw_degrees
 	facing.pitch = 0.0
 	controller.apply_command(facing)
@@ -489,7 +489,7 @@ func present_beacon(delta: float, at: Vector3, local_view: bool) -> bool:
 		return false
 
 	if beacon_marker == null:
-		beacon_marker = DotFxBeacon.new()
+		beacon_marker = GSFxBeacon.new()
 		beacon_marker.name = "Beacon"
 		add_child(beacon_marker)
 
@@ -527,7 +527,7 @@ func present_body(own_view: bool, at: Vector3, team_colour: Color) -> bool:
 	if shown and controller != null:
 		var velocity := controller.state.velocity
 		figure.set_motion({
-			"on_floor": controller.state.mode == DotFpsState.Mode.GROUND,
+			"on_floor": controller.state.mode == GSFpsState.Mode.GROUND,
 			"vertical": velocity.y,
 			"crouched": controller.state.crouch_fraction > 0.5,
 			# The view's pitch: the upper body, the arms and the gun follow it.

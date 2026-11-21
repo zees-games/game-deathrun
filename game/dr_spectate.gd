@@ -1,8 +1,8 @@
-extends DotSpectatorHost
+extends GSSpectatorHost
 
 const DrPlayer := preload("dr_player.gd")
 
-## Where somebody who is out looks, and what the server lets them see: [DotSpectatorHost] with this game's numbers.
+## Where somebody who is out looks, and what the server lets them see: [GSSpectatorHost] with this game's numbers.
 ## No delay: every client already receives every player's live position, so one would hide nothing. No `class_name`; reached by preload from [DrGame], which hands it the world's two dictionaries and no reference back, so there is no cycle.
 
 const CHANNEL := "dr.spectate"
@@ -35,7 +35,7 @@ func _channel() -> String:
 	return CHANNEL
 
 
-func _tune_rules(r: DotSpectatorRules) -> DotSpectatorRules:
+func _tune_rules(r: GSSpectatorRules) -> GSSpectatorRules:
 	# Dead players stay dead until the next round, so a list including them would be bodies at the kill height.
 	r.cycle_includes_dead = false
 	r.delay_ticks = 0
@@ -56,7 +56,7 @@ func on_died(
 		where = Vector3(at.x, deck_height + DROP_CAM_RISE - 2.0, at.z)
 
 	death(String(player_id), where, String(by), tick)
-	DotLog.debug(CHANNEL, "somebody who is out is watching", {
+	GSLog.debug(CHANNEL, "somebody who is out is watching", {
 		"player": String(player_id), "by": String(by), "fell": fell,
 	})
 

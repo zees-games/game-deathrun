@@ -1,6 +1,6 @@
-extends DotVoteRoundGame
+extends GSVoteRoundGame
 
-## The players choose the next course: dot-vote's [DotVoteRoundGame] with Deathrun's names. A round IS a course: the ballot
+## The players choose the next course: dot-vote's [GSVoteRoundGame] with Deathrun's names. A round IS a course: the ballot
 ## opens [member open_after_sec] into every course and applies when it ends. Settings: `user://cfg/deathrun_vote.json`, `game.yml`
 ## metadata `course_vote:`; `{"enabled": false}` leaves the rotation to decide alone.
 

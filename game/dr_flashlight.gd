@@ -11,16 +11,16 @@ const DARK_MOODS: PackedStringArray = ["interior_horror", "cave_tunnel", "outdoo
 
 
 ## A config with this game's defaults: F, off on a lit course, on in the dark ones.
-static func make_config() -> DotFlashlightConfig:
-	var cfg := DotFlashlightConfig.new()
+static func make_config() -> GSFlashlightConfig:
+	var cfg := GSFlashlightConfig.new()
 	cfg.key = "F"
 	cfg.dark_moods = DARK_MOODS
 	return cfg
 
 
 ## The binder: `dr_flashlight_<field>` cvars, `cfg/game/mg-deathrun/flashlight/game.yml`, a workbench set.
-static func make_binder(cfg: DotFlashlightConfig) -> DotGameConfigBinder:
-	var b := DotGameConfigBinder.create(cfg, GAME_ID, "dr_flashlight")
+static func make_binder(cfg: GSFlashlightConfig) -> GSGameConfigBinder:
+	var b := GSGameConfigBinder.create(cfg, GAME_ID, "dr_flashlight")
 	b.profile_kind = "flashlight"
 	return b
 
@@ -34,5 +34,5 @@ static func mood_of(course_id: String) -> String:
 
 
 ## Whether a player starts the course with the light on: its mood against the config's dark moods.
-static func starts_on(cfg: DotFlashlightConfig, course_id: String) -> bool:
-	return DotFlashlightRules.start_on(cfg, course_id, 1.0, mood_of(course_id))
+static func starts_on(cfg: GSFlashlightConfig, course_id: String) -> bool:
+	return GSFlashlightRules.start_on(cfg, course_id, 1.0, mood_of(course_id))

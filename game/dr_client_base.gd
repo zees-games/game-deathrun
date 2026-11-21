@@ -23,8 +23,8 @@ var camera: Camera3D = null
 
 var hud: DrHud = null
 
-## The Tab board, the menu's ([member DotGameClient.board]). See [method _dress_board].
-var board: DotMenuScoreboard = null
+## The Tab board, the menu's ([member GSGameClient.board]). See [method _dress_board].
+var board: GSMenuScoreboard = null
 
 ## When this client started, for an offline board's "time".
 var _started_msec: int = Time.get_ticks_msec()
@@ -36,7 +36,7 @@ var audio: DrAudio = null
 ## and every shot that matters is the server's; the rig is only a view model that moves.
 var weapons: ZeeWeaponRig = null
 
-var net: DotNetManager = null
+var net: GSNetManager = null
 
 var bridge: DrNetBridge = null
 
@@ -47,7 +47,7 @@ var _offline: bool = true
 var _watch_id: int = -1
 
 var _slot: int = 0
-var _wheel: DotWeaponWheel
+var _wheel: GSWeaponWheel
 
 ## The last whole second of the countdown a beep was played for.
 var _beeped: int = -1
@@ -67,11 +67,11 @@ func _dress_board() -> void:
 		return
 	board.title_text = "Deathrun"
 	board.columns = [
-		{"key": &"avatar", "kind": DotMenuScoreboard.KIND_AVATAR, "width": 0.0},
+		{"key": &"avatar", "kind": GSMenuScoreboard.KIND_AVATAR, "width": 0.0},
 		{"key": &"name", "title": "Player", "width": 3.0},
-		{"key": &"points", "title": "Points", "kind": DotMenuScoreboard.KIND_NUMBER},
-		{"key": &"seconds", "title": "Time", "kind": DotMenuScoreboard.KIND_DURATION},
-		{"key": &"ping", "title": "Ping", "kind": DotMenuScoreboard.KIND_PING},
+		{"key": &"points", "title": "Points", "kind": GSMenuScoreboard.KIND_NUMBER},
+		{"key": &"seconds", "title": "Time", "kind": GSMenuScoreboard.KIND_DURATION},
+		{"key": &"ping", "title": "Ping", "kind": GSMenuScoreboard.KIND_PING},
 	]
 	board.sort_by = &"points"
 	board.decorate = _decorate_row
@@ -162,22 +162,22 @@ func _aim_sent() -> bool:
 	return false
 
 
-func _drive_view_model(command: DotFpsCommand) -> void:
+func _drive_view_model(command: GSFpsCommand) -> void:
 	if weapons == null or player == null:
 		return
 
-	var weapon_command := DotWeaponCommand.new()
-	weapon_command.set_button(DotWeaponCommand.BUTTON_AIM, _aim_sent())
+	var weapon_command := GSWeaponCommand.new()
+	weapon_command.set_button(GSWeaponCommand.BUTTON_AIM, _aim_sent())
 
 	if command != null:
 		weapon_command.set_button(
-			DotWeaponCommand.BUTTON_ATTACK, command.is_pressed(DrNetCommand.BUTTON_FIRE)
+			GSWeaponCommand.BUTTON_ATTACK, command.is_pressed(DrNetCommand.BUTTON_FIRE)
 		)
 		weapon_command.set_button(
-			DotWeaponCommand.BUTTON_ALT, command.is_pressed(DrNetCommand.BUTTON_ALT)
+			GSWeaponCommand.BUTTON_ALT, command.is_pressed(DrNetCommand.BUTTON_ALT)
 		)
 		weapon_command.set_button(
-			DotWeaponCommand.BUTTON_RELOAD, command.is_pressed(DrNetCommand.BUTTON_RELOAD)
+			GSWeaponCommand.BUTTON_RELOAD, command.is_pressed(DrNetCommand.BUTTON_RELOAD)
 		)
 		weapon_command.yaw = command.yaw
 		weapon_command.pitch = command.pitch
@@ -186,8 +186,8 @@ func _drive_view_model(command: DotFpsCommand) -> void:
 
 	var _outcome := weapons.simulate_tick(weapon_command, game.round_number * 100000 + Engine.get_physics_frames())
 
-	var busy := weapon_command.is_pressed(DotWeaponCommand.BUTTON_ATTACK) \
-		or weapon_command.is_pressed(DotWeaponCommand.BUTTON_RELOAD) \
+	var busy := weapon_command.is_pressed(GSWeaponCommand.BUTTON_ATTACK) \
+		or weapon_command.is_pressed(GSWeaponCommand.BUTTON_RELOAD) \
 		or weapons.arsenal.is_reloading() or weapons.arsenal.is_switching()
 	_drawn_quiet = 0.0 if busy else _drawn_quiet + 1.0 / float(maxi(game.tick_rate, 1))
 	var _corrected := correct_drawn()
@@ -309,7 +309,7 @@ func _present_effects(delta: float) -> void:
 ## then every beacon; returns how many bodies are shown. Static so the net suite drives this, not a copy.
 ## [param first_person] hides own body; [param alpha] is the fraction through the tick, -1 for the engine's.
 static func present_frame(
-	p_net: DotNetManager,
+	p_net: GSNetManager,
 	p_game: DrGame,
 	own: DrPlayer,
 	first_person: bool,

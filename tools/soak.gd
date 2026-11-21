@@ -5,7 +5,7 @@ const DrConfig := preload("../game/dr_config.gd")
 const DrGame := preload("../game/dr_game.gd")
 const DrPlayer := preload("../game/dr_player.gd")
 
-## Bot soak on the real game: N stand-ins race one course (a "map" is a course id) for M simulated minutes through dot-bot's DotBotSoak, fed by dot-spawn's DotSpawnWatch.
+## Bot soak on the real game: N stand-ins race one course (a "map" is a course id) for M simulated minutes through dot-bot's GSBotSoak, fed by dot-spawn's GSSpawnWatch.
 ## Run: `./game.sh soak [course] [minutes]`. `--probe 1` prints each activator's place, target trap and button distance once a second; the harness's own flags work too.
 ## Writes .godot/test-logs/soak-<course>.json, prints the SOAK line, exits 1 on failure. Rounds run back to back; kills are off.
 
@@ -22,7 +22,7 @@ var _reached := 0
 
 
 func _ready() -> void:
-	DotLog.set_level(DotLog.Level.ERROR)
+	GSLog.set_level(GSLog.Level.ERROR)
 	_run.call_deferred()
 
 
@@ -36,7 +36,7 @@ func _arg(name: String, fallback: String) -> String:
 
 func _run() -> void:
 	var map_id := StringName(_arg("map", String(DEFAULT_MAP)))
-	var cfg := DotBotSoakConfig.new()
+	var cfg := GSBotSoakConfig.new()
 	cfg.minutes = DEFAULT_MINUTES
 	cfg.bots = DEFAULT_BOTS
 	cfg.apply_cli()
@@ -56,11 +56,11 @@ func _run() -> void:
 	await get_tree().physics_frame
 	_game.start()
 
-	var watch := DotSpawnWatch.new()
+	var watch := GSSpawnWatch.new()
 	watch.rules.enabled = true
 	watch.rules.kill_y = -5000.0
 
-	var soak := DotBotSoak.new(cfg)
+	var soak := GSBotSoak.new(cfg)
 	soak.watch = watch
 	soak.movers_fn = _movers
 	soak.object_count_fn = func() -> int: return int(Performance.get_monitor(Performance.OBJECT_COUNT))
@@ -84,8 +84,8 @@ func _run() -> void:
 	if _game.stage != null and _game.stage.trap_count() > 0 and _traps == 0 and cfg.minutes >= 0.5:
 		report["ok"] = false
 		(report["reasons"] as Array).append("the activator stand-in pressed nothing in %d rounds (reached a button %d times)" % [_game.round_number, _reached])
-	print(DotBotSoak.summary(report))
-	print(DotBotSoak.report_line(report))
+	print(GSBotSoak.summary(report))
+	print(GSBotSoak.report_line(report))
 	var path := ProjectSettings.globalize_path("res://.godot/test-logs/soak-%s.json" % map_id)
 	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
 	if soak.write_report(report, path) != OK:
@@ -118,7 +118,7 @@ func _make_game(map_id: StringName) -> void:
 func _seat_bots(count: int) -> void:
 	var taken: Array = []
 	for i in range(count):
-		var bot_name := DotBotNames.pick(taken, i, DrGame.BOT_NAMES)
+		var bot_name := GSBotNames.pick(taken, i, DrGame.BOT_NAMES)
 		taken.append(bot_name)
 		var bot := _game.add_player(StringName("u%d" % (900100 + i)), bot_name)
 		bot.is_bot = true

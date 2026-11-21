@@ -1,4 +1,4 @@
-extends DotGameModule
+extends GSGameModule
 
 ## The console commands of `dr_module.gd` and the delivered-course reload, split out to keep the module under the size budget. No `class_name`: a module in a pack cannot have one.
 
@@ -12,7 +12,7 @@ const DrVote := preload("dr_vote.gd")
 var vote: DrVote = null
 
 
-## The courses the SERVER names (its map config, via [DotGameContent]), fetched and added to the
+## The courses the SERVER names (its map config, via [GSGameContent]), fetched and added to the
 ## catalogue; returns how many documents they held. Server-only: clients get the course in STAGE.
 ## Call after EVERY catalogue load, because `load_from` forgets what was read before.
 func _add_delivered_courses(world: DrGame) -> int:
@@ -21,11 +21,11 @@ func _add_delivered_courses(world: DrGame) -> int:
 
 	var read := 0
 
-	for root in await DotGameContent.map_dirs(server, "courses"):
+	for root in await GSGameContent.map_dirs(server, "courses"):
 		read += world.catalogue.add_directory(root)
 
 	return read
-func _cmd_wish(ctx: DotCmdContext, side: int) -> void:
+func _cmd_wish(ctx: GSCmdContext, side: int) -> void:
 	var world := game as DrGame
 	if world == null or ctx.session == null:
 		ctx.reply("Only a player can choose a side.")
@@ -38,7 +38,7 @@ func _cmd_wish(ctx: DotCmdContext, side: int) -> void:
 		"You will be drawn as an activator first." if side == DrGame.ACTIVATORS
 		else ("You will only activate if nobody else can." if side == DrGame.RUNNERS else "Either side.")
 	)
-func _cmd_say(ctx: DotCmdContext) -> void:
+func _cmd_say(ctx: GSCmdContext) -> void:
 	var text := ctx.rest()
 
 	if text.strip_edges() == "":
@@ -51,12 +51,12 @@ func _cmd_say(ctx: DotCmdContext) -> void:
 
 	var announced: Variant = services.get("chat").call("announce", text, DrServices.CH_ALL)
 
-	if announced is DotResult and not (announced as DotResult).ok:
+	if announced is GSResult and not (announced as GSResult).ok:
 		ctx.reply_error(announced)
 		return
 
 	ctx.reply("Said: %s" % text)
-func _cmd_status(ctx: DotCmdContext) -> void:
+func _cmd_status(ctx: GSCmdContext) -> void:
 	var world := game as DrGame
 
 	if world == null:
@@ -64,7 +64,7 @@ func _cmd_status(ctx: DotCmdContext) -> void:
 		return
 
 	ctx.reply_lines(world.describe_lines())
-func _cmd_net(ctx: DotCmdContext) -> void:
+func _cmd_net(ctx: GSCmdContext) -> void:
 	if bridge == null:
 		ctx.reply("No bridge; this server is not replicating anything.")
 		return
@@ -73,7 +73,7 @@ func _cmd_net(ctx: DotCmdContext) -> void:
 
 	if services != null:
 		ctx.reply_lines(services.call("describe_lines"))
-func _cmd_courses(ctx: DotCmdContext) -> void:
+func _cmd_courses(ctx: GSCmdContext) -> void:
 	var world := game as DrGame
 
 	if world == null or world.catalogue == null:
@@ -82,7 +82,7 @@ func _cmd_courses(ctx: DotCmdContext) -> void:
 
 	ctx.reply_lines(world.catalogue.describe_lines())
 	ctx.reply("playing: %s" % str(world.course_doc.get("id", "-")))
-func _cmd_rotation(ctx: DotCmdContext) -> void:
+func _cmd_rotation(ctx: GSCmdContext) -> void:
 	var world := game as DrGame
 
 	if world == null or world.catalogue == null or not world.catalogue.has_rotation_file():
@@ -106,7 +106,7 @@ func _cmd_rotation(ctx: DotCmdContext) -> void:
 		vote.refresh_maps()
 
 	ctx.reply("Rotation: %s" % wanted)
-func _cmd_maps_reload(ctx: DotCmdContext) -> void:
+func _cmd_maps_reload(ctx: GSCmdContext) -> void:
 	var world := game as DrGame
 
 	if world == null or world.catalogue == null:
@@ -119,7 +119,7 @@ func _cmd_maps_reload(ctx: DotCmdContext) -> void:
 		vote.refresh_maps()
 
 	ctx.reply("maps.yml read." if read.ok else read.error.message)
-func _cmd_traps(ctx: DotCmdContext) -> void:
+func _cmd_traps(ctx: GSCmdContext) -> void:
 	var world := game as DrGame
 
 	if world == null or world.stage == null:
@@ -139,7 +139,7 @@ func _cmd_traps(ctx: DotCmdContext) -> void:
 
 	if world.stage.trap_count() == 0:
 		ctx.reply("This course has no traps.")
-func _cmd_reload(ctx: DotCmdContext) -> void:
+func _cmd_reload(ctx: GSCmdContext) -> void:
 	var world := game as DrGame
 
 	if world == null or world.catalogue == null:

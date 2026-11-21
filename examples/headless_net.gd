@@ -22,7 +22,7 @@ const CHECKS := 114
 
 
 func _ready() -> void:
-	DotLog.set_level(DotLog.Level.ERROR)
+	GSLog.set_level(GSLog.Level.ERROR)
 	_run.call_deferred()
 
 
@@ -104,7 +104,7 @@ func _build() -> bool:
 	# clock, so the client must not ask for dot-net's input-lead report: steered by reports
 	# about commands it never stamped, the clock runs away from them (only dot-net's cap
 	# holds it). By the constant map, so this parses against a dot-net from before the report.
-	var lead_bit := int((DotNetMessageRegistry as Script).get_script_constant_map().get("FEATURE_INPUT_LEAD", 0))
+	var lead_bit := int((GSNetMessageRegistry as Script).get_script_constant_map().get("FEATURE_INPUT_LEAD", 0))
 	_client_net.messages.features &= ~lead_bit
 
 	_server_bridge = DrNetBridge.new()
@@ -235,23 +235,23 @@ func _test_the_aim_bit_crosses() -> void:
 	drawn.role = ZeeWeaponRig.Role.SERVER
 	drawn.authority = false
 	drawn.tick_rate = _client_game.tick_rate
-	drawn.player_ref = DotNodeRef.of_path(_mine().get_path())
+	drawn.player_ref = GSNodeRef.of_path(_mine().get_path())
 	drawn.ads_rules = _client_game.ads_rules
 	_mine().add_child(drawn)
 	var drawn_ready := drawn.setup()
 	var _drawn_given := drawn.give(rig.current_def().id)
 	_check(drawn_ready.ok, "the client's drawn rig sets up", "" if drawn_ready.ok else drawn_ready.error.message)
 	var drawn_tick := 500000
-	var aim_step := func(command: DotFpsCommand, aim: bool) -> void:
+	var aim_step := func(command: GSFpsCommand, aim: bool) -> void:
 		drawn_tick += 1
-		var weapon_command := DotWeaponCommand.new()
-		weapon_command.set_button(DotWeaponCommand.BUTTON_AIM, aim)
+		var weapon_command := GSWeaponCommand.new()
+		weapon_command.set_button(GSWeaponCommand.BUTTON_AIM, aim)
 		var _o := drawn.simulate_tick(weapon_command, drawn_tick)
 		await _step(command, aim)
 	var start := server_me.global_position
 
 	var run := func(direction: Vector2, aim: bool) -> float:
-		var walk := DotFpsCommand.new()
+		var walk := GSFpsCommand.new()
 		walk.move = direction
 		server_me.place_at(start, 0.0)
 		for _i in range(INPUT_LEAD + 8):
@@ -276,7 +276,7 @@ func _test_the_aim_bit_crosses() -> void:
 	_check(not server_me.aiming and rig.ads_move_scale() == 1.0, "unaimed, the server's body is not aiming and not slowed")
 
 	var aimed_run: float = await run.call(best, true)
-	var forward := DotFpsCommand.new()
+	var forward := GSFpsCommand.new()
 	forward.move = best
 	_check(server_me.aiming and _mine().aiming and absf(rig.ads_move_scale() - paced) < 0.001,
 		"aimed, the server's body and the client's both are, and the rig is at the rules' pace",
@@ -323,7 +323,7 @@ func _test_the_local_player_is_predicted() -> void:
 	server_me.place_at(Vector3(0.0, 0.1, -4.0), 0.0)
 	await _steps(20)
 	var before := mine.controller.state.position
-	var forward := DotFpsCommand.new()
+	var forward := GSFpsCommand.new()
 	forward.move = Vector2(0.0, 1.0)
 	await _step(forward)
 	_check(mine.controller.state.position.distance_to(before) > 0.01,
@@ -438,7 +438,7 @@ func _test_the_end_crosses() -> void:
 	await _test_the_aim_bit_crosses()
 
 	_section("the showdown's result crosses")
-	var damage := DotDamage.make(server_me.entity_id, _stand_in.entity_id, 1000.0, null)
+	var damage := GSDamage.make(server_me.entity_id, _stand_in.entity_id, 1000.0, null)
 	damage.tick = _tick
 	var _applied := _server_game.combat.apply_damage(damage)
 	await _steps(6)
@@ -462,7 +462,7 @@ func _test_a_hit_is_the_shooters() -> void:
 	await _steps(2)
 
 	# Point-blank, straight down the aim: the stand-in three metres in front of the shooter's eye.
-	var aim := DotWeaponCommand.new()
+	var aim := GSWeaponCommand.new()
 	aim.yaw = 0.0
 	aim.pitch = 0.0
 	var ahead := aim.aim_direction()
@@ -474,12 +474,12 @@ func _test_a_hit_is_the_shooters() -> void:
 	_hits.clear()
 	_sent_events.clear()
 
-	var fire := DotFpsCommand.new()
+	var fire := GSFpsCommand.new()
 	fire.yaw = aim.yaw
 	fire.pitch = aim.pitch
-	fire.set_button(DotFpsCommand.BUTTON_USER_0, true)
+	fire.set_button(GSFpsCommand.BUTTON_USER_0, true)
 	await _steps(3, fire)
-	var still := DotFpsCommand.new()
+	var still := GSFpsCommand.new()
 	still.yaw = aim.yaw
 	await _steps(INPUT_LEAD + 6, still)
 
@@ -496,9 +496,9 @@ func _test_a_hit_is_the_shooters() -> void:
 	# peer, so a HIT routed by anything but the shooter's session would land on this client).
 	_hits.clear()
 	_sent_events.clear()
-	var shot_back := DotShot.new()
+	var shot_back := GSShot.new()
 	shot_back.attacker = _stand_in.entity_id
-	var wound := DotDamage.make(_stand_in.entity_id, server_me.entity_id, 1.0, null)
+	var wound := GSDamage.make(_stand_in.entity_id, server_me.entity_id, 1.0, null)
 	wound.health_lost = 1.0
 	wound.point = server_me.global_position + Vector3.UP
 	shot_back.damages.append(wound)
@@ -575,7 +575,7 @@ func _test_a_teleport_is_predicted() -> void:
 	server_me.place_at(Vector3(0.0, 0.1, -2.0), 0.0)
 	await _steps(20)
 	var warps_before := mine.warps
-	var forward := DotFpsCommand.new()
+	var forward := GSFpsCommand.new()
 	forward.move = Vector2(0.0, 1.0)
 	await _steps(40, forward)
 	await _steps(30)
@@ -682,7 +682,7 @@ func _test_leaving() -> void:
 
 func _test_killcam_icon() -> void:
 	_section("the killcam banner shows the weapon's icon")
-	var fatal := DrEvents.read_death(DotNetReader.new(DrEvents.write_death(5, 6, DrGame.DIED_SHOT, null, &"rifle")))
+	var fatal := DrEvents.read_death(GSNetReader.new(DrEvents.write_death(5, 6, DrGame.DIED_SHOT, null, &"rifle")))
 	_check(bool(fatal["ok"]) and fatal["weapon_id"] == &"rifle", "a DEATH carries the weapon id")
 	var client := DrClient.new()
 	client._build_killcam()
@@ -693,20 +693,20 @@ func _test_killcam_icon() -> void:
 	var moment := kc.buffer.last_event(&"moment")
 	_check(moment["data"].get("weapon_id", "") == "rifle", "the moment keeps the weapon id")
 	_check(kc.killcam.icon_provider.is_valid(), "the killcam has an icon provider")
-	var banner := DotKillcamBanner.new()
+	var banner := GSKillcamBanner.new()
 	banner.icon_provider = kc.killcam.icon_provider
 	add_child(banner)
 	banner.present({"killer": "A", "weapon": "put down", "weapon_id": "rifle"})
 	_check(banner.icon_rect.visible and banner.icon_rect.texture != null, "the banner shows the rifle's picture")
 	banner.free()
-	_check(kc.camera_mode_fn.call() == DotKillViewRules.Camera.EYE, "the killcam camera is the eye until the server says")
+	_check(kc.camera_mode_fn.call() == GSKillViewRules.Camera.EYE, "the killcam camera is the eye until the server says")
 	var pov := preload("../game/dr_kill_pov.gd")
 	_check(pov.weapon_name(pov.hash_of(&"pistol")) != "" and pov.weapon_name(0.0) == "" and pov.aux_of(null) == [0.0], "the killer's screen names a recorded weapon and nothing for an empty hand")
 	client._on_killcam_cvar("mp_killview_camera", "1")
-	_check(kc.camera_mode_fn.call() == DotKillViewRules.Camera.BEHIND, "mp_killview_camera 1 puts the killcam camera behind the killer")
-	var framing := DotKillcamFraming.new(null, 1)
+	_check(kc.camera_mode_fn.call() == GSKillViewRules.Camera.BEHIND, "mp_killview_camera 1 puts the killcam camera behind the killer")
+	var framing := GSKillcamFraming.new(null, 1)
 	var eye := Transform3D(Basis.IDENTITY, Vector3(0, 1.6, 0))
-	var placed: Dictionary = framing.place(DotKillViewRules.Camera.BEHIND, eye, 75.0, Vector3(0, 1.2, -20))
+	var placed: Dictionary = framing.place(GSKillViewRules.Camera.BEHIND, eye, 75.0, Vector3(0, 1.2, -20))
 	_check((placed["transform"] as Transform3D).origin.z > 1.0, "the behind camera sits behind the killer's eye")
 	kc.free()
 	client.free()

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Bake the courses' light: one lightmaps/<id>.res per course, which the game's pack ships and a client
-# lays over the course it builds (DrCourse._attach_bake; dot-lighting's DotLightBake).
+# lays over the course it builds (DrCourse._attach_bake; dot-lighting's GSLightBake).
 #
 #   tools/bake_lightmaps.sh                    # every course (the practice course and courses/)
 #   tools/bake_lightmaps.sh dr_quarry dr_temple   # these

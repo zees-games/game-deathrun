@@ -16,7 +16,7 @@ const WALKWAY_SKIP_MIN := 8
 
 var stage: DrCourse = null
 
-var physics: DotPhysicsLayout = null
+var physics: GSPhysicsLayout = null
 
 ## player id -> DrPlayer.
 var players: Dictionary = {}
@@ -52,7 +52,7 @@ func _floor_at(point: Vector3) -> bool:
 ## Steers a bot in the air so it lands on [param target] rather than past it. The overshoot is
 ## measured along the velocity, not toward the target (which reads zero when nearly above it); the brake
 ## is the constant deceleration `2·over / t²` that removes it in the time left.
-func _bot_land_on(player: DrPlayer, command: DotFpsCommand, target: Vector3) -> void:
+func _bot_land_on(player: DrPlayer, command: GSFpsCommand, target: Vector3) -> void:
 	var state := player.controller.state
 	var flat := Vector3(state.velocity.x, 0.0, state.velocity.z)
 
@@ -209,13 +209,13 @@ func _nearest_enemy(player: DrPlayer) -> DrPlayer:
 	return best
 
 
-## Aims a stand-in at [param target] with dot-bot's [DotBotAim] on `bot_difficulty` and says whether
+## Aims a stand-in at [param target] with dot-bot's [GSBotAim] on `bot_difficulty` and says whether
 ## it fires this tick. Seeded per bot and per round so an empty server does not replay one fight.
-func _aim_bot(player: DrPlayer, command: DotFpsCommand, target: DrPlayer) -> void:
-	var aim: DotBotAim = _bot_hands.get(player.player_id)
+func _aim_bot(player: DrPlayer, command: GSFpsCommand, target: DrPlayer) -> void:
+	var aim: GSBotAim = _bot_hands.get(player.player_id)
 
 	if aim == null:
-		aim = DotBotAim.new(round_number * 8192 + int(player.entity_id % 8192), DotBotSettings.of(self))
+		aim = GSBotAim.new(round_number * 8192 + int(player.entity_id % 8192), GSBotSettings.of(self))
 		aim.view_from(command.yaw, command.pitch)
 		_bot_hands[player.player_id] = aim
 
@@ -229,14 +229,14 @@ func _aim_bot(player: DrPlayer, command: DotFpsCommand, target: DrPlayer) -> voi
 	var fire := aim.trigger(now, eye.distance_to(at))
 	if fire:
 		aim.note_shot(eye, at, now)
-	command.set_button(DotFpsCommand.BUTTON_USER_0, fire)
+	command.set_button(GSFpsCommand.BUTTON_USER_0, fire)
 
 
 # Reacting
 
 
 ## Cancels sideways momentum carried down a staircase, which sails past a small stone at the bottom.
-func _bot_cancel_drift(player: DrPlayer, command: DotFpsCommand, route: Array, index: int, point: Dictionary, toward: Vector3) -> void:
+func _bot_cancel_drift(player: DrPlayer, command: GSFpsCommand, route: Array, index: int, point: Dictionary, toward: Vector3) -> void:
 	if not bool(point["jump"]) and index + 1 < route.size() and bool((route[index + 1] as Dictionary)["jump"]) \
 			and toward.length() > 1.0 and toward.length() < 6.0:
 		var drift: Vector3 = player.controller.state.velocity
@@ -250,7 +250,7 @@ func _bot_cancel_drift(player: DrPlayer, command: DotFpsCommand, route: Array, i
 
 
 ## Just landed: stops (a jump keeps the last landing's momentum), then goes back to the middle for a run-up. True while it is doing so.
-func _bot_settle_step(player: DrPlayer, command: DotFpsCommand, at: Vector3) -> bool:
+func _bot_settle_step(player: DrPlayer, command: GSFpsCommand, at: Vector3) -> bool:
 	if not _bot_settle.has(player.player_id):
 		return false
 
@@ -268,7 +268,7 @@ func _bot_settle_step(player: DrPlayer, command: DotFpsCommand, at: Vector3) -> 
 
 	if back.length() > 0.35:
 		command.yaw = rad_to_deg(atan2(-back.x, -back.z))
-		command.set_button(DotFpsCommand.BUTTON_WALK, true)
+		command.set_button(GSFpsCommand.BUTTON_WALK, true)
 		return true
 
 	_bot_settle.erase(player.player_id)

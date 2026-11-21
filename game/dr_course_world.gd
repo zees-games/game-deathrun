@@ -59,7 +59,7 @@ func _build_world() -> void:
 	var lighting := Node3D.new()
 	lighting.name = "Lighting"
 	add_child(lighting)
-	var sun := DotLightRig.apply(lighting, DotLightDocument.from_dictionary(light_document(theme)), light_profile())
+	var sun := GSLightRig.apply(lighting, GSLightDocument.from_dictionary(light_document(theme)), light_profile())
 	if sun != null:
 		sun.shadow_blur = 1.5
 
@@ -124,10 +124,10 @@ static func light_document(theme: Dictionary) -> Dictionary:
 ## What this machine draws of a course's light: dot-lighting's `painted()`, the family's profile
 ## for flat colours (the Compatibility renderer clips a sunlit pastel to white at Forward+'s numbers,
 ## and the grid that shows how far a jump is goes with it), with the sun's shadows kept on.
-static func light_profile() -> DotLightProfile:
+static func light_profile() -> GSLightProfile:
 	# Over the hand-set numbers it replaced (the sun / 700, a fill of 0.62) it lowers the exposure,
 	# grades, and trades ambient for a shadowless fill: a corridor's two walls differ in shade.
-	var p := DotLightProfile.painted()
+	var p := GSLightProfile.painted()
 	# On in the browser too, unlike `web()`: a course is a few hundred boxes, and a trap's
 	# shadow on the floor is how a runner sees where it is.
 	p.sun_shadows = true
@@ -263,7 +263,7 @@ func _draw_spikes(parent: Node3D, size: Vector3, face: String, tint: Color, movi
 	# Very many points is very many draw calls; a field of fifty is past where they read as
 	# separate points anyway.
 	if count_a * count_b > 400:
-		DotLog.debug("dr.course", "a large bed of spikes", {"points": count_a * count_b})
+		GSLog.debug("dr.course", "a large bed of spikes", {"points": count_a * count_b})
 
 
 static func _metal(tint: Color) -> StandardMaterial3D:

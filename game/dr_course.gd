@@ -83,7 +83,7 @@ signal built()
 @export var draw_world: bool = false
 
 ## The collision layout everything is put on. Set by [DrGame] before [method build].
-var physics: DotPhysicsLayout = null
+var physics: GSPhysicsLayout = null
 
 ## Ticks a second, for turning a tick into the time every formula is written in.
 var tick_rate: int = 64
@@ -123,12 +123,12 @@ var _by_collider: Dictionary = {}
 var _posed_tick: int = -2147483648
 var _posed_time: float = -1.0
 
-## The map's toys (dot-props' [DotPropBodyBox]): loose ones only on a course (balls,
+## The map's toys (dot-props' [GSPropBodyBox]): loose ones only on a course (balls,
 ## tyres, barrels in the start room and the arena), simulated where [member authoritative], posed from snapshots elsewhere,
 ## under the game's `sv_toys*` [member toy_rules]. Set by the game before it builds.
-var toys: DotPropBodyBox = null
+var toys: GSPropBodyBox = null
 var authoritative: bool = true
-var toy_rules: DotPropBodyRules = null
+var toy_rules: GSPropBodyRules = null
 var gravity: float = 20.0
 
 ## The LightmapGI laid over this course, or null: drawn with live light alone.
@@ -148,8 +148,8 @@ static var _spent_material: StandardMaterial3D = null
 ##
 ## [b]The old pieces are taken out of the tree now and freed at the end of the frame.[/b]
 ## A round can change course inside the netcode's own tick, and freeing a body there frees
-## something [DotNetManager.server_tick] may still be walking.
-func build(p_doc: Dictionary) -> DotResult:
+## something [GSNetManager.server_tick] may still be walking.
+func build(p_doc: Dictionary) -> GSResult:
 	clear()
 
 	var checked := DrCourseDoc.validate(p_doc)
@@ -186,18 +186,18 @@ func build(p_doc: Dictionary) -> DotResult:
 	pose_at_time(0.0)
 	built.emit()
 
-	DotLog.debug(CHANNEL, "built", {
+	GSLog.debug(CHANNEL, "built", {
 		"id": id(), "pieces": pieces.size(), "traps": traps.size(),
 		"digest": DrCourseDoc.digest(doc),
 	})
-	return DotResult.success(self)
+	return GSResult.success(self)
 
 
 ## The toys, on their own layer: a loose one (a ball, a tyre) on `toy`, which the course and its
 ## traps and the other toys stop and a runner never does (they walk through it and push it,
 ## `DrGame._advance_toys`): a crusher or a trapdoor sends a ball flying.
 func _build_toys() -> void:
-	toys = DotPropBodyBox.new()
+	toys = GSPropBodyBox.new()
 	toys.name = "Toys"
 	toys.authoritative = authoritative
 	toys.draw = draw_world
@@ -215,7 +215,7 @@ func _build_toys() -> void:
 	add_child(toys)
 	var built := toys.build(doc.get("toys", []))
 	if not built.ok:
-		DotLog.warn(CHANNEL, "a map's toys would not build", {"map": String(id()), "why": built.error.message})
+		GSLog.warn(CHANNEL, "a map's toys would not build", {"map": String(id()), "why": built.error.message})
 
 
 func clear() -> void:
@@ -306,9 +306,9 @@ static func is_bakeable(spec: Dictionary, kind: String) -> bool:
 ## are on and one ships for it (or a bake scene is being made). Otherwise the pieces keep their
 ## BoxMesh, which is what a workshop or user course always draws.
 func _will_bake() -> bool:
-	if DotAddonApi.build_level("dot_lighting") < 5 or not ResourceLoader.exists(BAKE_SCRIPT) \
+	if GSAddonApi.build_level("dot_lighting") < 5 or not ResourceLoader.exists(BAKE_SCRIPT) \
 			or not ResourceLoader.exists(SHEET_SCRIPT):
-		DotLog.debug(CHANNEL, "this dot-lighting cannot bake; the course is drawn live", {"id": String(id())})
+		GSLog.debug(CHANNEL, "this dot-lighting cannot bake; the course is drawn live", {"id": String(id())})
 		return false
 
 	if for_bake_scene:
@@ -318,7 +318,7 @@ func _will_bake() -> bool:
 
 
 ## Swaps a bakeable piece's BoxMesh for the same six faces with a second UV set
-## (dot-lighting's `DotLightmapSheet`), in the body's own space and under a name that is the same on every
+## (dot-lighting's `GSLightmapSheet`), in the body's own space and under a name that is the same on every
 ## build: a bake names its meshes by path from the [LightmapGI]. The world-space triplanar
 ## material does not read the first UVs, so it draws exactly as the BoxMesh did.
 func _make_bakeable(body: Node3D, size: Vector3) -> void:
@@ -372,7 +372,7 @@ func light_fingerprint() -> String:
 	for key: String in theme:
 		colours[key] = (theme[key] as Color).to_html() if theme[key] is Color else theme[key]
 
-	if DotAddonApi.build_level("dot_lighting") < 5 or not ResourceLoader.exists(BAKE_SCRIPT):
+	if GSAddonApi.build_level("dot_lighting") < 5 or not ResourceLoader.exists(BAKE_SCRIPT):
 		return ""
 
 	return (load(BAKE_SCRIPT) as GDScript).call(&"fingerprint", {
@@ -383,16 +383,16 @@ func light_fingerprint() -> String:
 ## The course's bake laid over it, if the game ships one made from this document.
 func _attach_bake() -> void:
 	var path := DrPaths.rebase(BAKE_PATH % String(id()))
-	if DotAddonApi.build_level("dot_lighting") < 5 or not ResourceLoader.exists(BAKE_SCRIPT):
+	if GSAddonApi.build_level("dot_lighting") < 5 or not ResourceLoader.exists(BAKE_SCRIPT):
 		return
 
-	var res: DotResult = (load(BAKE_SCRIPT) as GDScript).call(&"attach", self, path, light_fingerprint())
+	var res: GSResult = (load(BAKE_SCRIPT) as GDScript).call(&"attach", self, path, light_fingerprint())
 
 	if not res.ok:
 		return
 
 	baked = res.value
-	DotLog.debug(CHANNEL, "the course is drawn with its baked light", {"id": String(id())})
+	GSLog.debug(CHANNEL, "the course is drawn with its baked light", {"id": String(id())})
 
 
 func _collect_bodies(node: Node, into: Array) -> void:
@@ -410,7 +410,7 @@ func _put_on_world_layer(body: CollisionObject3D) -> void:
 	var applied := physics.apply_to(body, &"world")
 
 	if not applied.ok:
-		DotLog.warn(CHANNEL, "a piece could not be put on its collision layer", {
+		GSLog.warn(CHANNEL, "a piece could not be put on its collision layer", {
 			"why": applied.error.message,
 		})
 
@@ -588,7 +588,7 @@ func _make_trap(index: int, spec: Dictionary) -> void:
 		else:
 			node = Node3D.new()
 			# A part that is not solid is drawn only: a lethal one is measured (`lethal_at`),
-			# never collided, so a drawing with no shape is its design (dot-core DotCollisionAudit).
+			# never collided, so a drawing with no shape is its design (dot-core GSCollisionAudit).
 			node.set_meta(&"dot_no_collision", true)
 
 		node.name = "Part_%d" % part_index
@@ -971,7 +971,7 @@ func _place_gate() -> void:
 ## ramp is tilted, which the helper's creases do not follow; the gate is see-through and drops.
 ## By path, behind the level, so a shell older than the helper draws the course without it.
 func _add_contact_shade() -> void:
-	if DotAddonApi.build_level("dot_lighting") < 4 or not ResourceLoader.exists(CONTACT_SHADE_SCRIPT):
+	if GSAddonApi.build_level("dot_lighting") < 4 or not ResourceLoader.exists(CONTACT_SHADE_SCRIPT):
 		return
 	var boxes: Array = []
 	for piece: Dictionary in pieces:

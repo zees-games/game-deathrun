@@ -1,6 +1,6 @@
-extends DotConfig
+extends GSConfig
 
-## Every number this game has, layered like every other [DotConfig] in the family.
+## Every number this game has, layered like every other [GSConfig] in the family.
 ##
 ## [code]exported defaults < JSON file < environment < command line[/code], identically to
 ## dot-server, dot-cloud and the other games. Nothing here reads
@@ -166,11 +166,11 @@ extends DotConfig
 @export var shuffle_courses: bool = true
 
 ## The file that says which courses this server ROTATES; the default stem makes dot-map look through its tiers for `maps.yml` in `cfg/game/mg-deathrun/dot_map/` (shipped) or `cfg/server/addons/dot_map/` (operator; dot-map's
-## `DotMapRotationFile`: named rotations, `random` or `cycle`, wildcards, command names). Empty, or no such file, rotates every course. A course it
+## `GSMapRotationFile`: named rotations, `random` or `cycle`, wildcards, command names). Empty, or no such file, rotates every course. A course it
 ## leaves out stays installed (the map menu and an admin's change load it); it is only never
 ## drawn, balloted or nominated. A rotation in the file replaces [member shuffle_courses].
 ## `sv_map_rotation_file`.
-@export var map_rotation_file: String = DotMapRotationFile.DEFAULT_STEM
+@export var map_rotation_file: String = GSMapRotationFile.DEFAULT_STEM
 
 ## Where course documents are read from, beside the one built into this game. Relative to
 ## this game's own root, so a delivered pack reads its own copy.
@@ -215,7 +215,7 @@ extends DotConfig
 @export_range(0, 24, 1, "or_greater") var minimum_players: int = 3
 
 ## Deprecated: what `dr_bot_spread` last set `bot_aim_error` to. A stand-in's aim is dot-bot's
-## ([DotBotAim] on `bot_difficulty`); nothing reads this but the alias.
+## ([GSBotAim] on `bot_difficulty`); nothing reads this but the alias.
 @export_range(0.0, 45.0, 0.5, "or_greater") var bot_aim_spread_degrees: float = 7.0
 
 ## How likely a stand-in runner is to mistime a jump, in a hundred.
@@ -264,8 +264,8 @@ const CFG_FILES := {
 
 
 ## The binder every entry point uses: [param config] layered, one cfg file per [constant CFG_FILES] entry.
-static func make_binder(config: DotConfig, json_path := "") -> DotGameConfigBinder:
-	var b := DotGameConfigBinder.create(config, "mg-deathrun", "dr", json_path)
+static func make_binder(config: GSConfig, json_path := "") -> GSGameConfigBinder:
+	var b := GSGameConfigBinder.create(config, "mg-deathrun", "dr", json_path)
 	b.grouped = true
 	b.group_files = CFG_FILES
 	return b
@@ -290,28 +290,28 @@ func activators_for(players: int) -> int:
 	return clampi(wanted, 1, most)
 
 
-func validate() -> DotResult:
+func validate() -> GSResult:
 	if round_seconds <= 0.0:
-		return DotResult.fail(DotError.CODE_INVALID, "A round has to last some time.")
+		return GSResult.fail(GSError.CODE_INVALID, "A round has to last some time.")
 
 	if max_activators < 0:
-		return DotResult.fail(DotError.CODE_INVALID,
+		return GSResult.fail(GSError.CODE_INVALID,
 			"max_activators is %d; it is a count, or 0 for no limit." % max_activators)
 
 	if timeout_winner < 0 or timeout_winner > 2:
-		return DotResult.fail(
-			DotError.CODE_INVALID,
+		return GSResult.fail(
+			GSError.CODE_INVALID,
 			"timeout_winner is %d; it is 0 (draw), 1 (runners) or 2 (activators)." % timeout_winner,
 		)
 
 	if spectate_camera < 0 or spectate_camera > 2:
-		return DotResult.fail(
-			DotError.CODE_INVALID,
+		return GSResult.fail(
+			GSError.CODE_INVALID,
 			"spectate_camera is %d; it is 0 (anybody), 1 (own side) or 2 (nobody)."
 				% spectate_camera,
 		)
 
-	return DotResult.success(null)
+	return GSResult.success(null)
 
 
 func describe() -> Dictionary:

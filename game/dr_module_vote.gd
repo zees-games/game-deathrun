@@ -39,12 +39,12 @@ func _tunable(
 
 
 ## Refuses (with the reason) a value outside [param least]..[param most]; either may be infinite. Never clamps.
-static func _between(value: String, cvar_name: String, least: float, most: float) -> DotResult:
+static func _between(value: String, cvar_name: String, least: float, most: float) -> GSResult:
 	if not value.is_valid_float() or value.to_float() < least or value.to_float() > most:
 		var want := "a number of %s or more" % _number(least) if is_inf(most) \
 			else "a number from %s to %s" % [_number(least), _number(most)]
-		return DotResult.fail(DotError.CODE_INVALID, "%s is %s; it takes %s." % [cvar_name, value, want])
-	return DotResult.success(value)
+		return GSResult.fail(GSError.CODE_INVALID, "%s is %s; it takes %s." % [cvar_name, value, want])
+	return GSResult.success(value)
 
 
 ## The players' vote for the next course, over dot-vote (`!vote`, `!rtv`, `!nominate`): opened
@@ -52,7 +52,7 @@ static func _between(value: String, cvar_name: String, least: float, most: float
 ## round here is a course; see [code]game/dr_vote.gd[/code].
 func _build_vote(world: DrGame) -> void:
 	# A server owner turns it off or reshapes it in `user://cfg/deathrun_vote.json` or `game.yml`'s
-	# `metadata: course_vote:`, keyed as dot-vote's [DotVoteRules]. One that cannot be built is a
+	# `metadata: course_vote:`, keyed as dot-vote's [GSVoteRules]. One that cannot be built is a
 	# WARN and the rotation alone, never a server that will not start.
 	if world.catalogue == null:
 		return
@@ -71,9 +71,9 @@ func _build_vote(world: DrGame) -> void:
 				out.append([id, str((world.catalogue.courses.get(id, {}) as Dictionary).get("name", id))])
 
 		return out
-	vote.apply_fn = func(id: StringName) -> DotResult:
+	vote.apply_fn = func(id: StringName) -> GSResult:
 		world.next_course_id = id
-		return DotResult.success(id)
+		return GSResult.success(id)
 	# People only: a stand-in is not a voter, and a ballot it could swing is not the players'.
 	vote.voters_fn = func() -> Array:
 		var out: Array = []
@@ -102,13 +102,13 @@ func _build_vote(world: DrGame) -> void:
 	var ready := vote.setup()
 
 	if not ready.ok:
-		DotLog.result(CHANNEL, "the course vote; the rotation alone chooses", ready)
+		GSLog.result(CHANNEL, "the course vote; the rotation alone chooses", ready)
 		vote.queue_free()
 		vote = null
 		return
 
 	var commanded := vote.install_commands(self)
-	DotLog.result(CHANNEL, "the course vote's commands", commanded)
+	GSLog.result(CHANNEL, "the course vote's commands", commanded)
 
 	_wire_vote_world(world)
 
@@ -124,7 +124,7 @@ func _wire_vote_server() -> void:
 			server.broadcast_message(line)
 	vote.is_admin_fn = func(voter: StringName) -> bool:
 		var session := server.session_by_userid(String(voter).to_int()) if server != null else null
-		return session != null and session.has_permission(DotAdminFlags.CHANGEMAP)
+		return session != null and session.has_permission(GSAdminFlags.CHANGEMAP)
 	vote.ballot_fn = func(state: Dictionary) -> void:
 		if server == null:
 			return
@@ -132,7 +132,7 @@ func _wire_vote_server() -> void:
 		for session in server.playing_sessions():
 			var data := state.duplicate()
 			data["you"] = str(session.userid)
-			server.send_notice(session, DotNotice.make(
+			server.send_notice(session, GSNotice.make(
 				&"", "", float(state.get("seconds", -1.0)), COURSE_BALLOT_TOPIC, data
 			))
 	vote.people_fn = func(voter: StringName) -> Dictionary:
@@ -173,7 +173,7 @@ func _wire_vote_world(world: DrGame) -> void:
 	)
 
 	if server != null:
-		server.client_disconnected.connect(func(session: DotClientSession, _reason: String) -> void:
+		server.client_disconnected.connect(func(session: GSClientSession, _reason: String) -> void:
 			if vote != null:
 				vote.forget_voter(StringName(str(session.userid)))
 		)

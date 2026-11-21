@@ -21,11 +21,11 @@ func _test_the_flashlight() -> void:
 		"a horror course starts lit")
 	_check(not DrFlashlight.starts_on(cfg, "dr_practice"), "and the lit practice course starts dark")
 
-	cfg.default_state = DotFlashlightConfig.START_ON
+	cfg.default_state = GSFlashlightConfig.START_ON
 	runner.flashlight_ready = false
 	await _step(game, 2)
 	_check(runner.flashlight, "a config that starts lit lights the player")
-	cfg.default_state = DotFlashlightConfig.START_OFF
+	cfg.default_state = GSFlashlightConfig.START_OFF
 	runner.flashlight_ready = false
 	await _step(game, 2)
 	_check(not runner.flashlight, "and one that starts dark does not")
@@ -40,5 +40,5 @@ func _test_the_flashlight() -> void:
 	cfg.allowed_maps = PackedStringArray(["no_such_course"])
 	_check(not game.toggle_flashlight(activator.player_id) and activator.flashlight, "a course outside allowed_maps has no light")
 	cfg.allowed_maps = PackedStringArray()
-	cfg.default_state = DotFlashlightConfig.START_DARK
+	cfg.default_state = GSFlashlightConfig.START_DARK
 	_finished()

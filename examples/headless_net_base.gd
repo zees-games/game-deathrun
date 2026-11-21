@@ -1,4 +1,4 @@
-extends DotGameCheckSuite
+extends GSGameCheckSuite
 
 ## The wire rig for headless_net: two worlds, two managers, two bridges and the queues between them, and the suite counters. No `class_name`; the suite extends this.
 
@@ -29,8 +29,8 @@ var _sections_finished := 0
 
 var _server_game: DrGame = null
 var _client_game: DrGame = null
-var _server_net: DotNetManager = null
-var _client_net: DotNetManager = null
+var _server_net: GSNetManager = null
+var _client_net: GSNetManager = null
 var _server_bridge: DrNetBridge = null
 var _client_bridge: DrNetBridge = null
 var _stand_in: DrPlayer = null
@@ -104,8 +104,8 @@ func _make_game(server: bool, parent: Node) -> DrGame:
 	return game
 
 
-func _make_manager(server: bool, scope: StringName, peer_id: int, parent: Node, tick_rate: int) -> DotNetManager:
-	var manager := DotNetManager.new()
+func _make_manager(server: bool, scope: StringName, peer_id: int, parent: Node, tick_rate: int) -> GSNetManager:
+	var manager := GSNetManager.new()
 	manager.name = "Server" if server else "Client"
 	manager.is_server = server
 	manager.local_peer_id = peer_id
@@ -113,7 +113,7 @@ func _make_manager(server: bool, scope: StringName, peer_id: int, parent: Node, 
 	manager.auto_tick = false
 	manager.config_file = ""
 
-	var config := DotNetConfig.new()
+	var config := GSNetConfig.new()
 	config.tick_rate = tick_rate
 	config.snapshot_rate = SNAPSHOT_RATE
 	config.enable_prediction = true
@@ -131,7 +131,7 @@ func _on_server_send(method: StringName, peer_id: int, payload: PackedByteArray)
 	# Every event the server sends, by who it was for, decoded with the client's own registry:
 	# what "to the shooter alone" is checked against, the bystander's included.
 	if method == &"event":
-		var decoded := _client_net.messages.decode(DotNetReader.new(payload), 1, false)
+		var decoded := _client_net.messages.decode(GSNetReader.new(payload), 1, false)
 		if decoded.ok and decoded.value is DrEvent:
 			_sent_events.append([peer_id, (decoded.value as DrEvent).kind])
 
@@ -164,17 +164,17 @@ func _exchange() -> void:
 
 
 ## One tick on both ends, with a real physics frame between them.
-func _step(command: DotFpsCommand = null, aim: bool = false) -> void:
+func _step(command: GSFpsCommand = null, aim: bool = false) -> void:
 	_tick += 1
 	var _ticks := _client_net.clock.advance(1.0 / float(maxi(_client_game.tick_rate, 1)))
 	_server_bridge.server_tick(_tick)
 	_flush()
-	_client_bridge.client_tick(_tick + INPUT_LEAD, command if command != null else DotFpsCommand.new(), 0, false, aim)
+	_client_bridge.client_tick(_tick + INPUT_LEAD, command if command != null else GSFpsCommand.new(), 0, false, aim)
 	_flush()
 	await get_tree().physics_frame
 
 
-func _steps(count: int, command: DotFpsCommand = null, aim: bool = false) -> void:
+func _steps(count: int, command: GSFpsCommand = null, aim: bool = false) -> void:
 	for _i in range(count):
 		await _step(command, aim)
 

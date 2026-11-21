@@ -90,17 +90,17 @@ func _test_the_wire() -> void:
 	var torn := bytes.slice(0, bytes.size() / 2)
 	_check(not DrCourseDoc.decode(torn).ok, "half of it is refused, not built")
 
-	# A death carries how the body falls (dot-player-char's DotPlayerDeath), last and optional.
-	var fall := DotPlayerDeath.new()
+	# A death carries how the body falls (dot-player-char's GSPlayerDeath), last and optional.
+	var fall := GSPlayerDeath.new()
 	fall.reaction = &"face_plant"
 	fall.roll_seed = 1234
 	fall.damage = 100.0
 	fall.direction = Vector3(1, 0, 0)
-	var died := DrEvents.read_death(DotNetReader.new(DrEvents.write_death(5, 6, DrGame.DIED_SHOT, fall)))
-	var carried: DotPlayerDeath = died.get("death")
+	var died := DrEvents.read_death(GSNetReader.new(DrEvents.write_death(5, 6, DrGame.DIED_SHOT, fall)))
+	var carried: GSPlayerDeath = died.get("death")
 	_check(bool(died["ok"]) and carried != null and carried.reaction == &"face_plant" and carried.roll_seed == 1234
 		and carried.direction.distance_to(Vector3(1, 0, 0)) < 0.02, "a DEATH carries the fall the server picked")
-	var bare := DrEvents.read_death(DotNetReader.new(DrEvents.write_death(5, 6, DrGame.DIED_SHOT)))
+	var bare := DrEvents.read_death(GSNetReader.new(DrEvents.write_death(5, 6, DrGame.DIED_SHOT)))
 	_check(bool(bare["ok"]) and not bare.has("death"), "and one without a fall still reads")
 	_finished()
 
@@ -117,7 +117,7 @@ func _test_catalogue() -> void:
 	_check(ids.size() == 1 or not ids.has(DrCatalogue.PRACTICE),
 		"practice drops out once there is a real course", "%d playable" % ids.size())
 
-	var stream := DotRandomStream.new(7)
+	var stream := GSRandomStream.new(7)
 	var first := catalogue.next_course(PackedStringArray(), true, stream, &"")
 	var second := catalogue.next_course(PackedStringArray(), true, stream, StringName(str(first["id"])))
 	_check(ids.size() < 2 or str(first["id"]) != str(second["id"]),

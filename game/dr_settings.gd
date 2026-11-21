@@ -1,8 +1,8 @@
-extends DotMenuGameSettings
+extends GSMenuGameSettings
 
 const DrBindings := preload("dr_bindings.gd")
 
-## A player's own settings and the menu that changes them, on dot-menu's `DotMenuGameSettings` with this game's spec.
+## A player's own settings and the menu that changes them, on dot-menu's `GSMenuGameSettings` with this game's spec.
 ## Call `setup()`, then `bind_look`, `bind_camera` and `bind_audio`; `open()` shows the menu.
 ## Why the scopes are the family's: docs/comment-notes.md.
 
@@ -29,8 +29,8 @@ func _init() -> void:
 
 
 ## The game's settings as data: names, field of view, extra settings, keys and the help screen's goal and rules.
-static func spec_for() -> DotMenuGameSpec:
-	var s := DotMenuGameSpec.new()
+static func spec_for() -> GSMenuGameSpec:
+	var s := GSMenuGameSpec.new()
 	s.schema_version = SCHEMA_VERSION
 	s.brand_name = "Deathrun"
 	s.settings_dir = SETTINGS_DIR
@@ -42,7 +42,7 @@ static func spec_for() -> DotMenuGameSpec:
 	s.menu_button_corner = &"top_left"
 	s.ambient_text = "Quiet sounds under the course."
 	s.not_applied = NOT_APPLIED
-	s.bindings_maker = func() -> DotMenuBindings: return DrBindings.make()
+	s.bindings_maker = func() -> GSMenuBindings: return DrBindings.make()
 	s.help_about = "One long course of traps. Most players run it; one or more activators, drawn fresh each round, stand on a walkway beside it with a button for every trap. Runners try to reach the end; activators try to catch them in the traps."
 	s.help_cards = [
 		["Activators", "Stand at a button and press the use key while a runner is in its trap. Each trap shows its name when you look at its button."],

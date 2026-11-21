@@ -1,4 +1,4 @@
-extends DotGameCheckSuite
+extends GSGameCheckSuite
 
 const DrAudio := preload("../game/dr_audio.gd")
 const DrCatalogue := preload("../game/dr_catalogue.gd")
@@ -36,7 +36,7 @@ var _world: DrGame = null
 
 
 func _ready() -> void:
-	DotLog.set_level(DotLog.Level.ERROR)
+	GSLog.set_level(GSLog.Level.ERROR)
 	_run.call_deferred()
 
 const PUSH_CHECKS := 4
@@ -193,7 +193,7 @@ func _test_teleport_pad(catalogue: DrCatalogue) -> void:
 			and Vector2(runner.controller.state.velocity.x, runner.controller.state.velocity.z).length() > 3.0,
 		"one that keeps velocity lands moving", str(runner.controller.state.velocity))
 	# A replayed warp must not re-aim the mouse: a correction re-runs old ticks.
-	var sampler := DotFpsSampler.new(runner.controller.tunables)
+	var sampler := GSFpsSampler.new(runner.controller.tunables)
 	runner.controller.sampler = sampler
 	runner.place_at(Vector3(-1.8, 0.1, 4.0), 0.0)
 	sampler.look_at_angles(33.0, 5.0)
@@ -276,7 +276,7 @@ func _test_baked_light(catalogue: DrCatalogue) -> void:
 		var data := load(path) as LightmapGIData
 		baked.append(String(id))
 
-		if data == null or str(data.get_meta(DotLightBake.META_FINGERPRINT, "")) != course.light_fingerprint():
+		if data == null or str(data.get_meta(GSLightBake.META_FINGERPRINT, "")) != course.light_fingerprint():
 			stale.append(String(id))
 
 		course.free()
@@ -302,8 +302,8 @@ func _test_baked_light(catalogue: DrCatalogue) -> void:
 
 	var host := Node3D.new()
 	add_child(host)
-	var res := DotLightBake.attach(host, DrCourse.BAKE_PATH % "dr_practice", before)
-	_check(not res.ok and res.error.code == DotError.CODE_UNSUPPORTED and host.get_child_count() == 0,
+	var res := GSLightBake.attach(host, DrCourse.BAKE_PATH % "dr_practice", before)
+	_check(not res.ok and res.error.code == GSError.CODE_UNSUPPORTED and host.get_child_count() == 0,
 		"a headless process (a server) never lays a bake over its course", "%s" % [res.error.message if not res.ok else "attached"])
 	host.free()
 	moved.free()
@@ -351,7 +351,7 @@ func _check_sound_ids() -> void:
 	for id: StringName in listed:
 		if not known.has(id):
 			missing.append("uncatalogued " + String(id))
-	_check(missing.is_empty() and listed.has(DotPlayerDeathReactions.SOUND_FACE_PLANT),
+	_check(missing.is_empty() and listed.has(GSPlayerDeathReactions.SOUND_FACE_PLANT),
 		"every catalogued sound is listed, the death sounds too", ", ".join(missing))
 
 
@@ -470,7 +470,7 @@ func _run_course(doc: Dictionary) -> void:
 	var start_at := bot.controller.state.position
 
 	for i in range(int(limit * TICK_RATE)):
-		idle.controller.apply_command(DotFpsCommand.new())
+		idle.controller.apply_command(GSFpsCommand.new())
 		await _tick(game, i)
 
 		if bot.finished:
@@ -577,7 +577,7 @@ func _walk_to_every_button(doc: Dictionary) -> void:
 		for i in range(budget):
 			var eyes := activator.eye_position()
 			var look := button - eyes
-			var command := DotFpsCommand.new()
+			var command := GSFpsCommand.new()
 			command.yaw = rad_to_deg(atan2(-look.x, -look.z))
 			command.pitch = clampf(rad_to_deg(asin(clampf(look.normalized().y, -1.0, 1.0))), -89.0, 89.0)
 
@@ -590,7 +590,7 @@ func _walk_to_every_button(doc: Dictionary) -> void:
 				break
 
 			activator.controller.apply_command(command)
-			runner.controller.apply_command(DotFpsCommand.new())
+			runner.controller.apply_command(GSFpsCommand.new())
 			await _tick(game, i)
 
 		if not reached:
@@ -649,17 +649,17 @@ func _stand_in_the_end(doc: Dictionary) -> void:
 
 # --- Helpers ------------------------------------------------------------------------
 
-## dot-core's [DotCollisionAudit] over the course as a client draws it: visible geometry nothing
+## dot-core's [GSCollisionAudit] over the course as a client draws it: visible geometry nothing
 ## collides with, which a runner walks through. The course keeps its drawing and its bodies
 ## apart (moving parts are static bodies the course teleports), so the lenient audit is used.
 func _audit_collision(doc: Dictionary) -> void:
 	_section("%s: nothing drawn is walked through" % doc["id"])
 	var game := await _fresh(doc, true)
-	var res := DotCollisionAudit.audit(game.stage, true)
+	var res := GSCollisionAudit.audit(game.stage, true)
 	var found := 0
 
 	if res.ok:
-		var report: DotCollisionAudit = res.value
+		var report: GSCollisionAudit = res.value
 		found = report.count()
 		print("  %s collision audit: %d of %d" % [doc["id"], found, report.examined])
 

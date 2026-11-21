@@ -9,7 +9,7 @@ extends "dr_client_world.gd"
 ## keep in step, and this family has watched two copies of one thing drift more than once.
 ##
 ## [b]Which half runs is decided by whether there is a link in the registry.[/b] A dot-server
-## client publishes a [DotClientLink] under `dot_client_link` before the game scene loads; no
+## client publishes a [GSClientLink] under `dot_client_link` before the game scene loads; no
 ## link means nobody connected us to anything, and the honest answer to that is a playable
 ## course rather than an error. `--offline` forces it.
 ##
@@ -24,7 +24,7 @@ func _ready() -> void:
 	# First, before anything can be drawn: the course and the player arrive after this node is
 	# in the tree. The platform puts the loading cover up, held until the player exists and the
 	# camera is current, and finds the link.
-	platform = DotGameClient.new()
+	platform = GSGameClient.new()
 	platform.name = "Platform"
 	platform.force_offline = force_offline
 	platform.spawned_fn = func() -> bool: return player != null
@@ -42,7 +42,7 @@ func _ready() -> void:
 	var loaded := binder.load_layers()
 
 	if not loaded.ok:
-		DotLog.warn(CHANNEL, "falling back to defaults", {"why": loaded.error.message})
+		GSLog.warn(CHANNEL, "falling back to defaults", {"why": loaded.error.message})
 
 	link = platform.link as Node
 	_offline = platform.offline
@@ -76,14 +76,14 @@ func _ready() -> void:
 	if _offline:
 		_start_offline()
 	else:
-		# In `_ready`, inside `DotClientLink._load_scene`: the netcode is up before the server is told we loaded.
+		# In `_ready`, inside `GSClientLink._load_scene`: the netcode is up before the server is told we loaded.
 		var netted := _build_netcode()
-		DotLog.result(CHANNEL, "the netcode", netted)
+		GSLog.result(CHANNEL, "the netcode", netted)
 		if netted.ok:
 			_start_remote_workbench()
 
 
-## The load gate is [member DotGameClient.gate].
+## The load gate is [member GSGameClient.gate].
 ##
 ## [b]Covered also means the round does not run.[/b] Offline the world ticks itself, so the
 ## countdown, the stand-in activators' buttons, the traps' deaths and the round clock would all
@@ -110,7 +110,7 @@ func _covered() -> bool:
 
 
 func _build_ragdolls() -> void:
-	ragdolls = DotPlayerRagdolls.new()
+	ragdolls = GSPlayerRagdolls.new()
 	ragdolls.name = "Ragdolls"
 	ragdolls.rules = game.ragdoll_rules
 	ragdolls.sound_fn = _ragdoll_sound
@@ -144,7 +144,7 @@ func _start_offline() -> void:
 	# the same as on a server.
 	var taken: Array = ["You"]
 	for i in range(offline_bots):
-		var bot_name := DotBotNames.pick(taken, i, DrGame.BOT_NAMES)
+		var bot_name := GSBotNames.pick(taken, i, DrGame.BOT_NAMES)
 		taken.append(bot_name)
 		var bot := game.add_player(StringName("u%d" % (DrNetBridge.FIRST_BOT_SESSION + i)), bot_name)
 		bot.is_bot = true
@@ -154,13 +154,13 @@ func _start_offline() -> void:
 
 	# How well they play: `bot_difficulty` and every `bot_*` at the console, or
 	# `-- --bot_difficulty <preset>` at launch; the settings a server binds as cvars.
-	var skill := DotBotSettings.of(game)
+	var skill := GSBotSettings.of(game)
 	var args := OS.get_cmdline_user_args()
 	var at := args.find("--bot_difficulty")
 	if at >= 0 and at + 1 < args.size():
-		DotLog.result(CHANNEL, "bot difficulty from the command line", skill.set_difficulty(args[at + 1]))
+		GSLog.result(CHANNEL, "bot difficulty from the command line", skill.set_difficulty(args[at + 1]))
 	if console != null:
-		var local := DotConsoleLocal.new()
+		var local := GSConsoleLocal.new()
 		console.add_source(local)
 		var _bound := skill.bind_console(local)
 		var _icons := DrWeaponIcons.shared.bind_console(local)
@@ -179,7 +179,7 @@ func _start_offline() -> void:
 
 	# No bridge: the box still opens and still echoes, because a chat box that does nothing
 	# at all reads as broken rather than as absent.
-	DotLog.result(CHANNEL, "chat, offline", chat.attach(null))
+	GSLog.result(CHANNEL, "chat, offline", chat.attach(null))
 
 
 ## Follows the server's replicated cvars through the link, so this end traces, draws and flies under the same rules.
@@ -216,8 +216,8 @@ func _follow_cvars() -> void:
 # --- Connected -------------------------------------------------------------
 
 ## The netcode's settings on a client: the game's rates and range, prediction on, rewinding off.
-func _client_net_config() -> DotNetConfig:
-	var config := DotNetConfig.new()
+func _client_net_config() -> GSNetConfig:
+	var config := GSNetConfig.new()
 	config.tick_rate = game.tick_rate
 	config.snapshot_rate = DrGame.NET_SNAPSHOT_RATE
 	config.enable_prediction = true
@@ -231,10 +231,10 @@ func _client_net_config() -> DotNetConfig:
 	return config
 
 
-func _build_netcode() -> DotResult:
+func _build_netcode() -> GSResult:
 	_follow_cvars()
 
-	net = DotNetManager.new()
+	net = GSNetManager.new()
 	net.name = "Net"
 	net.is_server = false
 	net.local_peer_id = multiplayer.get_unique_id() if multiplayer != null else 2
@@ -264,9 +264,9 @@ func _build_netcode() -> DotResult:
 	# Under the link, and NAMED the same as the server's — the name is the routing.
 	bridge.open_link(link)
 	# Before the seal and in the server's order (after the bridge), or the actions stay local.
-	DotLog.result(CHANNEL, "avatar action message", DotGameAvatarActionMessage.register(net))
+	GSLog.result(CHANNEL, "avatar action message", GSGameAvatarActionMessage.register(net))
 	# The server's order again (after the avatar frame): the remote workbench's frame.
-	workbench_remote = DotGameWorkbenchRemoteClient.attach(net)
+	workbench_remote = GSGameWorkbenchRemoteClient.attach(net)
 	net.messages.seal()
 
 	bridge.hello_received.connect(_on_hello)
@@ -296,7 +296,7 @@ func _build_netcode() -> DotResult:
 		bridge.rtt_source = func() -> float:
 			return float(maxi(0, int(link.call("ping_ms"))))
 
-	DotLog.result(CHANNEL, "chat and voice", chat.attach(bridge))
+	GSLog.result(CHANNEL, "chat and voice", chat.attach(bridge))
 
 	# READY, and not one byte before the scene exists. dot-server's signon finishes and THEN
 	# the client builds this; anything the server sent in between landed on a node that did
@@ -378,7 +378,7 @@ func _build_killcam() -> void:
 	killcam.over.connect(func(_skipped: bool) -> void: _reveal_round())
 	add_child(killcam)
 	var _mounted := KillPovView.mount(self, killcam)
-	winner_reveal = DotWinnerReveal.new()
+	winner_reveal = GSWinnerReveal.new()
 	winner_reveal.name = "WinnerReveal"
 	winner_reveal.skip_actions = DrKillcam.SKIP_ACTIONS
 	winner_reveal.hold_seconds = 4.0
@@ -396,7 +396,7 @@ func _on_killcam_cvar(cvar_name: String, value: String) -> void:
 	if cvar_name == "mp_killcam_time" and value.strip_edges().is_valid_float():
 		_killcam_sec = maxf(value.to_float(), 0.0)
 	elif cvar_name == "mp_killview_camera" and value.strip_edges().is_valid_float():
-		_killcam_camera = DotKillViewRules.Camera.BEHIND if value.to_float() >= 0.5 else DotKillViewRules.Camera.EYE
+		_killcam_camera = GSKillViewRules.Camera.BEHIND if value.to_float() >= 0.5 else GSKillViewRules.Camera.EYE
 
 
 func _begin_round_end(number: int, why: String) -> void:
@@ -405,7 +405,7 @@ func _begin_round_end(number: int, why: String) -> void:
 	_round_ending = true
 	if killcam == null or not killcam.round_ended():
 		return
-	DotLog.debug(CHANNEL, "the winner waits for the killcam")
+	GSLog.debug(CHANNEL, "the winner waits for the killcam")
 
 
 ## The top three on a podium, after the killcam and before the board.
@@ -497,12 +497,12 @@ func _build_settings() -> void:
 	# decides, by the owner's `sv_map_menu_flag`, and anybody without it gets a vote instead
 	# (dot-vote's map menu, wired in [DrModule]).
 	platform.maps_rows_fn = func() -> Array: return game.course_rows() if game != null else []
-	platform.maps_change_fn = func(id: StringName) -> DotResult: return game.change_course_now(id)
+	platform.maps_change_fn = func(id: StringName) -> GSResult: return game.change_course_now(id)
 	platform.maps_title = "Change course"
 	platform.maps_noun = "courses"
-	DotLog.result(CHANNEL, "the platform", platform.setup())
+	GSLog.result(CHANNEL, "the platform", platform.setup())
 	# The starter set: the equipped list needs a credential the client does not hold (the server reads it).
-	DotLog.result(CHANNEL, "avatar actions", platform.add_avatar_actions(net, _avatar_figure))
+	GSLog.result(CHANNEL, "avatar actions", platform.add_avatar_actions(net, _avatar_figure))
 	# Walking is off while the cover is up, a menu is open or a line is typed: the sampler polls
 	# the keyboard, and a player dragging a volume slider with the arrow keys would otherwise
 	# walk off whatever they had stopped on.
@@ -511,7 +511,7 @@ func _build_settings() -> void:
 
 	settings = platform.settings as DrSettings
 	_add_noblock_and_workbench()
-	console = platform.console as DotConsoleController
+	console = platform.console as GSConsoleController
 	if settings == null:
 		return
 
@@ -526,7 +526,7 @@ func _build_settings() -> void:
 
 	if hud != null and settings.menu != null:
 		hud.follow_menu(settings.menu)
-	board = platform.board as DotMenuScoreboard
+	board = platform.board as GSMenuScoreboard
 	_dress_board()
 
 
@@ -539,7 +539,7 @@ func _build_audio() -> void:
 
 	if not ready_now.ok:
 		# A game that cannot make a noise still plays; it is the state this one shipped in.
-		DotLog.warn(CHANNEL, "no sound", {"why": ready_now.error.message})
+		GSLog.warn(CHANNEL, "no sound", {"why": ready_now.error.message})
 		remove_child(audio)
 		audio.queue_free()
 		audio = null
@@ -602,7 +602,7 @@ func _hear_the_world() -> void:
 	)
 
 
-func _on_rig_used(outcome: DotWeaponOutcome, armed: DrPlayer) -> void:
+func _on_rig_used(outcome: GSWeaponOutcome, armed: DrPlayer) -> void:
 	if audio != null and is_instance_valid(armed):
 		var _heard := audio.on_weapon(armed.global_position, ZeeWeaponNet.kind_number(outcome.kind))
 
@@ -688,15 +688,15 @@ func _arm_locally(weapon_id: StringName = &"") -> void:
 	weapons.tick_rate = game.tick_rate
 	# The held weapon lowers at every brush that stops the player, fences and clip included.
 	weapons.wall_extra_mask = player.controller.tunables.collision_mask if player.controller != null else 0
-	weapons.view_model_ref = DotNodeRef.of_path(view_model.get_path())
-	weapons.player_ref = DotNodeRef.of_path(player.get_path())
+	weapons.view_model_ref = GSNodeRef.of_path(view_model.get_path())
+	weapons.player_ref = GSNodeRef.of_path(player.get_path())
 	weapons.ads_rules = game.ads_rules
 	player.add_child(weapons)
 
 	var ready_now := weapons.setup()
 
 	if not ready_now.ok:
-		DotLog.warn(CHANNEL, "the view model would not set up", {
+		GSLog.warn(CHANNEL, "the view model would not set up", {
 			"why": ready_now.error.message,
 		})
 		_disarm_locally()
@@ -710,7 +710,7 @@ func _arm_locally(weapon_id: StringName = &"") -> void:
 
 	# Your own shots, from your own rig: a predicted use, heard the tick it happens rather
 	# than when the server's snapshot says it did. At the camera, so it is at full volume.
-	weapons.used.connect(func(outcome: DotWeaponOutcome) -> void:
+	weapons.used.connect(func(outcome: GSWeaponOutcome) -> void:
 		if audio != null and camera != null:
 			var _heard := audio.on_weapon(
 				camera.global_position, ZeeWeaponNet.kind_number(outcome.kind)
@@ -738,7 +738,7 @@ func _give_locally(weapon_id: StringName) -> void:
 		return
 	var given := weapons.give(weapon_id)
 	if not given.ok:
-		DotLog.warn(CHANNEL, "the drawn rig refused a weapon", {"weapon": String(weapon_id), "why": given.error.message})
+		GSLog.warn(CHANNEL, "the drawn rig refused a weapon", {"weapon": String(weapon_id), "why": given.error.message})
 
 
 # --- The camera ------------------------------------------------------------
@@ -756,7 +756,7 @@ func _build_camera() -> void:
 	# one stands between the camera and you. It rides the camera wherever the camera goes.
 	# Handed the figures rather than found by a query: a player's hull is off while
 	# mp_solidplayers is 0, and a body walking through you is exactly when it is needed.
-	_fade = DotCameraFade.new()
+	_fade = GSCameraFade.new()
 	_fade.name = "Fade"
 	_fade.bodies_fn = _other_players
 	camera.add_child(_fade)
@@ -770,7 +770,7 @@ func _build_camera() -> void:
 
 ## Puts the camera where this view mode wants it, rebuilding the rig if the mode changed.
 ##
-## [b]A boom in third person and nothing in first.[/b] dot-core's [DotCameraBoom] sweeps a
+## [b]A boom in third person and nothing in first.[/b] dot-core's [GSCameraBoom] sweeps a
 ## sphere from the eye and eases in ahead of a wall or a gantry; the spring arm it replaced
 ## cast a ray from a pivot above the head and snapped to whatever it hit.
 func _place_camera() -> void:
@@ -795,7 +795,7 @@ func _place_camera() -> void:
 			_fade.focus = null
 		return
 
-	_arm = DotCameraBoom.new()
+	_arm = GSCameraBoom.new()
 	_arm.name = "Chase"
 	_arm.spring_length = CHASE_BACK
 	# The level, never players: they are faded instead (a stand-in behind you would pull the
@@ -873,11 +873,11 @@ func _build_hud() -> void:
 
 ## On a touch device: dot-mobile's overlay (see [DrTouch]): use (held, like the key), jump and duck (held on the sampler).
 func _build_touch() -> void:
-	if not DotPlatform.has_touch():
+	if not GSPlatform.has_touch():
 		return
 	_touch = DrTouch.new()
 	_touch.use_fn = func(down: bool) -> void: _use = down and not _covered()
-	_touch.sampler_fn = func() -> DotFpsSampler:
+	_touch.sampler_fn = func() -> GSFpsSampler:
 		return _sampler if not _offline else (player.sampler if player != null else null)
 	_touch.busy_fn = func() -> bool:
 		return _covered() or is_spectating() or (platform != null and platform.is_input_blocked())
@@ -894,7 +894,7 @@ func _input(event: InputEvent) -> void:
 	if _touch != null and _touch.takes(event):
 		return
 	if event is InputEventScreenTouch or event is InputEventScreenDrag:
-		var live: DotFpsSampler = _sampler if not _offline else (player.sampler if player != null else null)
+		var live: GSFpsSampler = _sampler if not _offline else (player.sampler if player != null else null)
 		if live != null and not _covered():
 			live.handle_event(event)
 
@@ -912,27 +912,27 @@ func _build_chat() -> void:
 ## dot-team's block rules followed from the server, and the F9 tuning panel where this process hosts the game.
 func _add_noblock_and_workbench() -> void:
 	if link != null:
-		DotLog.result(CHANNEL, "noblock", platform.add_noblock(game, Callable(game, "team_of_side")))
+		GSLog.result(CHANNEL, "noblock", platform.add_noblock(game, Callable(game, "team_of_side")))
 		return
-	var wb := DotGameWorkbench.new()
+	var wb := GSGameWorkbench.new()
 	wb.name = "Workbench"
 	wb.lazy_panel = true
 	wb.listen_host_fn = func() -> bool: return true
 	wb.config = {"enabled": false}
 	if game.config_binder != null:
-		for set: DotProfileSet in game.config_binder.profile_sets():
+		for set: GSProfileSet in game.config_binder.profile_sets():
 			wb.add_set(set, "Game settings: %s" % set.rel_path.trim_prefix("config_"))
 	var _fl := game.flashlight_conf()
 	if game.flashlight_binder != null:
-		for set: DotProfileSet in game.flashlight_binder.profile_sets():
+		for set: GSProfileSet in game.flashlight_binder.profile_sets():
 			wb.add_set(set, "Flashlight")
 	add_child(wb)
 	var started := wb.start()
-	DotLog.result(CHANNEL, "the workbench", started)
+	GSLog.result(CHANNEL, "the workbench", started)
 	if started.ok and game.config_binder != null:
 		game.config_binder.attach(wb.api.runtime)
 	if started.ok and game.flashlight_binder != null and wb.api != null:
-		game.flashlight_binder.attach(wb.api.runtime as DotProfileRuntime)
+		game.flashlight_binder.attach(wb.api.runtime as GSProfileRuntime)
 	platform.add_workbench(wb)
 
 
@@ -940,21 +940,21 @@ func _add_noblock_and_workbench() -> void:
 func _start_remote_workbench() -> void:
 	if workbench_remote == null:
 		return
-	var wb := DotGameWorkbench.new()
+	var wb := GSGameWorkbench.new()
 	wb.name = "Workbench"
 	wb.remote_client = workbench_remote
 	wb.remote_fn = func() -> bool: return true
 	wb.config = {"enabled": false}
 	if game.config_binder != null:
-		for set: DotProfileSet in game.config_binder.profile_sets():
+		for set: GSProfileSet in game.config_binder.profile_sets():
 			wb.add_set(set, "Game settings: %s" % set.rel_path.trim_prefix("config_"))
 	var _fl := game.flashlight_conf()
 	if game.flashlight_binder != null:
-		for set: DotProfileSet in game.flashlight_binder.profile_sets():
+		for set: GSProfileSet in game.flashlight_binder.profile_sets():
 			wb.add_set(set, "Flashlight")
 	add_child(wb)
 	var started := wb.start(game.ensure_runtime())
-	DotLog.result(CHANNEL, "the remote workbench", started)
+	GSLog.result(CHANNEL, "the remote workbench", started)
 	if not started.ok:
 		wb.queue_free()
 		return
@@ -1036,7 +1036,7 @@ func _physics_process(delta: float) -> void:
 	if _covered():
 		return
 
-	var move := _sampler.sample(delta) if _sampler != null else DotFpsCommand.new()
+	var move := _sampler.sample(delta) if _sampler != null else GSFpsCommand.new()
 	_stamp(move)
 
 	# [b]Each pass is its own tick.[/b] `advance` has already moved the clock by all of
@@ -1080,7 +1080,7 @@ func _drive_offline(_delta: float) -> void:
 
 
 ## Puts this game's three buttons and the slot onto a command.
-func _stamp(command: DotFpsCommand) -> void:
+func _stamp(command: GSFpsCommand) -> void:
 	if command == null:
 		return
 
@@ -1175,7 +1175,7 @@ func _process(delta: float) -> void:
 		weapons.drive_view(
 			Vector2(state.yaw, state.pitch),
 			speed,
-			state.mode != DotFpsState.Mode.AIR,
+			state.mode != GSFpsState.Mode.AIR,
 			state.crouch_fraction > 0.5
 		)
 
@@ -1199,7 +1199,7 @@ func _watched_through_eyes() -> DrPlayer:
 
 	var mode := game.spectate.mode_of(player.player_id)
 
-	if mode != DotSpectatorView.Mode.FIRST_PERSON and mode != DotSpectatorView.Mode.FREEZE_CAM:
+	if mode != GSSpectatorView.Mode.FIRST_PERSON and mode != GSSpectatorView.Mode.FREEZE_CAM:
 		return null
 
 	return game.players.get(game.spectate.watching(player.player_id))
@@ -1242,7 +1242,7 @@ func _drive_spectator_camera() -> bool:
 		view_model.visible = false
 
 	# Chase and death cameras pulled out of the course by dot-spectate, given the level.
-	var manager: DotSpectatorManager = game.spectate.manager
+	var manager: GSSpectatorManager = game.spectate.manager
 	if manager != null and manager.camera_world == null and game.physics != null:
 		manager.camera_world = camera.get_world_3d()
 		manager.camera_mask = _level_mask()
@@ -1296,7 +1296,7 @@ func is_roaming() -> bool:
 ## The pose is kept in the manager too, so a later hand-over starts from it.
 func _fly_free_camera() -> Transform3D:
 	if _free_cam == null:
-		_free_cam = DotSpectatorFreeCam.new()
+		_free_cam = GSSpectatorFreeCam.new()
 		_free_cam.rules = game.spectate_rules
 		_free_cam.seed_from(camera.global_transform)
 
@@ -1361,7 +1361,7 @@ func spectate_step(direction: int) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	# Tab, M and a click taking the pointer back are the platform's (DotGameClient).
+	# Tab, M and a click taking the pointer back are the platform's (GSGameClient).
 	if event.is_action_pressed("ui_cancel"):
 		# Opens the settings when the menu left this Escape alone: a released pointer with nothing
 		# on screen to click was a key that did half a job. A second Escape never reaches here:
@@ -1383,7 +1383,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	# A tap or a left click while out. Touch arrives as a screen touch plus the mouse press the
 	# engine emulates from it; is_next_press skips the emulated one, so a tap steps once.
-	if is_spectating() and DotSpectatorHost.is_next_press(event):
+	if is_spectating() and GSSpectatorHost.is_next_press(event):
 		_firing = false
 		spectate_step(1)
 		return
@@ -1474,7 +1474,7 @@ func _game_key(event: InputEventKey) -> bool:
 ## Steps the carried slots on the previous/next weapon actions; true when the event was one.
 func _wheel_pressed(event: InputEvent) -> bool:
 	if _wheel == null:
-		_wheel = DotWeaponWheel.new()
+		_wheel = GSWeaponWheel.new()
 		_wheel.ring_provider = func() -> Array:
 			return weapons.arsenal.slots() if weapons != null and weapons.arsenal != null else []
 		_wheel.current_provider = func() -> Variant:
@@ -1512,8 +1512,8 @@ func describe() -> Dictionary:
 ## draws dot-server's own lines (the vote between games, joins, an admin's `say`), which arrive
 ## on the shell's client link rather than on this game's bridge. Static so a suite can build
 ## the same box the client does.
-static func new_chat() -> DotGameChatClient:
-	var box := DotGameChatClient.new()
+static func new_chat() -> GSGameChatClient:
+	var box := GSGameChatClient.new()
 	box.name = "Chat"
 	box.channels = [
 		{"id": DrServices.CH_ALL, "label": "All", "colour": Color(0.93, 0.94, 0.96)},
@@ -1523,7 +1523,7 @@ static func new_chat() -> DotGameChatClient:
 	box.max_length = DrServices.chat_rules().max_length
 	box.voice_config = DrServices.voice_format()
 	# A phone: three narrow rows in the corner, so a log line is not drawn across the thumbstick and the buttons.
-	if DotPlatform.has_touch():
+	if GSPlatform.has_touch():
 		box.window_settings = {"max_lines": 3, "width": 200.0, "margin_left": 12.0, "margin_bottom": 8.0}
 	return box
 

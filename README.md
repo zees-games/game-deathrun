@@ -106,7 +106,7 @@ bot_difficulty medium          // easy, medium, hard or nightmare: how bots aim,
 dr_vote_after 20               // seconds into a course before the vote for the next one opens
 ```
 
-The bot cvars are the family's shared ones (dot-server's `DotBotQuota`, dot-bot's `bot_difficulty` and `bot_*`; solo they are console variables, or `-- --bot_difficulty hard` at launch). `dr_min_players` still works and sets `bot_quota`, and `dr_bot_spread` sets `bot_aim_error`; both are deprecated.
+The bot cvars are the family's shared ones (dot-server's `GSBotQuota`, dot-bot's `bot_difficulty` and `bot_*`; solo they are console variables, or `-- --bot_difficulty hard` at launch). `dr_min_players` still works and sets `bot_quota`, and `dr_bot_spread` sets `bot_aim_error`; both are deprecated.
 
 Dead runners fall as ragdolls ([dot-player-char](https://github.com/gamespice-platform/player-char)); the server picks how each one goes down and everybody sees the same fall. `sv_ragdoll 0` makes it a quick fall with no physics, `sv_ragdoll_style` picks ragdoll, stiff, topple or hide, `sv_ragdoll_time` and `sv_ragdoll_max` say how long and how many, and `sv_ragdoll_reactions` weights the falls (`limp`, `face_plant`, `crumple`, `headshot_launch`, `power_launch`; 0 turns one off).
 
@@ -175,4 +175,4 @@ The file `cfg/game/mg-deathrun/dot_map/maps.yml` says which installed courses ar
 | `dr_maps_reload` | Reads the file again |
 | `shuffle_courses` in `config_courses/game.yml` | Random or in-order choice when no rotation file names rotations (default on) |
 
-A course left out of the rotation stays installed: the map menu and an admin can still load it, marked "not in rotation". The file can also rename the vote commands. The format is dot-map's `DotMapRotationFile`.
+A course left out of the rotation stays installed: the map menu and an admin can still load it, marked "not in rotation". The file can also rename the vote commands. The format is dot-map's `GSMapRotationFile`.

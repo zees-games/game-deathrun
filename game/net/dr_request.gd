@@ -1,4 +1,4 @@
-extends DotNetMessage
+extends GSNetMessage
 
 const DrEvents := preload("dr_events.gd")
 
@@ -24,21 +24,21 @@ func _type_name() -> StringName:
 	return NAME
 
 
-func _write(writer: DotNetWriter) -> void:
+func _write(writer: GSNetWriter) -> void:
 	writer.write_uint(kind, KIND_BITS)
 	writer.write_bytes(body)
 
 
-func _read(reader: DotNetReader) -> void:
+func _read(reader: GSNetReader) -> void:
 	kind = reader.read_uint(KIND_BITS)
 	body = reader.read_bytes(MAX_BODY)
 
 
-func _validate() -> DotResult:
+func _validate() -> GSResult:
 	if kind < 0 or kind >= DrEvents.Ask.size():
-		return DotResult.fail(DotError.CODE_INVALID, "Unknown request kind %d." % kind)
+		return GSResult.fail(GSError.CODE_INVALID, "Unknown request kind %d." % kind)
 
-	return DotResult.success(true)
+	return GSResult.success(true)
 
 
 ## Whether every [enum DrEvents.Ask] fits in [constant KIND_BITS]. What a check reads: the writer
@@ -47,8 +47,8 @@ static func fits() -> bool:
 	return int(DrEvents.Ask.values().max()) < (1 << KIND_BITS)
 
 
-func reader() -> DotNetReader:
-	return DotNetReader.new(body)
+func reader() -> GSNetReader:
+	return GSNetReader.new(body)
 
 
 func _to_string() -> String:

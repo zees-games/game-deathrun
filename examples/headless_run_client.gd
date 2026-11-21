@@ -1,4 +1,4 @@
-extends DotGameCheckSuite
+extends GSGameCheckSuite
 
 const DrBindings := preload("../game/dr_bindings.gd")
 const DrCatalogue := preload("../game/dr_catalogue.gd")
@@ -50,7 +50,7 @@ func _test_a_bot_at_the_buttons() -> void:
 	runner.place_at(Vector3(0.0, 0.1, -27.0), 0.0)
 
 	for _i in range(TICK_RATE * 12):
-		runner.controller.apply_command(DotFpsCommand.new())
+		runner.controller.apply_command(GSFpsCommand.new())
 		await _step(game, 1)
 
 		if not fired.is_empty():
@@ -81,7 +81,7 @@ func _test_progress() -> void:
 		"the activator has one runner trapped", str(values.get_value(DrProgress.TRAP_KILLS)))
 	_check(is_equal_approx(values.get_value(DrProgress.PRESSES), 1.0), "and one trap sprung")
 
-	var held := DotStatsValues.new()
+	var held := GSStatsValues.new()
 	held.values = {String(DrProgress.TRAP_KILLS): 10.0}
 	game.progress.rank.seed_baseline(activator.player_id, held)
 	var alone: float = game.progress.rank.weighted(game.progress.session_values(activator.player_id).to_dictionary())
@@ -133,7 +133,7 @@ func _press(game: DrGame, activator: DrPlayer, index: int) -> void:
 ## Looks at [param at] and presses the use key for a tick, then lets go.
 func _use(game: DrGame, player: DrPlayer, at: Vector3) -> void:
 	var look := at - player.eye_position()
-	var command := DotFpsCommand.new()
+	var command := GSFpsCommand.new()
 	command.yaw = rad_to_deg(atan2(-look.x, -look.z))
 	command.pitch = clampf(rad_to_deg(asin(clampf(look.normalized().y, -1.0, 1.0))), -89.0, 89.0)
 	player.controller.apply_command(command)
@@ -177,7 +177,7 @@ func _why(deaths: Array, id: StringName) -> StringName:
 ## starved tick's view and buttons but drops its movement.
 func _hold_for(game: DrGame, player: DrPlayer, move: Vector2, yaw: float, ticks: int) -> void:
 	for _i in range(ticks):
-		var command := DotFpsCommand.new()
+		var command := GSFpsCommand.new()
 		command.move = move
 		command.yaw = yaw
 		player.controller.apply_command(command)
@@ -193,7 +193,7 @@ func _test_the_client_settings() -> void:
 	client.set(&"config_file", "user://cfg/headless-none.json")
 	add_child(client)
 	# The course must not be drawn, or steered, while it is still being built.
-	var platform: DotGameClient = client.get("platform")
+	var platform: GSGameClient = client.get("platform")
 	var covered := platform != null and platform.gate != null and not platform.is_shown() \
 		and platform.is_input_blocked()
 	for i in 240:
@@ -227,7 +227,7 @@ func _test_the_client_settings() -> void:
 	tab.physical_keycode = KEY_TAB
 	tab.pressed = true
 	settings.menu.handle_event(tab)
-	var board: DotMenuScoreboard = client.get("board")
+	var board: GSMenuScoreboard = client.get("board")
 	_check(board != null and board.is_open() and board.rows().size() >= 1
 		and board.rows().any(func(r: Dictionary) -> bool: return bool(r.get("you", false))),
 		"Tab holds the scoreboard up, with this player on it and picked out",
@@ -259,7 +259,7 @@ func _test_the_hud() -> void:
 	hud.bind(game, activator)
 	hud._process(0.0)
 	_check(
-		game.phase == DrGame.Phase.RUN and hud.strip.clock == DotScoreStrip.clock_text(game.seconds_left())
+		game.phase == DrGame.Phase.RUN and hud.strip.clock == GSScoreStrip.clock_text(game.seconds_left())
 		and hud.strip.under_text() == hud._phase_line() and hud._phase_line().contains(" E "),
 		"the strip shows the clock, the phase line under it, naming the use key",
 		"%s / %s" % [hud.strip.clock, hud.strip.under_text()]
@@ -270,7 +270,7 @@ func _test_the_hud() -> void:
 	activator.place_at(button + Vector3(1.0, -DrCourse.BUTTON_HEIGHT + 0.05, 0.0), 90.0)
 	await _step(game, 1)
 	var look := button - activator.eye_position()
-	var command := DotFpsCommand.new()
+	var command := GSFpsCommand.new()
 	command.yaw = rad_to_deg(atan2(-look.x, -look.z))
 	command.pitch = clampf(rad_to_deg(asin(clampf(look.normalized().y, -1.0, 1.0))), -89.0, 89.0)
 	activator.controller.apply_command(command)
@@ -278,7 +278,7 @@ func _test_the_hud() -> void:
 	hud._process(0.0)
 	_check(
 		hud.prompt.visible and hud.prompt.words == game.stage.trap_name(0) and hud.prompt.key == "E",
-		"looking at a ready button, DotKeyPrompt names its trap with the use key",
+		"looking at a ready button, GSKeyPrompt names its trap with the use key",
 		hud.prompt.text()
 	)
 	var _pressed := game.press(0, activator.player_id)
@@ -298,7 +298,7 @@ func _test_the_hud() -> void:
 	hud._process(0.0)
 	_check(
 		hud.vitals.visible and hud.vitals.number_text() == "18" and hud.vitals.is_low(),
-		"at the end DotVitals shows it, red at a quarter",
+		"at the end GSVitals shows it, red at a quarter",
 		"%s low=%s" % [hud.vitals.number_text(), str(hud.vitals.is_low())]
 	)
 
@@ -306,9 +306,9 @@ func _test_the_hud() -> void:
 
 	# A pack naming these classes does not parse on a shell whose dot-ui predates them, so
 	# the requires.json dot-ci derives must ask for dot-ui 4, and nothing may lower it.
-	var asks := DotAddonApi.derive()
+	var asks := GSAddonApi.derive()
 	_check(
-		int(asks.get("dot_ui", 0)) >= 13 and FileAccess.file_exists("res://" + DotAddonApi.FLOOR_FILE),
+		int(asks.get("dot_ui", 0)) >= 13 and FileAccess.file_exists("res://" + GSAddonApi.FLOOR_FILE),
 		"the pack asks a shell for dot-ui level 13, the weapon icons (requires.floor.json)",
 		str(asks.get("dot_ui"))
 	)
@@ -320,7 +320,7 @@ func _test_the_hud() -> void:
 func _hud_chat_and_theme_checks(hud: DrHud) -> void:
 	var chat := DrClient.new_chat()
 	add_child(chat)
-	var w: DotChatWindow = chat.window
+	var w: GSChatWindow = chat.window
 	var log_top := w.margin_bottom + w.entry_height + float(w.max_lines) * (w.line_height + w.line_gap)
 	var plate_bottom := -(hud.vitals.offset_top + hud.vitals.footprint().end.y)
 	_check(
@@ -333,12 +333,12 @@ func _hud_chat_and_theme_checks(hud: DrHud) -> void:
 	# Christian's first play test: a darker HUD by default, restyled live by the menu's theme.
 	var settings := DrSettings.new()
 	add_child(settings)
-	var _built: Variant = settings.setup(DotSettingsStoreMemory.new())
+	var _built: Variant = settings.setup(GSSettingsStoreMemory.new())
 	hud.follow_menu(settings.menu)
 	var plate := hud.vitals.colour(&"plate")
 	_check(plate.get_luminance() < 0.1 and plate.a >= 0.7, "the HUD is dark by default, in the menu's theme", str(plate))
 	var _t := settings.settings.set_value(&"ui_theme", &"contrast")
-	var contrast: DotMenuPalette = settings.menu.palette()
+	var contrast: GSMenuPalette = settings.menu.palette()
 	_check(contrast.id == &"contrast" and hud.vitals.colour(&"plate") == contrast.hud_plate and hud.vitals.colour(&"text") == contrast.hud_text,
 		"a theme picked in the menu reaches the pieces at once")
 	_check(hud.vitals.colour(&"highlight") == DrHud.COURSE_COLOUR and hud._field.get_theme_color(&"font_color") == contrast.hud_text,
@@ -353,9 +353,9 @@ func _test_help_and_menu() -> void:
 	_section("H opens help, and the Escape menu has Help and Leave")
 	var settings := DrSettings.new()
 	add_child(settings)
-	var built: DotResult = settings.setup(DotSettingsStoreMemory.new())
-	var keys: DotMenuBindings = settings.bindings
-	_check(built.ok and keys != null and keys.key_for(DotMenuBindings.HELP_ACTION) == "H", "help is on H")
+	var built: GSResult = settings.setup(GSSettingsStoreMemory.new())
+	var keys: GSMenuBindings = settings.bindings
+	_check(built.ok and keys != null and keys.key_for(GSMenuBindings.HELP_ACTION) == "H", "help is on H")
 	_check(keys.defaults_on("H").size() == 1, "and nothing else in the table defaults to H",
 		str(keys.defaults_on("H").map(func(r: Dictionary) -> String: return str(r["label"]))))
 	# The wheel cycles weapons and does not jump.
@@ -365,12 +365,12 @@ func _test_help_and_menu() -> void:
 	var wd := InputEventMouseButton.new()
 	wd.button_index = MOUSE_BUTTON_WHEEL_DOWN
 	wd.pressed = true
-	_check(wu.is_action_pressed(DotMenuBindings.WEAPON_PREVIOUS_ACTION) and wd.is_action_pressed(DotMenuBindings.WEAPON_NEXT_ACTION),
+	_check(wu.is_action_pressed(GSMenuBindings.WEAPON_PREVIOUS_ACTION) and wd.is_action_pressed(GSMenuBindings.WEAPON_NEXT_ACTION),
 		"wheel up is previous weapon and wheel down is next")
 	_check(not wu.is_action_pressed(&"dot_fps_jump") and not wd.is_action_pressed(&"dot_fps_jump"), "and the wheel does not jump")
 	var wc: Node = DrClient.new()
 	var took: bool = wc.call("_wheel_pressed", wd)
-	_check(not took and wc.get(&"_wheel") is DotWeaponWheel, "the client's DotWeaponWheel is built on first use and leaves a wheel alone with the pointer free")
+	_check(not took and wc.get(&"_wheel") is GSWeaponWheel, "the client's GSWeaponWheel is built on first use and leaves a wheel alone with the pointer free")
 	wc.free()
 	var h := InputEventKey.new()
 	h.physical_keycode = KEY_H
@@ -403,7 +403,7 @@ func _test_offline_trigger() -> void:
 	client._adopt(me)
 	client._firing = true
 	me.simulate(game.current_tick() + 1, 1.0 / float(TICK_RATE))
-	var pressed := game.weapon_command_for(me).is_pressed(DotWeaponCommand.BUTTON_ATTACK)
+	var pressed := game.weapon_command_for(me).is_pressed(GSWeaponCommand.BUTTON_ATTACK)
 	_check(me.sampler != null and pressed, "the world's weapon command has the trigger the client holds")
 	client.free()
 	_finished()
@@ -419,7 +419,7 @@ func _test_spectate_tap() -> void:
 	var id := a.player_id
 	a.watching = true
 	game.spectate.on_died(id, others[0], false, Vector3(0, 2, 0), 0.0, 0)
-	game.spectate.manager.set_mode(String(id), DotSpectatorView.Mode.CHASE)
+	game.spectate.manager.set_mode(String(id), GSSpectatorView.Mode.CHASE)
 	var client := DrClient.new()
 	client.game = game
 	client._adopt(a)
@@ -472,7 +472,7 @@ func _test_free_roam() -> void:
 		"the game's rules allow roaming and are the manager's own")
 	a.watching = true
 	game.spectate.on_died(id, b.player_id, false, Vector3(0, 2, 0), 0.0, 0)
-	game.spectate.manager.set_mode(String(id), DotSpectatorView.Mode.CHASE)
+	game.spectate.manager.set_mode(String(id), GSSpectatorView.Mode.CHASE)
 	_check(game.spectate.can_roam(id), "somebody who is out may roam")
 	_check(game.spectate.toggle_roam(id).ok and game.spectate.is_roaming(id), "the key enters the free camera")
 
@@ -482,7 +482,7 @@ func _test_free_roam() -> void:
 	var client := DrClient.new()
 	client.game = game
 	client._adopt(a)
-	var command := DotFpsCommand.new()
+	var command := GSFpsCommand.new()
 	command.move = Vector2(1.0, 1.0)
 	command.set_button(DrNetCommand.BUTTON_FIRE, true)
 	client._firing = true
@@ -491,7 +491,7 @@ func _test_free_roam() -> void:
 		"a roamer's movement command is zeroed, offline included")
 	client.free()
 
-	var cam := DotSpectatorFreeCam.new()
+	var cam := GSSpectatorFreeCam.new()
 	cam.rules = game.spectate_rules
 	cam.seed_from(Transform3D(Basis.IDENTITY, Vector3(0, 2, 0)))
 	var pose := cam.step(Vector3(0, 0, 1), false, false, 0.5)
@@ -502,7 +502,7 @@ func _test_free_roam() -> void:
 
 	var _off := game.spectate_rules.set_cvar("mp_freeroam", "0")
 	var refused := game.spectate.toggle_roam(id)
-	_check(not refused.ok and refused.error.code == DotError.CODE_FORBIDDEN and not game.spectate.is_roaming(id),
+	_check(not refused.ok and refused.error.code == GSError.CODE_FORBIDDEN and not game.spectate.is_roaming(id),
 		"mp_freeroam 0 refuses it")
 	var _on := game.spectate_rules.set_cvar("mp_freeroam", "1")
 	var _own := game.spectate_rules.set_cvar("mp_forcecamera", "1")
@@ -538,7 +538,7 @@ func _test_the_drawn_gun() -> void:
 	# Your own view is first person, so no figure is drawn yet: give it one as the third-person view does.
 	var DrFigureScript: GDScript = load("res://game/dr_figure.gd")
 	me.figure = DrFigureScript.new()
-	me.figure.person = DotHumanoidFigure.new()
+	me.figure.person = GSHumanoidFigure.new()
 	me.figure.add_child(me.figure.person)
 	add_child(me.figure)
 	var action_fig: Object = client.call(&"_avatar_figure", 0)
@@ -582,7 +582,7 @@ func _test_the_drawn_gun() -> void:
 		"the drawn gun takes the server's count once quiet, and not before",
 		"after 10 ticks %d, after 70 %d, server %d" % [early, drawn.arsenal.current().magazine, world_count])
 
-	var marker: DotHitMarker = hud.get("hit_marker")
+	var marker: GSHitMarker = hud.get("hit_marker")
 	world.hit_landed.emit(&"local", Vector3(0.0, 1.0, -4.0), true, false)
 	_check(marker != null and marker.alpha() > 0.9 and marker.kill, "a hit the world confirms flashes the marker, a kill's")
 
@@ -596,16 +596,16 @@ func _test_the_drawn_gun() -> void:
 func _drawn_gun_hud_checks(client: Node, drawn: ZeeWeaponRig) -> void:
 	var hud: Node = client.get("hud")
 	hud.call("_process", 0.0)
-	var counter: DotAmmoCounter = hud.get("ammo")
+	var counter: GSAmmoCounter = hud.get("ammo")
 	var def := drawn.current_def() if drawn != null else null
 	var expected := "%d | %d" % [drawn.arsenal.current().magazine, drawn.arsenal.ammo().count(def.ammo_type)] if def != null else "?"
 	_check(counter != null and counter.visible and def != null and counter.weapon_name == def.display_name
 		and counter.count_text() == expected,
-		"the HUD has DotAmmoCounter, counting the drawn gun",
+		"the HUD has GSAmmoCounter, counting the drawn gun",
 		"%s %s, want %s" % [counter.weapon_name if counter else "-", counter.count_text() if counter else "-", expected])
 	var icon_script: Script = load("res://game/dr_weapon_icons.gd")
-	var icons: DotWeaponIconStyle = icon_script.get("shared")
-	var icon_rect: DotWeaponIconPlate = hud.get("weapon_icon")
+	var icons: GSWeaponIconStyle = icon_script.get("shared")
+	var icon_rect: GSWeaponIconPlate = hud.get("weapon_icon")
 	var unmapped := PackedStringArray()
 	for weapon in icon_script.get("TAGS"):
 		if not icons.icon_set().has_icon(weapon):
@@ -633,9 +633,9 @@ func _test_the_map_menu() -> void:
 	await _step(game, 2)
 	var settings := DrSettings.new()
 	add_child(settings)
-	var _built: DotResult = settings.setup(DotSettingsStoreMemory.new())
-	var keys: DotMenuBindings = settings.bindings
-	_check(keys.key_for(DotMenuBindings.MAPS_ACTION) == "M" and keys.defaults_on("M").size() == 1,
+	var _built: GSResult = settings.setup(GSSettingsStoreMemory.new())
+	var keys: GSMenuBindings = settings.bindings
+	_check(keys.key_for(GSMenuBindings.MAPS_ACTION) == "M" and keys.defaults_on("M").size() == 1,
 		"the map menu is on M, and nothing else in the table defaults to M",
 		str(keys.defaults_on("M").map(func(r: Dictionary) -> String: return str(r["label"]))))
 	var rows: Array = game.course_rows()
@@ -649,7 +649,7 @@ func _test_the_map_menu() -> void:
 	_check(settings.menu.handle_event(m) and settings.menu.picker.is_open(), "M opens the picker")
 	var wanted: StringName = &""
 	var key := KEY_NONE
-	for row in range(1, DotMenuPicker.PAGE_SIZE + 1):
+	for row in range(1, GSMenuPicker.PAGE_SIZE + 1):
 		var it: Variant = settings.menu.picker.at_row(row)
 		if it is Dictionary and not bool((it as Dictionary)["current"]):
 			wanted = StringName(str((it as Dictionary)["id"]))

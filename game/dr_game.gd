@@ -14,7 +14,7 @@ func _ready() -> void:
 	if not valid.ok:
 		# FATAL is reserved for "the process cannot continue", and a configuration that
 		# contradicts itself is not that: say so loudly and refuse to run a round.
-		DotLog.error(CHANNEL, "the configuration is not usable", {"why": valid.error.message})
+		GSLog.error(CHANNEL, "the configuration is not usable", {"why": valid.error.message})
 		return
 
 	_round_seed = config.seed_value
@@ -41,26 +41,26 @@ func _ready() -> void:
 		for root in solo_map_dirs("courses"):
 			var _added := catalogue.add_directory(root)
 		# The Workshop's courses, solo only by the index's own session (an online session lists none).
-		catalogue.follow_content(DotContentIndex.shared(), DrCatalogue.accepted_map_kinds())
+		catalogue.follow_content(GSContentIndex.shared(), DrCatalogue.accepted_map_kinds())
 		var _rotation := load_rotation()
 		# Laid out now, not on the first round: dot-match runs a warmup first, and an empty
 		# world through the warmup is indistinguishable from a map that failed to load.
 		_lay_out_course()
 
 	if register_service:
-		DotRegistry.register(SERVICE, self)
+		GSRegistry.register(SERVICE, self)
 
-	DotLog.info(CHANNEL, "world ready", config.describe())
+	GSLog.info(CHANNEL, "world ready", config.describe())
 
 
 ## The `<pack>/<subdir>` directories of the map packs a host running this game with no server
 ## has mounted for it: the client shell's Solo play, which fetches the packs a server owner
 ## would name (dot-server-deploy's `client/solo.json`) because a tab has no server to name
-## them. Read the way the module reads its server's ([DotGameContent]). Empty everywhere else:
+## them. Read the way the module reads its server's ([GSGameContent]). Empty everywhere else:
 ## a server, a suite, a run from the repository. Looked up by name and duck-typed, because a
 ## delivered game may not name a host's class.
 static func solo_map_dirs(subdir: String) -> PackedStringArray:
-	var host: Object = DotRegistry.get_service(SOLO_SERVICE)
+	var host: Object = GSRegistry.get_service(SOLO_SERVICE)
 	if host == null or not host.has_method(&"map_dirs"):
 		return PackedStringArray()
 	return host.call(&"map_dirs", subdir)
@@ -68,7 +68,7 @@ static func solo_map_dirs(subdir: String) -> PackedStringArray:
 
 func _exit_tree() -> void:
 	if register_service:
-		DotRegistry.unregister_instance(SERVICE, self)
+		GSRegistry.unregister_instance(SERVICE, self)
 
 
 # --- Building ---------------------------------------------------------------
@@ -96,7 +96,7 @@ func _on_body_rules_changed() -> void:
 
 ## The named collision layers: the world and the players.
 func _build_physics() -> void:
-	physics = DotPhysicsLayout.custom(&"deathrun", [&"world", &"player", &"toy", &"footprint"])
+	physics = GSPhysicsLayout.custom(&"deathrun", [&"world", &"player", &"toy", &"footprint"])
 
 	for layer in physics.layers:
 		match layer.id:
@@ -120,7 +120,7 @@ func _build_physics() -> void:
 	var built := physics.build()
 
 	if not built.ok:
-		DotLog.error(CHANNEL, "the collision layout would not build", {"why": built.error.message})
+		GSLog.error(CHANNEL, "the collision layout would not build", {"why": built.error.message})
 		physics = null
 
 
@@ -130,14 +130,14 @@ func _apply_gravity() -> void:
 	var world := get_world_3d()
 
 	if world == null:
-		DotLog.warn(CHANNEL, "no world to set gravity on", {})
+		GSLog.warn(CHANNEL, "no world to set gravity on", {})
 		return
 
 	PhysicsServer3D.area_set_param(world.space, PhysicsServer3D.AREA_PARAM_GRAVITY, config.gravity)
 
 
 func _build_random() -> void:
-	random = DotRandomManager.new()
+	random = GSRandomManager.new()
 	random.name = "Random"
 	# Off: a registry name is process-wide, and two worlds in one process is every suite.
 	random.register_as_service = false
@@ -159,12 +159,12 @@ func _build_stage() -> void:
 
 
 func _build_combat() -> void:
-	combat = DotCombatManager.new()
+	combat = GSCombatManager.new()
 	combat.name = "Combat"
 	combat.is_authority = authoritative
 	combat.register_service = false
 
-	var rules := DotDamageRules.new()
+	var rules := GSDamageRules.new()
 	rules.friendly_fire = config.friendly_fire
 	rules.self_damage = true
 	rules.hit_groups = true
@@ -173,12 +173,12 @@ func _build_combat() -> void:
 	# Lag compensation OFF here and turned on by the bridge with the callables that make it
 	# real — mg-smash-copter's finding: left on, a delivered server logged "no rewind function"
 	# at every boot about a server where it works.
-	var settings := DotCombatConfig.new()
+	var settings := GSCombatConfig.new()
 	settings.lag_compensation = false
 	combat.config = settings
 
 	# A trace, or every shot goes through the arena's walls. Before `setup`, which warns.
-	var trace := DotTracePhysics.for_world(get_world_3d())
+	var trace := GSTracePhysics.for_world(get_world_3d())
 
 	if physics != null:
 		trace.collision_mask = physics.layer_mask(&"world")
@@ -186,15 +186,15 @@ func _build_combat() -> void:
 	combat.trace = trace
 
 	# Which side an entity is on, or friendly fire is ON between two runners.
-	combat.resolver = DotDamageResolver.with_rules(rules)
-	combat.resolver.hit_groups = DotHitGroup.defaults()
+	combat.resolver = GSDamageResolver.with_rules(rules)
+	combat.resolver.hit_groups = GSHitGroup.defaults()
 	combat.resolver.team_of = func(entity_id: int) -> int:
 		return team_of(entities.key_for_id(entity_id))
 
 	# dot-game's "still loading": the one place every hurt passes (a trap's kill, the floor, a
 	# weapon), so a covered seat is neither hurt nor eliminated, and a round counts the living
 	# from health. An admin's slay or slap is the operator's word and passes.
-	combat.resolver.adjust = func(damage: DotDamage) -> void:
+	combat.resolver.adjust = func(damage: GSDamage) -> void:
 		if damage.context.get("admin", false):
 			return
 
@@ -210,36 +210,36 @@ func _build_effects() -> void:
 	if authoritative and not draw_world:
 		return
 
-	var catalogue_fx := DotFxCatalogue.new()
+	var catalogue_fx := GSFxCatalogue.new()
 
-	var trap := DotFxDef.new()
+	var trap := GSFxDef.new()
 	trap.id = &"trap"
-	trap.kind = DotFxDef.Kind.SHAKE
+	trap.kind = GSFxDef.Kind.SHAKE
 	trap.shake_trauma = 0.4
 	trap.max_distance = 14.0
 	catalogue_fx.add(trap)
 
-	var go := DotFxDef.new()
+	var go := GSFxDef.new()
 	go.id = &"go"
-	go.kind = DotFxDef.Kind.SCREEN
+	go.kind = GSFxDef.Kind.SCREEN
 	go.flash_peak = 0.22
 	go.flash_colour = Color(0.98, 0.86, 0.35, 1.0)
 	go.flash_decay_ms = 380
 	catalogue_fx.add(go)
 
-	effects = DotFxManager.new()
+	effects = GSFxManager.new()
 	effects.name = "Effects"
 	effects.catalogue = catalogue_fx
-	effects.config = DotFxConfig.new()
+	effects.config = GSFxConfig.new()
 	effects.register_as_service = false
 	add_child(effects)
 
-	DotLog.result(CHANNEL, "the effects layer", effects.setup())
+	GSLog.result(CHANNEL, "the effects layer", effects.setup())
 
 
 ## The intermission is the pause plus the killcam the clients play inside it, so the server never waits on one.
-func apply_intermission(rules: DotMatchRules = null) -> void:
-	var target: DotMatchRules = rules if rules != null else (match_node.rules if match_node != null else null)
+func apply_intermission(rules: GSMatchRules = null) -> void:
+	var target: GSMatchRules = rules if rules != null else (match_node.rules if match_node != null else null)
 	if target == null:
 		return
 	var pause := config.intermission_seconds
@@ -247,11 +247,11 @@ func apply_intermission(rules: DotMatchRules = null) -> void:
 
 
 func _build_match() -> void:
-	match_node = DotMatch.new()
+	match_node = GSMatch.new()
 	match_node.name = "Match"
 	match_node.register_service = false
 
-	var match_config := DotMatchConfig.new()
+	var match_config := GSMatchConfig.new()
 	match_config.tick_rate = tick_rate
 	match_config.auto_start = false
 	match_config.log_transitions = false
@@ -260,7 +260,7 @@ func _build_match() -> void:
 	match_config.balance_between_rounds = false
 	match_node.config = match_config
 
-	var rules: DotMatchRules = DrRules.make()
+	var rules: GSMatchRules = DrRules.make()
 	apply_intermission(rules)
 	rules.warmup_sec = config.warmup_seconds
 	rules.countdown_sec = 0.0
@@ -273,16 +273,16 @@ func _build_match() -> void:
 
 	# Scoped to the match node, which finds nothing: this game places its own players, and an
 	# unset `spawns_ref` walks the whole scene and finds another world's.
-	match_node.spawns_ref = DotNodeRef.of_path(^".")
+	match_node.spawns_ref = GSNodeRef.of_path(^".")
 
 	add_child(match_node)
 
 	match_node.round_started.connect(_on_round_started)
 	match_node.round_ended.connect(_on_round_ended)
 
-	var teams: Array[DotTeam] = [
-		DotTeam.make(RUNNERS, TEAM_NAMES[0], TEAM_COLOURS[0]),
-		DotTeam.make(ACTIVATORS, TEAM_NAMES[1], TEAM_COLOURS[1]),
+	var teams: Array[GSTeam] = [
+		GSTeam.make(RUNNERS, TEAM_NAMES[0], TEAM_COLOURS[0]),
+		GSTeam.make(ACTIVATORS, TEAM_NAMES[1], TEAM_COLOURS[1]),
 	]
 
 	match_node.teams.teams = teams
@@ -317,7 +317,7 @@ func _build_spectate() -> void:
 	var ready_now := spectate.setup()
 
 	if not ready_now.ok:
-		DotLog.warn(CHANNEL, "spectating is off", {"why": ready_now.error.message})
+		GSLog.warn(CHANNEL, "spectating is off", {"why": ready_now.error.message})
 		remove_child(spectate)
 		spectate.queue_free()
 		spectate = null
@@ -337,7 +337,7 @@ func _build_progress() -> void:
 	var ready_now := progress.setup(config.progress_directory, config.report_progress)
 
 	if not ready_now.ok:
-		DotLog.warn(CHANNEL, "progress is off", {"why": ready_now.error.message})
+		GSLog.warn(CHANNEL, "progress is off", {"why": ready_now.error.message})
 		remove_child(progress)
 		progress.queue_free()
 		progress = null
@@ -398,7 +398,7 @@ func add_player(
 		var applied := physics.apply_to(player, &"player")
 
 		if not applied.ok:
-			DotLog.warn(CHANNEL, "a player could not be put on its collision layer", {
+			GSLog.warn(CHANNEL, "a player could not be put on its collision layer", {
 				"why": applied.error.message,
 			})
 
@@ -407,17 +407,17 @@ func add_player(
 		_apply_body_mask(player)
 
 	var opened := entities.open(
-		DotEntity.KIND_PLAYER, player, &"", player_id, float(_tick) / float(maxi(tick_rate, 1))
+		GSEntity.KIND_PLAYER, player, &"", player_id, float(_tick) / float(maxi(tick_rate, 1))
 	)
 
 	if not opened.ok:
-		DotLog.error(CHANNEL, "could not open an entity for a player", {
+		GSLog.error(CHANNEL, "could not open an entity for a player", {
 			"id": String(player_id), "why": opened.error.message,
 		})
 
-	player.entity_id = (opened.value as DotEntityHandle).id if opened.ok else 0
+	player.entity_id = (opened.value as GSEntityHandle).id if opened.ok else 0
 
-	var health := DotHealth.new()
+	var health := GSHealth.new()
 	health.name = "Health"
 	health.max_health = config.player_health
 	health.health = config.player_health
@@ -428,7 +428,7 @@ func add_player(
 		combat.register_health(player.entity_id, health)
 		_give_hitboxes(player)
 
-	health.died.connect(func(damage: DotDamage) -> void: _on_player_died(player, damage))
+	health.died.connect(func(damage: GSDamage) -> void: _on_player_died(player, damage))
 
 	players[player_id] = player
 	sides[player_id] = side
@@ -437,7 +437,7 @@ func add_player(
 		var seated := match_node.add_player(String(player_id), display_name, _tick, side)
 
 		if not seated.ok:
-			DotLog.error(CHANNEL, "dot-match refused a player", {
+			GSLog.error(CHANNEL, "dot-match refused a player", {
 				"id": String(player_id), "side": side, "why": seated.error.message,
 			})
 
@@ -445,7 +445,7 @@ func add_player(
 	# falling, and mg-smash-copter's version of that ended rounds.
 	place_one(player)
 
-	DotLog.debug(CHANNEL, "player joined", {"id": String(player_id), "side": side})
+	GSLog.debug(CHANNEL, "player joined", {"id": String(player_id), "side": side})
 
 	# Last, after the health and the side: the bridge answers this by replicating the player.
 	player_added.emit(player_id)
@@ -454,15 +454,15 @@ func add_player(
 
 ## Somewhere on a player a shot can land. Without it nobody can be shot and nothing says so.
 func _give_hitboxes(player: DrPlayer) -> void:
-	var boxes := DotHitboxSet.new()
+	var boxes := GSHitboxSet.new()
 	boxes.name = "Hitboxes"
-	boxes.owner_ref = DotNodeRef.of_path(^"..")
+	boxes.owner_ref = GSNodeRef.of_path(^"..")
 	player.add_child(boxes)
 
-	var body := DotHitbox.new()
+	var body := GSHitbox.new()
 	body.name = "Chest"
-	body.group = DotHitGroup.CHEST
-	body.shape = DotHitbox.Shape.CAPSULE
+	body.group = GSHitGroup.CHEST
+	body.shape = GSHitbox.Shape.CAPSULE
 	body.radius = 0.34
 	body.height = 1.25
 	body.position = Vector3(0.0, 0.78, 0.0)
@@ -470,10 +470,10 @@ func _give_hitboxes(player: DrPlayer) -> void:
 	body.precedence = 0
 	boxes.add_child(body)
 
-	var head := DotHitbox.new()
+	var head := GSHitbox.new()
 	head.name = "Head"
-	head.group = DotHitGroup.HEAD
-	head.shape = DotHitbox.Shape.SPHERE
+	head.group = GSHitGroup.HEAD
+	head.shape = GSHitbox.Shape.SPHERE
 	head.radius = 0.19
 	head.position = Vector3(0.0, DrPlayer.EYE_HEIGHT + 0.06, 0.0)
 	head.damage_scale = 2.2
@@ -528,7 +528,7 @@ func remove_player(player_id: StringName) -> void:
 	# no symptom until the process runs out of memory.
 	if combat != null and is_instance_valid(combat) and player.entity_id != 0:
 		combat.forget(player.entity_id)
-		var _closed := entities.close(player.entity_id, DotEntityTable.REASON_OWNER_LEFT)
+		var _closed := entities.close(player.entity_id, GSEntityTable.REASON_OWNER_LEFT)
 
 	if match_node != null:
 		match_node.remove_player(String(player_id))
@@ -678,7 +678,7 @@ func _on_round_started(number: int) -> void:
 	_set_phase(Phase.COUNTDOWN)
 	round_began.emit(number, stage.id())
 
-	DotLog.info(CHANNEL, "round began", {
+	GSLog.info(CHANNEL, "round began", {
 		"number": number, "course": String(stage.id()), "seed": _round_seed,
 		"players": players.size(), "activators": ", ".join(_names(players_on(ACTIVATORS))),
 	})
@@ -696,7 +696,7 @@ func _on_round_ended(number: int, winner: int, _outcome: int) -> void:
 		progress.on_round_over(winner)
 
 	round_over.emit(number, winner, _winner_name)
-	DotLog.info(CHANNEL, "round over", {"number": number, "winner": _winner_name})
+	GSLog.info(CHANNEL, "round over", {"number": number, "winner": _winner_name})
 
 
 ## Who presses the buttons this round.
@@ -734,9 +734,9 @@ func _draw_sides() -> void:
 	# last round's activators sit out even if they volunteered, and come back only when there
 	# are not enough fresh names (unless the server lets them repeat).
 	var history := {}
-	DotTeamRotation.note(history, ids, _last_activators, 0)
-	var result := DotTeamRotation.pick(
-		ids, config.activators_for(ids.size()), DotTeamRotation.Mode.RANDOM, history,
+	GSTeamRotation.note(history, ids, _last_activators, 0)
+	var result := GSTeamRotation.pick(
+		ids, config.activators_for(ids.size()), GSTeamRotation.Mode.RANDOM, history,
 		random.stream(&"activators").next(), wishes, config.activator_may_repeat, true
 	)
 	var drawn: Array[StringName] = []
@@ -810,19 +810,19 @@ func _lay_out_course() -> void:
 ## Reads maps.yml (the `--config` directory first) and applies it. Called at boot and by
 ## `sv_map_rotation_file`. A file that is present and unreadable is an ERROR and changes nothing:
 ## rotating every course is a better failure than rotating none.
-func load_rotation() -> DotResult:
+func load_rotation() -> GSResult:
 	if catalogue == null:
-		return DotResult.fail(DotError.CODE_STATE, "There is no catalogue to rotate.")
+		return GSResult.fail(GSError.CODE_STATE, "There is no catalogue to rotate.")
 
 	var stem := config.map_rotation_file
-	var dir := DotMapRotationFile.config_dir_arg()
-	DotAddonConfig.game = "mg-deathrun"
-	var found := DotMapRotationFile.find(stem, dir)
+	var dir := GSMapRotationFile.config_dir_arg()
+	GSAddonConfig.game = "mg-deathrun"
+	var found := GSMapRotationFile.find(stem, dir)
 
 	if found == "" and stem != "" and (dir != "" or stem != DrConfig.new().map_rotation_file):
 		# The default name being absent is an install with no maps.yml; a name or a directory
 		# somebody chose that finds nothing is a typo they would otherwise never hear about.
-		DotLog.warn(CHANNEL, "the map rotation file was not found; every course rotates", {
+		GSLog.warn(CHANNEL, "the map rotation file was not found; every course rotates", {
 			"file": stem, "config_dir": dir,
 		})
 
@@ -830,13 +830,13 @@ func load_rotation() -> DotResult:
 
 	if found != "":
 		# The layers that apply (an operator file replaces the shipped one unless it says merge: true); a named file or the legacy file stands alone.
-		var layers := DotMapRotationFile.find_layers(dir, "mg-deathrun")
+		var layers := GSMapRotationFile.find_layers(dir, "mg-deathrun")
 		paths = layers if layers.has(found) else PackedStringArray([found])
 
-	var read := DotMapRotationFile.load_files(paths, "mg-deathrun")
+	var read := GSMapRotationFile.load_files(paths, "mg-deathrun")
 
 	if not read.ok:
-		DotLog.error(CHANNEL, "the map rotation file could not be read; every course rotates", {
+		GSLog.error(CHANNEL, "the map rotation file could not be read; every course rotates", {
 			"why": read.error.message,
 		})
 		catalogue.rotation_file = null
@@ -847,7 +847,7 @@ func load_rotation() -> DotResult:
 	catalogue.apply_rotation(config.course_ids)
 
 	if catalogue.has_rotation_file():
-		DotLog.info(CHANNEL, "the map rotation file", {
+		GSLog.info(CHANNEL, "the map rotation file", {
 			"paths": ", ".join(catalogue.rotation_file.sources),
 			"active": catalogue.rotation_file.active_name(),
 		})
@@ -871,7 +871,7 @@ func command_names(role: String) -> PackedStringArray:
 	if not names.has(role):
 		return PackedStringArray([role])
 
-	return DotCommandNames.all_of("", names, {}, role)
+	return GSCommandNames.all_of("", names, {}, role)
 
 
 ## Every course this server plays, as the map menu (M) lists them: `{id, name, detail,
@@ -898,18 +898,18 @@ func course_rows() -> Array:
 ## The map menu's change: [param id] now, not after this round. The next course is set and a
 ## fresh round begins on it (dot-match's `begin_round_now`: the round called off has no
 ## winner and no activator's score); with no match running it is simply built. Authority only.
-func change_course_now(id: StringName) -> DotResult:
+func change_course_now(id: StringName) -> GSResult:
 	if not authoritative:
-		return DotResult.fail(DotError.CODE_STATE, "Only the server changes the course.")
+		return GSResult.fail(GSError.CODE_STATE, "Only the server changes the course.")
 	if catalogue == null or not catalogue.playable_courses(config.course_ids).has(id):
-		return DotResult.fail(DotError.CODE_INVALID, "There is no course called '%s' here." % id)
+		return GSResult.fail(GSError.CODE_INVALID, "There is no course called '%s' here." % id)
 	next_course_id = id
 	# The warmup's course is not the one to keep: the next round is the chosen one.
 	_course_unplayed = false
 	if match_node == null or not match_node.begin_round_now(_tick):
 		_lay_out_course()
-	DotLog.info(CHANNEL, "course changed from the map menu", {"course": String(id)})
-	return DotResult.success(id)
+	GSLog.info(CHANNEL, "course changed from the map menu", {"course": String(id)})
+	return GSResult.success(id)
 
 
 ## [param doc] with [param tell] seconds added to every trap's delay: the tell, written into the
@@ -931,13 +931,13 @@ static func with_tell(doc: Dictionary, tell: float) -> Dictionary:
 
 ## Builds [param doc] as the stage. What the server does at a round start, and what a client
 ## does when it is sent one.
-func build_stage(doc: Dictionary) -> DotResult:
+func build_stage(doc: Dictionary) -> GSResult:
 	world_clearing.emit()
 
 	var built := stage.build(doc)
 
 	if not built.ok:
-		DotLog.error(CHANNEL, "a course would not build", {
+		GSLog.error(CHANNEL, "a course would not build", {
 			"id": str(doc.get("id", "?")), "why": built.error.message,
 		})
 		return built
@@ -1003,7 +1003,7 @@ func _set_phase(to: int) -> void:
 		stage.gate_closed = to == Phase.COUNTDOWN or to == Phase.IDLE
 
 	phase_changed.emit(to)
-	DotLog.debug(CHANNEL, "the round changed phase", {"phase": Phase.keys()[to]})
+	GSLog.debug(CHANNEL, "the round changed phase", {"phase": Phase.keys()[to]})
 
 
 ## The clock, and every decision it makes.
@@ -1064,7 +1064,7 @@ func _decide(winner: int, why: String) -> void:
 			if team_of(id) == winner:
 				(players[id] as DrPlayer).points += config.winner_points
 
-	DotLog.info(CHANNEL, "the round is decided", {"winner": winner, "why": why})
+	GSLog.info(CHANNEL, "the round is decided", {"winner": winner, "why": why})
 
 
 # --- The traps ---------------------------------------------------------------
@@ -1118,7 +1118,7 @@ func press(index: int, by: StringName) -> bool:
 	if progress != null and players.has(by):
 		progress.on_pressed(by)
 
-	DotLog.debug(CHANNEL, "a trap was pressed", {
+	GSLog.debug(CHANNEL, "a trap was pressed", {
 		"trap": stage.trap_name(index), "by": String(by), "tick": _tick,
 	})
 	return true
@@ -1255,7 +1255,7 @@ func _kill(player: DrPlayer, trap: int, why: StringName) -> void:
 
 	var by: StringName = pressed_by.get(trap, &"") if trap >= 0 else &""
 	var attacker: DrPlayer = players.get(by)
-	var damage := DotDamage.make(
+	var damage := GSDamage.make(
 		attacker.entity_id if attacker != null else 0, player.entity_id,
 		player.health.max_health * 10.0, null
 	)
@@ -1283,7 +1283,7 @@ func _finish(player: DrPlayer) -> void:
 		progress.on_finished(player.player_id, player.place, run_elapsed)
 
 	player_finished.emit(player.player_id, player.place, run_elapsed)
-	DotLog.debug(CHANNEL, "somebody finished", {
+	GSLog.debug(CHANNEL, "somebody finished", {
 		"id": String(player.player_id), "place": player.place, "seconds": "%.2f" % run_elapsed,
 	})
 
@@ -1312,7 +1312,7 @@ func _call_activators() -> void:
 			player.health.max_health = config.player_health * config.activator_health_scale
 			player.health.health = player.health.max_health
 
-	DotLog.info(CHANNEL, "the activators were called to the end", {"activators": seat})
+	GSLog.info(CHANNEL, "the activators were called to the end", {"activators": seat})
 
 
 func _send_to_end(player: DrPlayer, runner: bool, seat: int) -> void:
@@ -1381,14 +1381,14 @@ func arm(player: DrPlayer, weapon_id: StringName) -> bool:
 		rig.authority = authoritative
 		rig.tick_rate = tick_rate
 		rig.wall_extra_mask = player.controller.tunables.collision_mask if player.controller != null else 0
-		rig.player_ref = DotNodeRef.of_path(player.get_path())
+		rig.player_ref = GSNodeRef.of_path(player.get_path())
 		rig.ads_rules = ads_rules
 		player.add_child(rig)
 
 		var ready_now := rig.setup()
 
 		if not ready_now.ok:
-			DotLog.warn(CHANNEL, "a weapon rig would not set up", {
+			GSLog.warn(CHANNEL, "a weapon rig would not set up", {
 				"player": String(player.player_id), "why": ready_now.error.message,
 			})
 			player.remove_child(rig)
@@ -1445,17 +1445,17 @@ func _advance_weapons() -> void:
 
 ## A player's movement command as a weapon command: fire, alt-fire and reload are the
 ## movement command's three spare buttons; the slot is this game's own input message.
-func weapon_command_for(player: DrPlayer) -> DotWeaponCommand:
-	var command := DotWeaponCommand.new()
+func weapon_command_for(player: DrPlayer) -> GSWeaponCommand:
+	var command := GSWeaponCommand.new()
 	var pending := player.controller.current_command
 
 	if pending == null:
 		return command
 
-	command.set_button(DotWeaponCommand.BUTTON_ATTACK, pending.is_pressed(DotFpsCommand.BUTTON_USER_0))
-	command.set_button(DotWeaponCommand.BUTTON_ALT, pending.is_pressed(DotFpsCommand.BUTTON_USER_1))
-	command.set_button(DotWeaponCommand.BUTTON_RELOAD, pending.is_pressed(DotFpsCommand.BUTTON_USER_2))
-	command.set_button(DotWeaponCommand.BUTTON_AIM, player.aiming)
+	command.set_button(GSWeaponCommand.BUTTON_ATTACK, pending.is_pressed(GSFpsCommand.BUTTON_USER_0))
+	command.set_button(GSWeaponCommand.BUTTON_ALT, pending.is_pressed(GSFpsCommand.BUTTON_USER_1))
+	command.set_button(GSWeaponCommand.BUTTON_RELOAD, pending.is_pressed(GSFpsCommand.BUTTON_USER_2))
+	command.set_button(GSWeaponCommand.BUTTON_AIM, player.aiming)
 	command.yaw = pending.yaw
 	command.pitch = pending.pitch
 	command.slot = player.wanted_slot
@@ -1506,23 +1506,23 @@ func current_tick() -> int:
 	return _tick
 
 
-## Each part of the tick is a `dr.*` span ([DotFrameCost]: free while no profiler listens), so a
+## Each part of the tick is a `dr.*` span ([GSFrameCost]: free while no profiler listens), so a
 ## bench pins a slow tick on one of them and not on "physics scripts".
 func _step(delta: float) -> void:
-	var t := DotFrameCost.now()
+	var t := GSFrameCost.now()
 	_advance_phase(delta)
-	DotFrameCost.add(&"dr.phase", t)
+	GSFrameCost.add(&"dr.phase", t)
 
-	t = DotFrameCost.now()
+	t = GSFrameCost.now()
 	if stage != null:
 		stage.pose_at(_tick)
-	DotFrameCost.add(&"dr.pose", t)
+	GSFrameCost.add(&"dr.pose", t)
 
-	t = DotFrameCost.now()
+	t = GSFrameCost.now()
 	_drive_bots()
-	DotFrameCost.add(&"dr.bots", t)
+	GSFrameCost.add(&"dr.bots", t)
 
-	t = DotFrameCost.now()
+	t = GSFrameCost.now()
 	for id: StringName in players:
 		var player: DrPlayer = players[id]
 
@@ -1530,43 +1530,43 @@ func _step(delta: float) -> void:
 		# and one standing in a corridor would be a body the next runner collides with.
 		if player.is_alive() and not player.watching:
 			player.simulate(_tick, delta)
-	DotFrameCost.add(&"dr.players", t)
+	GSFrameCost.add(&"dr.players", t)
 
-	t = DotFrameCost.now()
+	t = GSFrameCost.now()
 	_advance_flashlights()
 	_advance_buttons()
-	DotFrameCost.add(&"dr.buttons", t)
+	GSFrameCost.add(&"dr.buttons", t)
 
-	t = DotFrameCost.now()
+	t = GSFrameCost.now()
 	_watch_course()
-	DotFrameCost.add(&"dr.watch_course", t)
+	GSFrameCost.add(&"dr.watch_course", t)
 
-	t = DotFrameCost.now()
+	t = GSFrameCost.now()
 	_advance_grace()
 	_advance_weapons()
 	if authoritative:
 		_advance_toys(delta)
 	if combat != null:
 		combat.tick(_tick, delta)
-	DotFrameCost.add(&"dr.combat", t)
+	GSFrameCost.add(&"dr.combat", t)
 
-	t = DotFrameCost.now()
+	t = GSFrameCost.now()
 	if spectate != null:
 		spectate.advance(_tick)
 
 	if sides_are_playable() or phase != Phase.IDLE:
 		match_node.tick(_tick)
-	DotFrameCost.add(&"dr.match", t)
+	GSFrameCost.add(&"dr.match", t)
 
 
 # --- The flashlight --------------------------------------------------------------
 
 ## The flashlight config, made on first use.
-func flashlight_conf() -> DotFlashlightConfig:
+func flashlight_conf() -> GSFlashlightConfig:
 	if flashlight_config == null:
 		flashlight_config = DrFlashlight.make_config()
 		flashlight_binder = DrFlashlight.make_binder(flashlight_config)
-		DotLog.result(CHANNEL, "flashlight config", flashlight_binder.load_layers())
+		GSLog.result(CHANNEL, "flashlight config", flashlight_binder.load_layers())
 	return flashlight_config
 
 
@@ -1594,7 +1594,7 @@ func toggle_flashlight(id: StringName) -> bool:
 	var player: DrPlayer = players.get(id)
 
 	if player == null or not player.is_alive() or player.watching \
-			or not DotFlashlightRules.allowed_on(flashlight_conf(), str(course_doc.get("id", ""))):
+			or not GSFlashlightRules.allowed_on(flashlight_conf(), str(course_doc.get("id", ""))):
 		return false
 
 	player.flashlight = not player.flashlight
@@ -1621,7 +1621,7 @@ func _advance_toys(delta: float) -> void:
 ## An armed runner's shot against the toys: the first one on its ray, nearer than a wall, is
 ## pushed (dot-props' `shot_along`). The shot goes on to the combat, whose trace never sees a
 ## toy, so a ball is never cover in the arena. Server side.
-func _shoot_toys(shot: DotShot) -> void:
+func _shoot_toys(shot: GSShot) -> void:
 	if not authoritative or stage == null or stage.toys == null or stage.toys.count() == 0:
 		return
 	var directions: Array = shot.pellets if not shot.pellets.is_empty() else [shot.direction]
@@ -1666,7 +1666,7 @@ func _drive_bots() -> void:
 		if not player.is_bot or not player.is_alive() or player.watching:
 			continue
 
-		var command := DotFpsCommand.new()
+		var command := GSFpsCommand.new()
 		command.yaw = player.controller.state.yaw
 		command.pitch = player.controller.state.pitch
 
@@ -1686,7 +1686,7 @@ func _drive_bots() -> void:
 
 ## A stand-in runner: along the route, and over every gap the route lands it across.
 ## A `jump` point is where the jump LANDS; the take-off is wherever a ray finds no floor ahead.
-func _bot_run(player: DrPlayer, command: DotFpsCommand) -> void:
+func _bot_run(player: DrPlayer, command: GSFpsCommand) -> void:
 	var route := stage.route()
 
 	if route.is_empty():
@@ -1697,7 +1697,7 @@ func _bot_run(player: DrPlayer, command: DotFpsCommand) -> void:
 	var at := player.controller.state.position
 	var toward: Vector3 = (point["at"] as Vector3) - at
 	toward.y = 0.0
-	var grounded := player.controller.state.mode == DotFpsState.Mode.GROUND
+	var grounded := player.controller.state.mode == GSFpsState.Mode.GROUND
 
 	command.yaw = rad_to_deg(atan2(-toward.x, -toward.z))
 	command.move = Vector2(0.0, 1.0)
@@ -1705,10 +1705,10 @@ func _bot_run(player: DrPlayer, command: DotFpsCommand) -> void:
 	_bot_cancel_drift(player, command, route, index, point, toward)
 
 	if bool(point["walk"]):
-		command.set_button(DotFpsCommand.BUTTON_WALK, true)
+		command.set_button(GSFpsCommand.BUTTON_WALK, true)
 
 	if bool(point["crouch"]):
-		command.set_button(DotFpsCommand.BUTTON_CROUCH, true)
+		command.set_button(GSFpsCommand.BUTTON_CROUCH, true)
 
 	if grounded and _bot_settle_step(player, command, at):
 		return
@@ -1738,7 +1738,7 @@ func _bot_run(player: DrPlayer, command: DotFpsCommand) -> void:
 
 
 ## Jumps from the right spot toward a jump waypoint, unless this bot fumbles it.
-func _bot_take_off(player: DrPlayer, command: DotFpsCommand, point: Dictionary, index: int, toward: Vector3, grounded: bool) -> void:
+func _bot_take_off(player: DrPlayer, command: GSFpsCommand, point: Dictionary, index: int, toward: Vector3, grounded: bool) -> void:
 	var at := player.controller.state.position
 
 	if bool(point["jump"]):
@@ -1762,11 +1762,11 @@ func _bot_take_off(player: DrPlayer, command: DotFpsCommand, point: Dictionary, 
 					round_number * 65536 + int(player.entity_id % 256) * 256 + index)
 
 				if draw.next_range_f(0.0, 100.0) >= config.bot_fumble_chance:
-					command.set_button(DotFpsCommand.BUTTON_JUMP, true)
+					command.set_button(GSFpsCommand.BUTTON_JUMP, true)
 
 
 ## Jumps when the bot has been running for a second and got nowhere.
-func _bot_unstick(player: DrPlayer, command: DotFpsCommand) -> void:
+func _bot_unstick(player: DrPlayer, command: GSFpsCommand) -> void:
 	var at := player.controller.state.position
 	var mark: Array = _bot_stuck.get(player.player_id, [])
 
@@ -1774,15 +1774,15 @@ func _bot_unstick(player: DrPlayer, command: DotFpsCommand) -> void:
 		var stuck := not mark.is_empty() and command.move != Vector2.ZERO \
 			and Vector2(at.x - (mark[0] as Vector3).x, at.z - (mark[0] as Vector3).z).length() < 0.4
 
-		if stuck and player.controller.state.mode == DotFpsState.Mode.GROUND:
-			command.set_button(DotFpsCommand.BUTTON_JUMP, true)
+		if stuck and player.controller.state.mode == GSFpsState.Mode.GROUND:
+			command.set_button(GSFpsCommand.BUTTON_JUMP, true)
 
 		_bot_stuck[player.player_id] = [at, _tick]
 
 
 ## While the runners wait behind the gate, walks a stand-in activator to the first trap's button,
 ## so it is there when the clump arrives (run speed is the runners' too).
-func _bot_take_position(player: DrPlayer, command: DotFpsCommand) -> void:
+func _bot_take_position(player: DrPlayer, command: GSFpsCommand) -> void:
 	var first := -1
 	var first_progress := 1 << 30
 
@@ -1805,7 +1805,7 @@ func _bot_take_position(player: DrPlayer, command: DotFpsCommand) -> void:
 
 ## A stand-in at the buttons: walks (in a straight line) to the first trap a runner reaches and presses it
 ## once somebody has been in it for [member DrConfig.bot_trap_delay].
-func _bot_activate(player: DrPlayer, command: DotFpsCommand) -> void:
+func _bot_activate(player: DrPlayer, command: GSFpsCommand) -> void:
 	var target := _bot_target_trap(player)
 
 	if target < 0:
@@ -1842,19 +1842,19 @@ func _bot_activate(player: DrPlayer, command: DotFpsCommand) -> void:
 	# Released and pressed again, so the server sees an edge every other tick it is wanted.
 	# The operator's delay, scaled by how quickly this preset reacts (`bot_reaction` against
 	# medium's): medium presses exactly when it always did, easy later, nightmare sooner.
-	var reacts := DotBotSettings.of(self).profile.reaction / _MEDIUM_BOT.reaction
+	var reacts := GSBotSettings.of(self).profile.reaction / _MEDIUM_BOT.reaction
 	player.wants_use = _tick - since >= int(config.bot_trap_delay * reacts * float(tick_rate)) \
 		and not player.wants_use
 
 
-static var _MEDIUM_BOT: DotBotProfile = DotBotProfile.new()
+static var _MEDIUM_BOT: GSBotProfile = GSBotProfile.new()
 
 
 ## Walks a stand-in activator one step toward trap [param index]'s button and says whether it
 ## is there (close enough to press). A course with a `walkway` names the points to walk through
 ## (forward or back, to the point that trap's button is pressed from); without one, or for a
 ## button the walkway does not name, it is straight at the button.
-func bot_walk_toward(player: DrPlayer, index: int, command: DotFpsCommand) -> bool:
+func bot_walk_toward(player: DrPlayer, index: int, command: GSFpsCommand) -> bool:
 	var eyes := player.eye_position()
 	var button := stage.button_point(index)
 	var goal := button
@@ -1940,7 +1940,7 @@ func _bot_target_trap(player: DrPlayer = null) -> int:
 	return best
 
 
-func _bot_fight(player: DrPlayer, command: DotFpsCommand) -> void:
+func _bot_fight(player: DrPlayer, command: GSFpsCommand) -> void:
 	var enemy := _nearest_enemy(player)
 
 	if enemy == null:
@@ -1960,7 +1960,7 @@ func _bot_fight(player: DrPlayer, command: DotFpsCommand) -> void:
 
 
 
-func _on_player_died(player: DrPlayer, damage: DotDamage) -> void:
+func _on_player_died(player: DrPlayer, damage: GSDamage) -> void:
 	var by := entities.key_for_id(damage.attacker)
 	var why: StringName = damage.context.get("why", DIED_SHOT)
 
@@ -1977,7 +1977,7 @@ func _on_player_died(player: DrPlayer, damage: DotDamage) -> void:
 		progress.on_died(player.player_id, by, why)
 		progress.report_kill(damage.attacker, player.entity_id, String(damage.weapon_id))
 
-	if match_node != null and DotEntity.is_kind(player.entity_id, DotEntity.KIND_PLAYER):
+	if match_node != null and GSEntity.is_kind(player.entity_id, GSEntity.KIND_PLAYER):
 		match_node.report_kill(String(by), String(player.player_id), why, _tick)
 
 	if authoritative and weapon_layer != null:
@@ -1988,7 +1988,7 @@ func _on_player_died(player: DrPlayer, damage: DotDamage) -> void:
 		player.death = decide_death(player, damage)
 
 	player_died.emit(player.player_id, by, why, damage.weapon_id)
-	DotLog.debug(CHANNEL, "player died", {
+	GSLog.debug(CHANNEL, "player died", {
 		"id": String(player.player_id), "by": String(by), "why": String(why),
 	})
 
@@ -1996,16 +1996,16 @@ func _on_player_died(player: DrPlayer, damage: DotDamage) -> void:
 ## The fall a death gets: dot-player-char's reaction rule over the server's weights, seeded from
 ## the player and the tick, with the killing weapon's def (zee's sniper and launcher always throw
 ## the body). A trap kills "downward", which pushes nothing; the body just drops.
-func decide_death(player: DrPlayer, damage: DotDamage) -> DotPlayerDeath:
+func decide_death(player: DrPlayer, damage: GSDamage) -> GSPlayerDeath:
 	if _weapon_defs.is_empty():
 		_weapon_defs = ZeeWeaponPack.table()
 	var direction := damage.direction
 	var attacker: DrPlayer = players.get(entities.key_for_id(damage.attacker)) if damage.attacker != 0 else null
 	if direction.length_squared() < 0.0001 and attacker != null and attacker != player:
 		direction = player.controller.state.position - attacker.controller.state.position
-	return DotPlayerDeath.decide(
+	return GSPlayerDeath.decide(
 		ragdoll_rules.reactions(), damage.is_headshot(), damage.amount, direction,
-		DotPlayerDeath.seed_of(player.entity_id, _tick), _weapon_defs.get(damage.weapon_id)
+		GSPlayerDeath.seed_of(player.entity_id, _tick), _weapon_defs.get(damage.weapon_id)
 	)
 
 
@@ -2064,14 +2064,14 @@ func describe_lines() -> PackedStringArray:
 ## Every damage a weapon's shot did to somebody else, as [signal hit_landed] for the shooter.
 ## Only what took health and only on the authority: a refused hit, a dead body or the
 ## shooter's own splash is no confirmation anybody wants a marker for.
-func _note_hits(shooter: DrPlayer, shot: DotShot) -> void:
+func _note_hits(shooter: DrPlayer, shot: GSShot) -> void:
 	if not authoritative or shot == null or shooter == null:
 		return
 	if progress != null:
 		progress.report_shot(shot)
-	for damage: DotDamage in shot.damages:
+	for damage: GSDamage in shot.damages:
 		if damage == null or damage.refused or damage.health_lost <= 0.0 or damage.victim == shooter.entity_id:
 			continue
 		if progress != null:
 			progress.report_damage(damage)
-		hit_landed.emit(shooter.player_id, damage.point, damage.lethal, damage.hit_group == DotHitGroup.HEAD)
+		hit_landed.emit(shooter.player_id, damage.point, damage.lethal, damage.hit_group == GSHitGroup.HEAD)

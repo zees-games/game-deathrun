@@ -72,19 +72,19 @@ const FACES := ["up", "down", "forward", "back", "left", "right"]
 
 
 ## Reads a document from JSON text, and checks it.
-static func parse_json(text: String, origin: String = "") -> DotResult:
+static func parse_json(text: String, origin: String = "") -> GSResult:
 	var json := JSON.new()
 	var parsed := json.parse(text)
 
 	if parsed != OK:
-		return DotResult.fail(
-			DotError.CODE_PARSE,
+		return GSResult.fail(
+			GSError.CODE_PARSE,
 			"The document is not JSON.",
 			"%s line %d: %s" % [origin, json.get_error_line(), json.get_error_message()]
 		)
 
 	if typeof(json.data) != TYPE_DICTIONARY:
-		return DotResult.fail(DotError.CODE_PARSE, "The document is not a JSON object.", origin)
+		return GSResult.fail(GSError.CODE_PARSE, "The document is not a JSON object.", origin)
 
 	return validate(json.data as Dictionary)
 
@@ -95,7 +95,7 @@ static func parse_json(text: String, origin: String = "") -> DotResult:
 ## [b]A copy, so the builder never sees what a mapper wrote.[/b] It sees what this said the
 ## mapper meant — which is the one version a client is also sent — so a missing `yaw` is 0.0
 ## on both ends rather than "absent" on one and "0" on the other.
-static func validate(source: Dictionary) -> DotResult:
+static func validate(source: Dictionary) -> GSResult:
 	var doc := source.duplicate(true)
 
 	if int(doc.get("format", 0)) != FORMAT:
@@ -133,12 +133,12 @@ static func validate(source: Dictionary) -> DotResult:
 	if not wired.ok:
 		return wired
 
-	# Toys: dot-props' DotPropBodyBox placements, `{toy, at, yaw}`. Which ids exist is the
+	# Toys: dot-props' GSPropBodyBox placements, `{toy, at, yaw}`. Which ids exist is the
 	# catalogue's to say when the map is built (an unknown one is left out and listed), so a map
 	# with a toy a newer dot-props has still plays on an older server.
 	var toys: Array = []
 	for raw: Variant in doc.get("toys", []):
-		var toy := DotPropBodyBox.normal_placement(raw)
+		var toy := GSPropBodyBox.normal_placement(raw)
 		if toy.is_empty():
 			return _refuse("toy %d is not {toy, at}" % toys.size(), doc)
 		toys.append(toy)
@@ -153,11 +153,11 @@ static func validate(source: Dictionary) -> DotResult:
 	if not rest.ok:
 		return rest.wrap("course %s" % id)
 
-	return DotResult.success(doc)
+	return GSResult.success(doc)
 
 
 ## The pieces, normalised into [param doc], and the teleports' destinations.
-static func _check_pieces(doc: Dictionary, id: String) -> DotResult:
+static func _check_pieces(doc: Dictionary, id: String) -> GSResult:
 	var pieces: Variant = doc.get("pieces", [])
 
 	if typeof(pieces) != TYPE_ARRAY or (pieces as Array).is_empty():
@@ -192,11 +192,11 @@ static func _check_pieces(doc: Dictionary, id: String) -> DotResult:
 		if why != "":
 			return _refuse(why, doc)
 
-	return DotResult.success(null)
+	return GSResult.success(null)
 
 
 ## The traps, normalised into [param doc], each with its own id.
-static func _check_traps(doc: Dictionary, id: String) -> DotResult:
+static func _check_traps(doc: Dictionary, id: String) -> GSResult:
 	var traps: Variant = doc.get("traps", [])
 
 	if typeof(traps) != TYPE_ARRAY:
@@ -224,25 +224,25 @@ static func _check_traps(doc: Dictionary, id: String) -> DotResult:
 
 	doc["traps"] = checked_traps
 
-	return DotResult.success(null)
+	return GSResult.success(null)
 
 
 ## The places a round puts people: the runners' start, the activators' corridor, the finish
 ## line, and the two ends of the arena.
-static func _places(doc: Dictionary) -> DotResult:
+static func _places(doc: Dictionary) -> GSResult:
 	for key: String in ["start", "activators", "finish"]:
 		var area: Variant = doc.get(key)
 
 		if typeof(area) != TYPE_DICTIONARY or not (area as Dictionary).has("at"):
-			return DotResult.fail(DotError.CODE_INVALID, "A course needs a `%s`: {at, size, yaw}." % key)
+			return GSResult.fail(GSError.CODE_INVALID, "A course needs a `%s`: {at, size, yaw}." % key)
 
 		doc[key] = _area(area as Dictionary, Vector3(8.0, 3.0, 6.0) if key == "finish" else Vector3(8.0, 3.0, 6.0))
 
 	var end: Variant = doc.get("end")
 
 	if typeof(end) != TYPE_DICTIONARY:
-		return DotResult.fail(
-			DotError.CODE_INVALID, "A course needs an `end`: {runners, activators}, the arena's two sides."
+		return GSResult.fail(
+			GSError.CODE_INVALID, "A course needs an `end`: {runners, activators}, the arena's two sides."
 		)
 
 	var normalised_end := {}
@@ -251,7 +251,7 @@ static func _places(doc: Dictionary) -> DotResult:
 		var area: Variant = (end as Dictionary).get(side)
 
 		if typeof(area) != TYPE_DICTIONARY or not (area as Dictionary).has("at"):
-			return DotResult.fail(DotError.CODE_INVALID, "The end needs a `%s` area." % side)
+			return GSResult.fail(GSError.CODE_INVALID, "The end needs a `%s` area." % side)
 
 		normalised_end[side] = _area(area as Dictionary, Vector3(6.0, 3.0, 4.0))
 
@@ -261,7 +261,7 @@ static func _places(doc: Dictionary) -> DotResult:
 
 	for entry: Variant in doc.get("route", []):
 		if typeof(entry) != TYPE_DICTIONARY or not (entry as Dictionary).has("at"):
-			return DotResult.fail(DotError.CODE_INVALID, "A route point needs an `at`.")
+			return GSResult.fail(GSError.CODE_INVALID, "A route point needs an `at`.")
 
 		route.append({
 			"at": _v3((entry as Dictionary)["at"]),
@@ -279,7 +279,7 @@ static func _places(doc: Dictionary) -> DotResult:
 
 	for entry: Variant in doc.get("walkway", []):
 		if typeof(entry) != TYPE_DICTIONARY or not (entry as Dictionary).has("at"):
-			return DotResult.fail(DotError.CODE_INVALID, "A walkway point needs an `at`.")
+			return GSResult.fail(GSError.CODE_INVALID, "A walkway point needs an `at`.")
 
 		walkway.append({
 			"at": _v3((entry as Dictionary)["at"]),
@@ -288,7 +288,7 @@ static func _places(doc: Dictionary) -> DotResult:
 		})
 
 	doc["walkway"] = walkway
-	return DotResult.success(doc)
+	return GSResult.success(doc)
 
 
 ## An area: `at` is the middle of its FLOOR, `size` is width, height and depth, and `yaw` is
@@ -301,31 +301,31 @@ static func _area(source: Dictionary, default_size: Vector3) -> Dictionary:
 	}
 
 
-static func _piece(source: Variant, index: int) -> DotResult:
+static func _piece(source: Variant, index: int) -> GSResult:
 	if typeof(source) != TYPE_DICTIONARY:
-		return DotResult.fail(DotError.CODE_INVALID, "Piece %d is not an object." % index)
+		return GSResult.fail(GSError.CODE_INVALID, "Piece %d is not an object." % index)
 
 	var piece := (source as Dictionary).duplicate(true)
 	var kind := str(piece.get("kind", ""))
 
 	if not PIECES.has(kind):
-		return DotResult.fail(
-			DotError.CODE_INVALID,
+		return GSResult.fail(
+			GSError.CODE_INVALID,
 			"Piece %d is a \"%s\", which this build does not know." % [index, kind],
 			"known: %s" % ", ".join(PIECES.keys())
 		)
 
 	for field: String in PIECES[kind]:
 		if not piece.has(field):
-			return DotResult.fail(
-				DotError.CODE_INVALID, "Piece %d (%s) has no `%s`." % [index, kind, field]
+			return GSResult.fail(
+				GSError.CODE_INVALID, "Piece %d (%s) has no `%s`." % [index, kind, field]
 			)
 
 	var role := str(piece.get("role", "hazard" if kind == "kill" else ("safe" if kind == "teleport" else "deck")))
 
 	if not ROLES.has(role):
-		return DotResult.fail(
-			DotError.CODE_INVALID, "Piece %d has role \"%s\"." % [index, role],
+		return GSResult.fail(
+			GSError.CODE_INVALID, "Piece %d has role \"%s\"." % [index, role],
 			"roles: %s" % ", ".join(ROLES)
 		)
 
@@ -341,7 +341,7 @@ static func _piece(source: Variant, index: int) -> DotResult:
 		var side := str(piece.get("for", ""))
 
 		if side != "" and side != "runners" and side != "activators":
-			return DotResult.fail(DotError.CODE_INVALID, "Piece %d is a teleport for \"%s\"." % [index, side], "for: runners, activators or nothing")
+			return GSResult.fail(GSError.CODE_INVALID, "Piece %d is a teleport for \"%s\"." % [index, side], "for: runners, activators or nothing")
 
 		out["for"] = side
 		# Whether velocity goes through with them, and whether the pad is a floor (a trigger
@@ -353,7 +353,7 @@ static func _piece(source: Variant, index: int) -> DotResult:
 		var look := str(piece.get("look", "spikes"))
 
 		if look != "none" and not LOOKS.has(look):
-			return DotResult.fail(DotError.CODE_INVALID, "Piece %d looks like \"%s\"." % [index, look])
+			return GSResult.fail(GSError.CODE_INVALID, "Piece %d looks like \"%s\"." % [index, look])
 
 		out["look"] = look
 
@@ -373,15 +373,15 @@ static func _piece(source: Variant, index: int) -> DotResult:
 				pass
 
 	if out.has("period") and float(out["period"]) <= 0.05:
-		return DotResult.fail(DotError.CODE_INVALID, "Piece %d has a period of %s." % [index, out["period"]])
+		return GSResult.fail(GSError.CODE_INVALID, "Piece %d has a period of %s." % [index, out["period"]])
 
 	if out.has("size"):
 		var size: Vector3 = out["size"]
 
 		if size.x <= 0.0 or size.y <= 0.0 or size.z <= 0.0:
-			return DotResult.fail(DotError.CODE_INVALID, "Piece %d has a size of %s." % [index, size])
+			return GSResult.fail(GSError.CODE_INVALID, "Piece %d has a size of %s." % [index, size])
 
-	return DotResult.success(out)
+	return GSResult.success(out)
 
 
 ## One trap: what the activator presses, and what moves when they do.
@@ -391,21 +391,21 @@ static func _piece(source: Variant, index: int) -> DotResult:
 ## to there and back on this schedule, and these ones kill" — so a mapper builds a new trap
 ## out of the same five fields rather than waiting for a release that adds it, and the
 ## validator, the builder and the death test each have one case rather than one per kind.
-static func _trap(source: Variant, index: int) -> DotResult:
+static func _trap(source: Variant, index: int) -> GSResult:
 	if typeof(source) != TYPE_DICTIONARY:
-		return DotResult.fail(DotError.CODE_INVALID, "Trap %d is not an object." % index)
+		return GSResult.fail(GSError.CODE_INVALID, "Trap %d is not an object." % index)
 
 	var trap: Dictionary = source
 	var id := str(trap.get("id", "trap_%d" % index))
 
 	if not _is_id(id):
-		return DotResult.fail(DotError.CODE_INVALID, "Trap %d is called \"%s\"." % [index, id])
+		return GSResult.fail(GSError.CODE_INVALID, "Trap %d is called \"%s\"." % [index, id])
 
 	var button: Variant = trap.get("button")
 
 	if typeof(button) != TYPE_DICTIONARY or not (button as Dictionary).has("at"):
-		return DotResult.fail(
-			DotError.CODE_INVALID, "Trap %s has no button: {at, yaw} where the activator presses it." % id
+		return GSResult.fail(
+			GSError.CODE_INVALID, "Trap %s has no button: {at, yaw} where the activator presses it." % id
 		)
 
 	var timing: Dictionary = trap.get("timing", {}) if typeof(trap.get("timing", {})) == TYPE_DICTIONARY else {}
@@ -440,10 +440,10 @@ static func _trap(source: Variant, index: int) -> DotResult:
 	var parts: Variant = trap.get("parts", [])
 
 	if typeof(parts) != TYPE_ARRAY or (parts as Array).is_empty():
-		return DotResult.fail(DotError.CODE_INVALID, "Trap %s moves nothing: it has no parts." % id)
+		return GSResult.fail(GSError.CODE_INVALID, "Trap %s moves nothing: it has no parts." % id)
 
 	if (parts as Array).size() > MAX_PARTS:
-		return DotResult.fail(DotError.CODE_INVALID, "Trap %s has %d parts; the most is %d." % [
+		return GSResult.fail(GSError.CODE_INVALID, "Trap %s has %d parts; the most is %d." % [
 			id, (parts as Array).size(), MAX_PARTS])
 
 	var checked: Array = []
@@ -478,27 +478,27 @@ static func _trap(source: Variant, index: int) -> DotResult:
 			"size": _v3((zone as Dictionary).get("size", [4.0, 3.0, 4.0])),
 		}
 
-	return DotResult.success(out)
+	return GSResult.success(out)
 
 
-static func _part(source: Variant, trap_id: String, index: int) -> DotResult:
+static func _part(source: Variant, trap_id: String, index: int) -> GSResult:
 	if typeof(source) != TYPE_DICTIONARY or not (source as Dictionary).has("at") \
 			or not (source as Dictionary).has("size"):
-		return DotResult.fail(
-			DotError.CODE_INVALID, "Part %d of trap %s needs an `at` and a `size`." % [index, trap_id]
+		return GSResult.fail(
+			GSError.CODE_INVALID, "Part %d of trap %s needs an `at` and a `size`." % [index, trap_id]
 		)
 
 	var part: Dictionary = source
 	var look := str(part.get("look", "block"))
 
 	if not LOOKS.has(look):
-		return DotResult.fail(DotError.CODE_INVALID, "Part %d of trap %s looks like \"%s\"." % [
+		return GSResult.fail(GSError.CODE_INVALID, "Part %d of trap %s looks like \"%s\"." % [
 			index, trap_id, look], "looks: %s" % ", ".join(LOOKS))
 
 	var face := str(part.get("face", "up"))
 
 	if not FACES.has(face):
-		return DotResult.fail(DotError.CODE_INVALID, "Part %d of trap %s faces \"%s\"." % [
+		return GSResult.fail(GSError.CODE_INVALID, "Part %d of trap %s faces \"%s\"." % [
 			index, trap_id, face], "faces: %s" % ", ".join(FACES))
 
 	# A floor that is part of a trap is drawn as floor unless the mapper says otherwise: a
@@ -508,13 +508,13 @@ static func _part(source: Variant, trap_id: String, index: int) -> DotResult:
 	var role := str(part.get("role", "hazard" if bool(part.get("lethal", false)) else "deck"))
 
 	if not ROLES.has(role):
-		return DotResult.fail(DotError.CODE_INVALID, "Part %d of trap %s has role \"%s\"." % [
+		return GSResult.fail(GSError.CODE_INVALID, "Part %d of trap %s has role \"%s\"." % [
 			index, trap_id, role])
 
 	var size := _v3(part["size"])
 
 	if size.x <= 0.0 or size.y <= 0.0 or size.z <= 0.0:
-		return DotResult.fail(DotError.CODE_INVALID, "Part %d of trap %s has a size of %s." % [
+		return GSResult.fail(GSError.CODE_INVALID, "Part %d of trap %s has a size of %s." % [
 			index, trap_id, size])
 
 	var lethal := bool(part.get("lethal", false))
@@ -547,7 +547,7 @@ static func _part(source: Variant, trap_id: String, index: int) -> DotResult:
 		var axis := str((turn as Dictionary).get("axis", "z"))
 
 		if not ["x", "y", "z"].has(axis):
-			return DotResult.fail(DotError.CODE_INVALID, "Part %d of trap %s turns about \"%s\"." % [
+			return GSResult.fail(GSError.CODE_INVALID, "Part %d of trap %s turns about \"%s\"." % [
 				index, trap_id, axis])
 
 		out["turn"] = {
@@ -559,7 +559,7 @@ static func _part(source: Variant, trap_id: String, index: int) -> DotResult:
 	if part.has("tint"):
 		out["tint"] = _colour(part["tint"], Color.WHITE)
 
-	return DotResult.success(out)
+	return GSResult.success(out)
 
 
 static func _theme(source: Variant) -> Dictionary:
@@ -593,11 +593,11 @@ static func _theme(source: Variant) -> Dictionary:
 ## dictionary — and a client whose build is a format behind refuses it with a sentence rather
 ## than building a course with holes in it.
 static func encode(doc: Dictionary) -> PackedByteArray:
-	return DotWireDoc.encode(_to_plain(doc), true)
+	return GSWireDoc.encode(_to_plain(doc), true)
 
 
-static func decode(bytes: PackedByteArray) -> DotResult:
-	var text := DotWireDoc.decode_text(bytes, "course", WIRE_LIMIT * 16)
+static func decode(bytes: PackedByteArray) -> GSResult:
+	var text := GSWireDoc.decode_text(bytes, "course", WIRE_LIMIT * 16)
 	if not text.ok:
 		return text
 	return parse_json(text.value, "wire")
@@ -605,7 +605,7 @@ static func decode(bytes: PackedByteArray) -> DotResult:
 
 ## A short fingerprint of a document, for a log line and for two ends to compare.
 static func digest(doc: Dictionary) -> String:
-	return DotWireDoc.digest(_to_plain(doc))
+	return GSWireDoc.digest(_to_plain(doc))
 
 
 ## A validated document as JSON text a mapper's file could hold: [method parse_json] reads it
@@ -677,9 +677,9 @@ static func _is_id(id: String) -> bool:
 	return true
 
 
-static func _refuse(why: String, doc: Dictionary) -> DotResult:
-	return DotResult.fail(
-		DotError.CODE_INVALID, "The document is refused: %s." % why, str(doc.get("id", "?"))
+static func _refuse(why: String, doc: Dictionary) -> GSResult:
+	return GSResult.fail(
+		GSError.CODE_INVALID, "The document is refused: %s." % why, str(doc.get("id", "?"))
 	)
 
 

@@ -17,7 +17,7 @@ const CHECKS := 183
 
 
 func _ready() -> void:
-	DotLog.set_level(DotLog.Level.ERROR)
+	GSLog.set_level(GSLog.Level.ERROR)
 	_run.call_deferred()
 
 
@@ -228,7 +228,7 @@ func _test_the_trapdoor() -> void:
 	_check(_died(deaths, victim.player_id, activator.player_id), "it is the activator's kill", str(deaths))
 
 	# How the body falls: the server picked it, and a client draws it from the figure.
-	_check(victim.death != null and DotPlayerDeathReactions.stock().has(victim.death.reaction),
+	_check(victim.death != null and GSPlayerDeathReactions.stock().has(victim.death.reaction),
 		"the server picked how the body falls", str(victim.death.describe()) if victim.death != null else "none")
 	var client := DrClient.new()
 	client.game = game
@@ -261,8 +261,8 @@ func _test_the_killers() -> void:
 	spared.place_at(Vector3(0.0, 0.1, -24.0), 0.0)
 
 	# Crouching under the fire does not help: it fills the corridor to head height.
-	var duck := DotFpsCommand.new()
-	duck.set_button(DotFpsCommand.BUTTON_CROUCH, true)
+	var duck := GSFpsCommand.new()
+	duck.set_button(GSFpsCommand.BUTTON_CROUCH, true)
 	burned.controller.apply_command(duck)
 	await _step(game, 4)
 
@@ -329,7 +329,7 @@ func _test_a_bot_runs_the_course() -> void:
 	var top_speed := 0.0
 
 	for i in range(TICK_RATE * 40):
-		other.controller.apply_command(DotFpsCommand.new())
+		other.controller.apply_command(GSFpsCommand.new())
 		await _step(game, 1)
 		var v := bot.controller.state.velocity
 		top_speed = maxf(top_speed, Vector2(v.x, v.z).length())
@@ -381,19 +381,19 @@ func _test_the_end() -> void:
 	# reacts faster fires sooner (bot_reaction).
 	var first_shot := {}
 	for preset in ["easy", "nightmare"]:
-		var _p := DotBotSettings.of(game).set_difficulty(preset)
+		var _p := GSBotSettings.of(game).set_difficulty(preset)
 		game._bot_hands.erase(activator.player_id)
 		var tick_of := -1
 		for t in range(int(2.0 * TICK_RATE)):
-			var cmd := DotFpsCommand.new()
+			var cmd := GSFpsCommand.new()
 			cmd.yaw = activator.controller.state.yaw
 			game._tick += 1
 			game._aim_bot(activator, cmd, runner)
-			if cmd.is_pressed(DotFpsCommand.BUTTON_USER_0):
+			if cmd.is_pressed(GSFpsCommand.BUTTON_USER_0):
 				tick_of = t
 				break
 		first_shot[preset] = tick_of
-	var _back := DotBotSettings.of(game).set_difficulty("medium")
+	var _back := GSBotSettings.of(game).set_difficulty("medium")
 	_check(int(first_shot["easy"]) > 0 and int(first_shot["nightmare"]) > 0,
 		"a stand-in does not fire on the tick it first aims", str(first_shot))
 	_check(int(first_shot["nightmare"]) < int(first_shot["easy"]),
@@ -431,7 +431,7 @@ func _test_the_aim_button() -> void:
 		runner.place_at(start, 0.0)
 		runner.controller.state.velocity = Vector3.ZERO
 		runner.aiming = aim
-		var command := DotFpsCommand.new()
+		var command := GSFpsCommand.new()
 		command.move = direction
 		await _step(game, 4)
 		var from := runner.controller.state.position
@@ -454,12 +454,12 @@ func _test_the_aim_button() -> void:
 		"aimed, the runner walks at the rules' pace and not otherwise", "hip %.2f m aimed %.2f m, ratio %.2f of %.2f, rig %.2f" % [hip, aimed, aimed / maxf(hip, 0.001), paced, aimed_scale])
 
 	# The wire to the rig: the server builds the weapon command from the body's flag.
-	runner.controller.apply_command(DotFpsCommand.new())
+	runner.controller.apply_command(GSFpsCommand.new())
 	runner.aiming = true
 	var up := game.weapon_command_for(runner)
 	runner.aiming = false
 	var down := game.weapon_command_for(runner)
-	_check(up.is_pressed(DotWeaponCommand.BUTTON_AIM) and not down.is_pressed(DotWeaponCommand.BUTTON_AIM),
+	_check(up.is_pressed(GSWeaponCommand.BUTTON_AIM) and not down.is_pressed(GSWeaponCommand.BUTTON_AIM),
 		"the body's flag is the weapon command's aim button")
 
 	# The spread: first shots of a held trigger with the sights down, then up.
@@ -474,14 +474,14 @@ func _test_the_aim_button() -> void:
 
 ## The mean spread of a held trigger's first shots from [param rig] with [param held], the sights
 ## [param aim] down or up for longer than they take to rise first.
-func _mean_spread(rig: ZeeWeaponRig, held: DotWeaponDef, aim: bool) -> float:
-	var command := DotWeaponCommand.new()
-	command.set_button(DotWeaponCommand.BUTTON_AIM, aim)
+func _mean_spread(rig: ZeeWeaponRig, held: GSWeaponDef, aim: bool) -> float:
+	var command := GSWeaponCommand.new()
+	command.set_button(GSWeaponCommand.BUTTON_AIM, aim)
 	var tick := 100000
 	for i in range(TICK_RATE * 2):
 		tick += 1
 		var _o := rig.simulate_tick(command, tick)
-	command.set_button(DotWeaponCommand.BUTTON_ATTACK, true)
+	command.set_button(GSWeaponCommand.BUTTON_ATTACK, true)
 	var total := 0.0
 	var shots := 0
 	for i in range(TICK_RATE):
@@ -491,7 +491,7 @@ func _mean_spread(rig: ZeeWeaponRig, held: DotWeaponDef, aim: bool) -> float:
 		for shot in outcome.shots:
 			total += shot.spread
 			shots += 1
-		command.set_button(DotWeaponCommand.BUTTON_ATTACK, i % 2 == 1)
+		command.set_button(GSWeaponCommand.BUTTON_ATTACK, i % 2 == 1)
 	return total / float(maxi(shots, 1))
 
 
@@ -520,7 +520,7 @@ func _test_toys() -> void:
 
 	var beach := box.toy(1)
 	var o0 := beach.body.global_position
-	var shot := DotShot.make(&"test", runner.entity_id, game.current_tick(), 0)
+	var shot := GSShot.make(&"test", runner.entity_id, game.current_tick(), 0)
 	shot.origin = o0 + Vector3(0.0, 0.0, 5.0)
 	shot.direction = Vector3(0.0, 0.0, -1.0)
 	shot.damage = 25.0
@@ -567,7 +567,7 @@ func _test_the_runners_win() -> void:
 
 	runner.place_at(game.course_doc["finish"]["at"], 0.0)
 	await _step(game, int(0.3 * TICK_RATE))
-	var shot := DotDamage.make(runner.entity_id, activator.entity_id, 1000.0, null)
+	var shot := GSDamage.make(runner.entity_id, activator.entity_id, 1000.0, null)
 	shot.tick = game.current_tick()
 	var _applied := game.combat.apply_damage(shot)
 	await _step(game, 3)

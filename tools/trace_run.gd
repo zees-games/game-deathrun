@@ -11,7 +11,7 @@ const TICK_RATE := 64
 
 
 func _ready() -> void:
-	DotLog.set_level(DotLog.Level.ERROR)
+	GSLog.set_level(GSLog.Level.ERROR)
 	_run.call_deferred()
 
 
@@ -67,7 +67,7 @@ func _run() -> void:
 	var next_print := 0.0
 
 	for i in range(int(seconds * TICK_RATE)):
-		idle.controller.apply_command(DotFpsCommand.new())
+		idle.controller.apply_command(GSFpsCommand.new())
 		game.simulate(1.0 / TICK_RATE)
 		await get_tree().physics_frame
 		var t := float(i) / TICK_RATE
@@ -76,7 +76,7 @@ func _run() -> void:
 			next_print += every
 			var state := bot.controller.state
 			print("%6.2f  %-28s v %-26s %s  route %d" % [t, str(state.position), str(state.velocity.snapped(Vector3.ONE * 0.01)),
-				DotFpsState.Mode.keys()[state.mode], int(game._bot_route.get(bot.player_id, 0))])
+				GSFpsState.Mode.keys()[state.mode], int(game._bot_route.get(bot.player_id, 0))])
 
 		for line in said:
 			print("  %s" % line)

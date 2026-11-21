@@ -7,7 +7,7 @@ const DrCourse := preload("../game/dr_course.gd")
 ## Needs a display, not --headless. Only still opaque pieces bake; changing that means bumping
 ## DrCourse.BAKE_VERSION. See docs/comment-notes.md.
 
-## Per course: LightmapGI settings for DotLightBake.prepare.
+## Per course: LightmapGI settings for GSLightBake.prepare.
 const SETTINGS := {
 	"default": {"quality": LightmapGI.BAKE_QUALITY_MEDIUM, "bounces": 3, "texel_scale": 1.0},
 	# Half the texels each way: at full density its 456 pieces were 4.9 MB, more than the other
@@ -17,7 +17,7 @@ const SETTINGS := {
 
 
 func _ready() -> void:
-	DotLog.set_level(DotLog.Level.WARN)
+	GSLog.set_level(GSLog.Level.WARN)
 	_run.call_deferred()
 
 
@@ -102,10 +102,10 @@ func _bake_scene(course: DrCourse) -> Node3D:
 
 	for node in lighting.get_children():
 		if node is DirectionalLight3D:
-			# The sun first (DotLightRig adds it before the fill).
+			# The sun first (GSLightRig adds it before the fill).
 			node.light_bake_mode = Light3D.BAKE_DYNAMIC if node == lighting.get_child(0) else Light3D.BAKE_DISABLED
 
-	DotLightBake.prepare(root, course.light_fingerprint(), DrCourse.BAKE_PATH % String(course.id()), settings)
+	GSLightBake.prepare(root, course.light_fingerprint(), DrCourse.BAKE_PATH % String(course.id()), settings)
 	_own(root, root)
 	print("LIGHTMAP_SCENE kept %s %d of %d pieces" % [course.id(), kept, course.pieces.size()])
 	return root
