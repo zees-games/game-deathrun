@@ -593,45 +593,19 @@ static func _theme(source: Variant) -> Dictionary:
 ## dictionary — and a client whose build is a format behind refuses it with a sentence rather
 ## than building a course with holes in it.
 static func encode(doc: Dictionary) -> PackedByteArray:
-	var text := JSON.stringify(_to_plain(doc), "", true)
-	var raw := text.to_utf8_buffer()
-	var packed := raw.compress(FileAccess.COMPRESSION_DEFLATE)
-
-	var out := PackedByteArray()
-	out.resize(8)
-	out.encode_u32(0, raw.size())
-	out.encode_u32(4, packed.size())
-	out.append_array(packed)
-	return out
+	return DotWireDoc.encode(_to_plain(doc), true)
 
 
 static func decode(bytes: PackedByteArray) -> DotResult:
-	if bytes.size() < 9:
-		return DotResult.fail(DotError.CODE_PARSE, "A course on the wire was empty.")
-
-	var size := bytes.decode_u32(0)
-
-	# Both lengths, so a torn or padded body is refused here rather than handed to the
-	# decompressor, which prints an engine error for it before returning nothing.
-	if bytes.decode_u32(4) != bytes.size() - 8:
-		return DotResult.fail(DotError.CODE_PARSE, "A course on the wire is not the length it says.")
-
-	# A size this large is a corrupt header or somebody else's bytes; decompressing it would
-	# allocate whatever it says.
-	if size <= 0 or size > WIRE_LIMIT * 16:
-		return DotResult.fail(DotError.CODE_PARSE, "A course on the wire says it is %d bytes." % size)
-
-	var raw := bytes.slice(8).decompress(size, FileAccess.COMPRESSION_DEFLATE)
-
-	if raw.size() != size:
-		return DotResult.fail(DotError.CODE_PARSE, "A course on the wire would not decompress.")
-
-	return parse_json(raw.get_string_from_utf8(), "wire")
+	var text := DotWireDoc.decode_text(bytes, "course", WIRE_LIMIT * 16)
+	if not text.ok:
+		return text
+	return parse_json(text.value, "wire")
 
 
 ## A short fingerprint of a document, for a log line and for two ends to compare.
 static func digest(doc: Dictionary) -> String:
-	return JSON.stringify(_to_plain(doc), "", true).sha256_text().substr(0, 12)
+	return DotWireDoc.digest(_to_plain(doc))
 
 
 ## A validated document as JSON text a mapper's file could hold: [method parse_json] reads it
