@@ -86,6 +86,8 @@ Read the family [CLAUDE.md](../../CLAUDE.md) first; this file is only what is sp
 - No `class_name`; every own `res://` path through `DrPaths.rebase()` where defined; see [mg-buses-from-hell's delivery.md](../mg-buses-from-hell/docs/delivery.md) and [mg-smash-copter's](../mg-smash-copter/docs/delivery.md) for why.
 - dot-server-deploy's `examples/deathrun_client` is the real-client check against a delivered pack.
 
+- **A course reaches a client as GameSpice Core's `DotWireDoc`** (`DrCourseDoc.encode`/`decode`/`digest` are thin: the game normalises and validates, the deflate framing and its refusals are the addon's, API 41).
+
 **Tests** ([testing](docs/testing.md))
 - Every suite counts sections and checks. Read death events, not a later state; keep checks around a round boundary synchronous.
 
