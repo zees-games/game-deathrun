@@ -1,6 +1,7 @@
 {
   "format": 1,
   "addons": {
+    "dot_core": 41,
     "dot_mobile": 1,
     "dot_player_char": 3,
     "dot_player_controller": 27,
