@@ -53,6 +53,9 @@
 /addons/dot_spawn
 /addons/zee_weapons
 /addons/dot_player_char
+/addons/dot_animation
+/addons/dot_save
+/addons/dot_camera
 /addons/dot_props
 
 # The courses are mg-deathrun-maps, a repository and a pack of their own.
