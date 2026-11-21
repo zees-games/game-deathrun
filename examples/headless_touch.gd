@@ -1,6 +1,6 @@
 extends GSGameCheckSuite
 
-## The touch layout: three buttons that fit a phone without overlapping, the sampler a touch device gets, and dot-mobile's overlay driving that sampler (stick, look, use, jump, duck, a menu pausing it).
+## The touch layout: three buttons that fit a phone without overlapping, the sampler a touch device gets, and gs-mobile's overlay driving that sampler (stick, look, use, jump, duck, a menu pausing it).
 ## Run: `godot --headless --path . res://examples/headless_touch.tscn`
 
 const DrClient := preload("../game/dr_client.gd")
@@ -54,7 +54,7 @@ func _run() -> void:
 	if &"menu_button_corner" in config:
 		_check(config.get(&"menu_button_corner") == &"top_left", "the menu button is in the top-left corner")
 	else:
-		_check(true, "this dot-menu has no menu_button_corner; nothing to set")
+		_check(true, "this gs-menu has no menu_button_corner; nothing to set")
 	config = null
 	settings.free()
 	GSPlatform.touch_override = 0
@@ -67,7 +67,7 @@ func _run() -> void:
 	_report(CHECKS)
 
 
-## dot-mobile's overlay over a HUD of the real type (a CanvasLayer, as DrHud is), driving a touch sampler.
+## gs-mobile's overlay over a HUD of the real type (a CanvasLayer, as DrHud is), driving a touch sampler.
 func _overlay() -> void:
 	GSPlatform.touch_override = 1
 	var hud := CanvasLayer.new()

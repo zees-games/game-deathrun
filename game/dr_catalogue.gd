@@ -39,7 +39,7 @@ var _order: Array[StringName] = []
 var _next: int = 0
 
 ## The server's maps.yml, or null when there is none (every course rotates, as it always did).
-## dot-map's rotation file speaks GSMapDef; this catalogue holds course documents, so [member _defs]
+## gs-map's rotation file speaks GSMapDef; this catalogue holds course documents, so [member _defs]
 ## mirrors the ids (built-in, directory, delivered pack and Workshop alike) and the file marks
 ## `in_rotation` on the mirror. See [method rotating].
 var rotation_file: GSMapRotationFile = null
@@ -225,7 +225,7 @@ func _workshop_doc(entry: GSContentEntry) -> Dictionary:
 	return doc
 
 
-## The file a game pack states what it takes from subscriptions in (dot-cloud's
+## The file a game pack states what it takes from subscriptions in (gs-cloud's
 ## docs/workshop.md, "What a game accepts"). Read from there so the site and this list cannot drift.
 const PROVIDES_PATH := "res://provides.json"
 const ACCEPTED_MAP_KINDS_FALLBACK := ["deathrun"]
@@ -431,7 +431,7 @@ func describe_lines() -> PackedStringArray:
 
 # --- The one built in ---------------------------------------------------------
 
-## Tests only: loose physics props (dot-props' toys) to put on the practice course; empty in play.
+## Tests only: loose physics props (gs-props' toys) to put on the practice course; empty in play.
 static var practice_toys: Array = []
 
 

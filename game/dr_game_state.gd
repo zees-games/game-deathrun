@@ -19,7 +19,7 @@ const SERVICE := &"dr_game"
 
 ## Where a host that runs this game with no server (the client shell's Solo play) publishes
 ## the map packs it mounted for it. See [method solo_map_dirs].
-const SOLO_SERVICE := &"dot_solo"
+const SOLO_SERVICE := &"gs_solo"
 
 ## Snapshots a second. Thirty, like mg-wipeout: what a player reads continuously here is other
 ## people on floors that move under them.
@@ -37,7 +37,7 @@ const TEAM_COLOURS: Array[Color] = [
 	Color(0.88, 0.30, 0.26),
 ]
 
-## What the stand-ins are called, solo and on a server, through dot-bot's [GSBotNames]
+## What the stand-ins are called, solo and on a server, through gs-bot's [GSBotNames]
 ## (never doubled up, and numbered only past the end of the list). Not "Stand-in 2": a board of
 ## numbered stand-ins tells a player they are alone.
 const BOT_NAMES := ["Lever", "Pressure Plate", "Tripwire", "Pitfall", "Hinge", "Ratchet", "Sprocket", "Fuse"]
@@ -120,7 +120,7 @@ func ensure_runtime() -> GSProfileRuntime:
 			return typeof(actor) == TYPE_STRING_NAME and actor == &"local"
 	return profile_runtime
 
-## dot-team's block rules (`mp_teamblock`, `!block`, `!noblock`), set by the module or the client's `add_noblock`; null without dot-team.
+## gs-team's block rules (`mp_teamblock`, `!block`, `!noblock`), set by the module or the client's `add_noblock`; null without gs-team.
 var block_rules: Object = null
 
 ## Whether this instance decides anything. A client sets this false.
@@ -144,16 +144,16 @@ var catalogue: DrCatalogue = null
 var combat: GSCombatManager = null
 
 ## `func(player_id: StringName) -> bool`: whether a player may be hurt now, assigned by the
-## module from dot-game's `can_peer_be_harmed`. Unset offline, and a bot is never loading.
+## module from gs-game's `can_peer_be_harmed`. Unset offline, and a bot is never loading.
 var harm_gate: Callable = Callable()
 var match_node: GSMatch = null
 var random: GSRandomManager = null
-## What a dead body does, and which death reactions the server allows: dot-player-char's
+## What a dead body does, and which death reactions the server allows: gs-player-char's
 ## `sv_ragdoll*` cvars, bound by the module (REPLICATED) and followed by a client through its
 ## link, because the client draws the bodies. The game's, not the course's.
 var ragdoll_rules: GSPlayerRagdollRules = GSPlayerRagdollRules.new()
 
-## dot-props' `sv_toys*` (whether a course's toys are there, how many simulate at once, how hard a
+## gs-props' `sv_toys*` (whether a course's toys are there, how many simulate at once, how hard a
 ## walk pushes one). Bound by the module (REPLICATED) and followed by a client, which draws them.
 var toy_rules: GSPropBodyRules = GSPropBodyRules.new()
 
@@ -165,11 +165,11 @@ var drop_rules: GSWeaponDropRules = _walk_over_drops()
 ## rig. Bound by the module and followed by a client, so its prediction agrees. The aim bit (`DrNetCommand.aim`) sets BUTTON_AIM on the rig and scales the motor (`DrPlayer.step_controller`).
 var ads_rules: ZeeAdsRules = ZeeAdsRules.load_config()
 
-## dot-player-controller's `mp_forceview` (may a player switch to third person) and `mp_solidplayers`
+## gs-player-controller's `mp_forceview` (may a player switch to third person) and `mp_solidplayers`
 ## (do players and stand-ins block each other). Bound by the module (REPLICATED) and followed by a
 ## client, which places its camera under the first and predicts its own player under the second.
 var view_rules: GSPlayerViewRules = GSPlayerViewRules.new()
-## dot-mobile's `sv_mobile_*`, `sv_aim_assist*` and `sv_autofire*`: what a phone player may use. Bound REPLICATED by the module, followed by the client.
+## gs-mobile's `sv_mobile_*`, `sv_aim_assist*` and `sv_autofire*`: what a phone player may use. Bound REPLICATED by the module, followed by the client.
 var mobile_rules: GSMobileRules = GSMobileRules.new()
 var body_rules: GSPlayerBodyRules = GSPlayerBodyRules.new()
 ## The ambience cvars (`dr_ambient*`): bound by the module (REPLICATED), followed by a client through its link.
@@ -190,7 +190,7 @@ func _init() -> void:
 var _weapon_defs: Dictionary = {}
 var effects: GSFxManager = null
 var spectate: DrSpectate = null
-## Who a spectator may watch and whether they may fly a free camera: dot-spectate's `mp_forcecamera`,
+## Who a spectator may watch and whether they may fly a free camera: gs-spectate's `mp_forcecamera`,
 ## `mp_freeroam` and `mp_freeroam_speed`. One object for the game's life, shared with [DrSpectate]'s
 ## manager so a cvar change reaches it. Bound by the module (REPLICATED); a client flies the camera.
 var spectate_rules: GSSpectatorRules = GSSpectatorRules.new()

@@ -78,7 +78,7 @@ func _build_world() -> void:
 	var floor_mesh := MeshInstance3D.new()
 	floor_mesh.name = "Void"
 	# Below the kill height, where whoever falls is already dead: nobody stands on it.
-	floor_mesh.set_meta(&"dot_no_collision", true)
+	floor_mesh.set_meta(&"gs_no_collision", true)
 	var plane := PlaneMesh.new()
 	plane.size = Vector2(1600.0, 1600.0)
 	floor_mesh.mesh = plane
@@ -90,7 +90,7 @@ func _build_world() -> void:
 	add_child(floor_mesh)
 
 
-## The dot-lighting document a course's theme describes. The angles are dot-lighting's source
+## The gs-lighting document a course's theme describes. The angles are gs-lighting's source
 ## convention (a negative pitch is a sun in the sky); the brightness is divided by the profile's
 ## reference and square-rooted.
 static func light_document(theme: Dictionary) -> Dictionary:
@@ -121,7 +121,7 @@ static func light_document(theme: Dictionary) -> Dictionary:
 	}
 
 
-## What this machine draws of a course's light: dot-lighting's `painted()`, the family's profile
+## What this machine draws of a course's light: gs-lighting's `painted()`, the family's profile
 ## for flat colours (the Compatibility renderer clips a sunlit pastel to white at Forward+'s numbers,
 ## and the grid that shows how far a jump is goes with it), with the sun's shadows kept on.
 static func light_profile() -> GSLightProfile:

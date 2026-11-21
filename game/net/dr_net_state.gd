@@ -104,8 +104,8 @@ var _entities: Node = null
 ## session id -> [DrPlayerNet].
 var _behaviours: Dictionary = {}
 
-## The next session id for somebody the world made itself, well above anything dot-server issues.
-## A bot needs one because a player called `bot` parses back to session ZERO, dot-net's broadcast address.
+## The next session id for somebody the world made itself, well above anything gs-server issues.
+## A bot needs one because a player called `bot` parses back to session ZERO, gs-net's broadcast address.
 const FIRST_BOT_SESSION := 900000
 
 var _next_bot_session: int = FIRST_BOT_SESSION

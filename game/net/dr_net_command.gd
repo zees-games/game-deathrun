@@ -6,7 +6,7 @@ const DrNetCommand := preload("dr_net_command.gd")
 ## use key. The game buttons ride in [member GSFpsCommand.buttons] so they order against
 ## movement; the slot has a field of its own (see [member DrPlayer.wanted_slot]).
 
-## Fire. `BUTTON_USER_0`, which dot-player-controller reserves.
+## Fire. `BUTTON_USER_0`, which gs-player-controller reserves.
 const BUTTON_FIRE := GSFpsCommand.BUTTON_USER_0
 
 ## The alt-fire, which on every blaster in the pack is a bash.

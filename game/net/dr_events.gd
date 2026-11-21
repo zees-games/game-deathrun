@@ -6,7 +6,7 @@ const DrGame := preload("../dr_game.gd")
 ##
 ## Encoders and decoders in pairs, and nothing checks that they are inverses for you —
 ## `headless_net` round-trips every one of them, because this family has already shipped a
-## serialisation whose two ends never met: dot-moderation wrote `"voice muted"` and read
+## serialisation whose two ends never met: gs-moderation wrote `"voice muted"` and read
 ## back a warning, and the one thing that addon existed for silently did nothing.
 ##
 ## [b]The course is a document, and it travels whole.[/b] `STAGE` carries the normalised
@@ -78,7 +78,7 @@ enum Ask {
 
 ## Every decoder returns an `ok` beside its fields, and every caller checks it.
 ##
-## [b]A reader past its end returns plausible zeros rather than failing.[/b] dot-net shipped
+## [b]A reader past its end returns plausible zeros rather than failing.[/b] gs-net shipped
 ## with exhaustion that was not sticky, so a decoder that skipped this check got a
 ## believable value for the field AFTER the overrun — and a truncated packet decodes as a
 ## valid message about nothing.
@@ -287,7 +287,7 @@ static func read_team(r: GSNetReader) -> Dictionary:
 	return {"player_id": player_id, "team": team, "ok": r.ok()}
 
 
-## [param death] is how the body falls (dot-player-char's [GSPlayerDeath], the server's pick),
+## [param death] is how the body falls (gs-player-char's [GSPlayerDeath], the server's pick),
 ## last and optional, so every client draws the same fall and an older one reads the rest.
 static func write_death(player_id: int, by: int, why: StringName, death: GSPlayerDeath = null, weapon_id: StringName = &"") -> PackedByteArray:
 	var w := _w()
@@ -405,12 +405,12 @@ static func read_phase(r: GSNetReader) -> Dictionary:
 
 # --- Watching --------------------------------------------------------------
 
-## A view dot-spectate decided, for the one player it belongs to.
+## A view gs-spectate decided, for the one player it belongs to.
 ##
 ## [b]The death position travels.[/b] `GSSpectatorView.to_wire` did not carry it until
 ## 2026-09-25, and a mirror without it puts every death camera at the world origin, which
 ## in this map is inside the cannon. This event stays the game's own: bit-packed and keyed
-## by session, where dot-spectate's is a dictionary keyed by string. Everything else a mirror needs to
+## by session, where gs-spectate's is a dictionary keyed by string. Everything else a mirror needs to
 ## draw the camera it already has: the players are in its world.
 ##
 ## Sessions rather than keys, as everywhere on this wire; zero is nobody.
@@ -504,7 +504,7 @@ const CHAT_KEY_BYTES := 48
 const CHAT_KIND_BITS := 4
 
 
-## Whether every [enum GSChatMessage.Kind] fits in [constant CHAT_KIND_BITS]. dot-chat owns
+## Whether every [enum GSChatMessage.Kind] fits in [constant CHAT_KIND_BITS]. gs-chat owns
 ## that enum, so it can grow under this game; headless_net reads this.
 static func chat_kinds_fit() -> bool:
 	return GSChatMessage.KIND_NAMES.size() <= (1 << CHAT_KIND_BITS)

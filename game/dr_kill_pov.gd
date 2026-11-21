@@ -1,7 +1,7 @@
 extends RefCounted
 
 ## What the round killcam records of the killer's screen beyond the camera: the weapon in hand.
-## The rest of dot-replay's aux (reload, aim-down-sights) stays zero: this game's weapons keep that on the rig, not the wire.
+## The rest of gs-replay's aux (reload, aim-down-sights) stays zero: this game's weapons keep that on the rig, not the wire.
 
 ## Aux slot of the held weapon's id hash.
 const WEAPON := 0

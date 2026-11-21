@@ -1,9 +1,9 @@
 extends RefCounted
 
-## The phone's controls: dot-mobile's stick, drag-look and buttons over the HUD, driving the client's own
+## The phone's controls: gs-mobile's stick, drag-look and buttons over the HUD, driving the client's own
 ## [GSFpsTouchSampler]. A run has no weapon in hand to aim, so no crosshair, aim assist or auto-fire is wired; the
 ## server's `sv_mobile_*` cvars still bound the rest. The buttons are the platformer preset of [method DrClient.touch_layout]:
-## use (held, like the key), jump and duck (command bits held on the sampler). Stick and drag-look are dot-mobile's.
+## use (held, like the key), jump and duck (command bits held on the sampler). Stick and drag-look are gs-mobile's.
 
 const USE := &"use"
 ## The command bit the overlay holds on the sampler for a button.
@@ -18,7 +18,7 @@ var sampler_fn: Callable = Callable()
 var busy_fn: Callable = Callable()
 ## () -> bool: this player is in the run (alive, not watching, not under the cover).
 var live_fn: Callable = Callable()
-## () -> Button: dot-menu's Menu button, whose touches are the GUI's, or null before the menu exists.
+## () -> Button: gs-menu's Menu button, whose touches are the GUI's, or null before the menu exists.
 var menu_button_fn: Callable = Callable()
 
 var _layout: Array[Dictionary] = []

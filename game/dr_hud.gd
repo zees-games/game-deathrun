@@ -27,17 +27,17 @@ var weapons_fn: Callable = Callable()
 var hit_fx: GSHitFeedback = null
 var hit_marker: GSHitMarker = null
 
-## The clock with the phase line under it: dot-ui's [GSScoreStrip], clock alone.
+## The clock with the phase line under it: gs-ui's [GSScoreStrip], clock alone.
 var strip: GSScoreStrip = null
 var _role: Label = null
-## Health at the end: dot-ui's [GSVitals], bar and number on one plate, red at a quarter.
+## Health at the end: gs-ui's [GSVitals], bar and number on one plate, red at a quarter.
 ## Hidden on the course; see the class note.
 var vitals: GSVitals = null
 var _field: Label = null
 var _course: Label = null
 var _shout: Label = null
 var _traps: Label = null
-## What the use key would do now, at a button: dot-ui's [GSKeyPrompt], the trap's name
+## What the use key would do now, at a button: gs-ui's [GSKeyPrompt], the trap's name
 ## with the key drawn as a key, or "<trap> — spent" with none.
 var prompt: GSKeyPrompt = null
 
@@ -88,8 +88,8 @@ static func piece_theme() -> Theme:
 	return t
 
 
-## The Escape menu, whose theme this HUD follows (dot-menu's `follow_hud`). Duck-typed and
-## called by name, for a client shell older than dot-menu 7.
+## The Escape menu, whose theme this HUD follows (gs-menu's `follow_hud`). Duck-typed and
+## called by name, for a client shell older than gs-menu 7.
 var _menu: Object = null
 
 
@@ -327,9 +327,9 @@ func _build_gun_pieces() -> void:
 	hit_marker = hit_fx.marker
 
 
-## dot-ui's GSCrosshair as a plain dot (no arms, no spread) where the host has it (API 14), else the old square.
+## gs-ui's GSCrosshair as a plain dot (no arms, no spread) where the host has it (API 14), else the old square.
 func _make_crosshair() -> Control:
-	if GSAddonApi.build_level("dot_ui") >= 14:
+	if GSAddonApi.build_level("gs_ui") >= 14:
 		var shape: Variant = GSCrosshair
 		var cross := (shape as GDScript).new() as Control
 		cross.name = "Crosshair"

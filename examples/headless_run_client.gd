@@ -242,11 +242,11 @@ func _test_the_client_settings() -> void:
 	_finished()
 
 
-## The HUD's clock, health and trap prompt are dot-ui's glance pieces, handed this world's
+## The HUD's clock, health and trap prompt are gs-ui's glance pieces, handed this world's
 ## numbers. A headless viewport is 64 x 64, so the layout is checked as arithmetic on two
 ## bottom-anchored things and looked at with `tools/shot.sh --view=end` and `--view=button`.
 func _test_the_hud() -> void:
-	_section("the HUD draws the clock, health and the trap prompt through dot-ui")
+	_section("the HUD draws the clock, health and the trap prompt through gs-ui")
 	var game := await _world(func(c: DrConfig) -> void: c.countdown_seconds = 0.2)
 	var players := await _round(game, 2)
 	var runner := players[0]
@@ -304,13 +304,13 @@ func _test_the_hud() -> void:
 
 	_hud_chat_and_theme_checks(hud)
 
-	# A pack naming these classes does not parse on a shell whose dot-ui predates them, so
-	# the requires.json dot-ci derives must ask for dot-ui 4, and nothing may lower it.
+	# A pack naming these classes does not parse on a shell whose gs-ui predates them, so
+	# the requires.json gs-ci derives must ask for gs-ui 4, and nothing may lower it.
 	var asks := GSAddonApi.derive()
 	_check(
-		int(asks.get("dot_ui", 0)) >= 13 and FileAccess.file_exists("res://" + GSAddonApi.FLOOR_FILE),
-		"the pack asks a shell for dot-ui level 13, the weapon icons (requires.floor.json)",
-		str(asks.get("dot_ui"))
+		int(asks.get("gs_ui", 0)) >= 13 and FileAccess.file_exists("res://" + GSAddonApi.FLOOR_FILE),
+		"the pack asks a shell for gs-ui level 13, the weapon icons (requires.floor.json)",
+		str(asks.get("gs_ui"))
 	)
 	hud.queue_free()
 	_finished()
@@ -367,7 +367,7 @@ func _test_help_and_menu() -> void:
 	wd.pressed = true
 	_check(wu.is_action_pressed(GSMenuBindings.WEAPON_PREVIOUS_ACTION) and wd.is_action_pressed(GSMenuBindings.WEAPON_NEXT_ACTION),
 		"wheel up is previous weapon and wheel down is next")
-	_check(not wu.is_action_pressed(&"dot_fps_jump") and not wd.is_action_pressed(&"dot_fps_jump"), "and the wheel does not jump")
+	_check(not wu.is_action_pressed(&"gs_fps_jump") and not wd.is_action_pressed(&"gs_fps_jump"), "and the wheel does not jump")
 	var wc: Node = DrClient.new()
 	var took: bool = wc.call("_wheel_pressed", wd)
 	_check(not took and wc.get(&"_wheel") is GSWeaponWheel, "the client's GSWeaponWheel is built on first use and leaves a wheel alone with the pointer free")
@@ -670,7 +670,7 @@ func _test_the_map_menu() -> void:
 
 
 ## The pack carries its art (a delivered game has only what is vendored in assets/), so every
-## model the weapons table names must be here. Sync it with zee-dot-weapons' tools/sync-art.sh.
+## model the weapons table names must be here. Sync it with zee-gs-weapons' tools/sync-art.sh.
 func _test_the_weapon_art_is_vendored() -> void:
 	_section("every model the weapon art table names is vendored in this game")
 	var models := ZeeWeaponArtTable.validate_models()

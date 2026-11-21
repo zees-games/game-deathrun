@@ -51,8 +51,8 @@ const KILLED_BY_COURSE := -2
 ## And for nothing.
 const KILLED_BY_NOTHING := -1
 
-## dot-lighting's contact shade, loaded by path (API 4): see [method _add_contact_shade].
-const CONTACT_SHADE_SCRIPT := "res://addons/dot_lighting/runtime/dot_contact_shade.gd"
+## gs-lighting's contact shade, loaded by path (API 4): see [method _add_contact_shade].
+const CONTACT_SHADE_SCRIPT := "res://addons/gs_lighting/runtime/gs_contact_shade.gd"
 
 ## What a bake of this game's courses means beyond the document (which pieces are in it, its
 ## settings in tools/lightmap_scenes.gd). Bump it and every committed bake reads as stale.
@@ -61,10 +61,10 @@ const BAKE_VERSION := 1
 ## Where a course's bake is, by id; rebased, so a delivered pack finds its own.
 const BAKE_PATH := "res://lightmaps/%s.res"
 
-## dot-lighting's baker and lightmap sheet (API 5), loaded by path like the contact shade: a
-## class_name here would fail to parse this whole file under a shell whose dot-lighting is older.
-const BAKE_SCRIPT := "res://addons/dot_lighting/bake/dot_light_bake.gd"
-const SHEET_SCRIPT := "res://addons/dot_lighting/bake/dot_lightmap_sheet.gd"
+## gs-lighting's baker and lightmap sheet (API 5), loaded by path like the contact shade: a
+## class_name here would fail to parse this whole file under a shell whose gs-lighting is older.
+const BAKE_SCRIPT := "res://addons/gs_lighting/bake/gs_light_bake.gd"
+const SHEET_SCRIPT := "res://addons/gs_lighting/bake/gs_lightmap_sheet.gd"
 
 ## The height of a button's top, above the floor its `at` names.
 const BUTTON_HEIGHT := 1.05
@@ -123,7 +123,7 @@ var _by_collider: Dictionary = {}
 var _posed_tick: int = -2147483648
 var _posed_time: float = -1.0
 
-## The map's toys (dot-props' [GSPropBodyBox]): loose ones only on a course (balls,
+## The map's toys (gs-props' [GSPropBodyBox]): loose ones only on a course (balls,
 ## tyres, barrels in the start room and the arena), simulated where [member authoritative], posed from snapshots elsewhere,
 ## under the game's `sv_toys*` [member toy_rules]. Set by the game before it builds.
 var toys: GSPropBodyBox = null
@@ -306,9 +306,9 @@ static func is_bakeable(spec: Dictionary, kind: String) -> bool:
 ## are on and one ships for it (or a bake scene is being made). Otherwise the pieces keep their
 ## BoxMesh, which is what a workshop or user course always draws.
 func _will_bake() -> bool:
-	if GSAddonApi.build_level("dot_lighting") < 5 or not ResourceLoader.exists(BAKE_SCRIPT) \
+	if GSAddonApi.build_level("gs_lighting") < 5 or not ResourceLoader.exists(BAKE_SCRIPT) \
 			or not ResourceLoader.exists(SHEET_SCRIPT):
-		GSLog.debug(CHANNEL, "this dot-lighting cannot bake; the course is drawn live", {"id": String(id())})
+		GSLog.debug(CHANNEL, "this gs-lighting cannot bake; the course is drawn live", {"id": String(id())})
 		return false
 
 	if for_bake_scene:
@@ -318,7 +318,7 @@ func _will_bake() -> bool:
 
 
 ## Swaps a bakeable piece's BoxMesh for the same six faces with a second UV set
-## (dot-lighting's `GSLightmapSheet`), in the body's own space and under a name that is the same on every
+## (gs-lighting's `GSLightmapSheet`), in the body's own space and under a name that is the same on every
 ## build: a bake names its meshes by path from the [LightmapGI]. The world-space triplanar
 ## material does not read the first UVs, so it draws exactly as the BoxMesh did.
 func _make_bakeable(body: Node3D, size: Vector3) -> void:
@@ -372,7 +372,7 @@ func light_fingerprint() -> String:
 	for key: String in theme:
 		colours[key] = (theme[key] as Color).to_html() if theme[key] is Color else theme[key]
 
-	if GSAddonApi.build_level("dot_lighting") < 5 or not ResourceLoader.exists(BAKE_SCRIPT):
+	if GSAddonApi.build_level("gs_lighting") < 5 or not ResourceLoader.exists(BAKE_SCRIPT):
 		return ""
 
 	return (load(BAKE_SCRIPT) as GDScript).call(&"fingerprint", {
@@ -383,7 +383,7 @@ func light_fingerprint() -> String:
 ## The course's bake laid over it, if the game ships one made from this document.
 func _attach_bake() -> void:
 	var path := DrPaths.rebase(BAKE_PATH % String(id()))
-	if GSAddonApi.build_level("dot_lighting") < 5 or not ResourceLoader.exists(BAKE_SCRIPT):
+	if GSAddonApi.build_level("gs_lighting") < 5 or not ResourceLoader.exists(BAKE_SCRIPT):
 		return
 
 	var res: GSResult = (load(BAKE_SCRIPT) as GDScript).call(&"attach", self, path, light_fingerprint())
@@ -546,7 +546,7 @@ func _moving_disc(radius: float, thickness: float, role: DrTextures.Role) -> Sta
 ## A volume that kills: drawn as what it is, never solid.
 func _trigger_volume(spec: Dictionary) -> Node3D:
 	var root := Node3D.new()
-	root.set_meta(&"dot_no_collision", true)
+	root.set_meta(&"gs_no_collision", true)
 	root.transform = Transform3D(_yaw_basis(float(spec["yaw"])), spec["at"])
 	return root
 
@@ -554,7 +554,7 @@ func _trigger_volume(spec: Dictionary) -> Node3D:
 func _killer(spec: Dictionary) -> Node3D:
 	var root := Node3D.new()
 	# Measured by `lethal_at`, never collided: a pit's spikes or pool have no shape on purpose.
-	root.set_meta(&"dot_no_collision", true)
+	root.set_meta(&"gs_no_collision", true)
 	root.transform = Transform3D(_yaw_basis(float(spec["yaw"])), spec["at"])
 	_draw_look(root, spec["size"], str(spec.get("look", "spikes")), "up",
 		spec.get("tint", Color.WHITE), false)
@@ -588,8 +588,8 @@ func _make_trap(index: int, spec: Dictionary) -> void:
 		else:
 			node = Node3D.new()
 			# A part that is not solid is drawn only: a lethal one is measured (`lethal_at`),
-			# never collided, so a drawing with no shape is its design (dot-core GSCollisionAudit).
-			node.set_meta(&"dot_no_collision", true)
+			# never collided, so a drawing with no shape is its design (gs-core GSCollisionAudit).
+			node.set_meta(&"gs_no_collision", true)
 
 		node.name = "Part_%d" % part_index
 		node.transform = _part_rest(part_spec)
@@ -624,7 +624,7 @@ func _make_button(spec: Dictionary) -> Node3D:
 	var root := Node3D.new()
 	root.name = "Button"
 	# Not solid, as the note above says: a post a player catches on ends a round.
-	root.set_meta(&"dot_no_collision", true)
+	root.set_meta(&"gs_no_collision", true)
 	root.transform = Transform3D(_yaw_basis(float(spec["yaw"])), spec["at"])
 
 	var post := MeshInstance3D.new()
@@ -959,11 +959,11 @@ func _place_gate() -> void:
 
 ## The sky, the sun, the fog and the void. Client side.
 ##
-## [b]The light is a dot-lighting document made from the course's theme[/b]
+## [b]The light is a gs-lighting document made from the course's theme[/b]
 ## ([method light_document]), so the family's look (game-fatal-contact's built-in maps: a warm sun
 ## with soft shadows, a pale cool fill, filmic tone map, glow) and each course's own sky,
 ## horizon, sun colour and void are one thing rather than two that can disagree.
-## dot-lighting's contact shade (API 4) where the course's still boxes meet: a wall on a deck, a
+## gs-lighting's contact shade (API 4) where the course's still boxes meet: a wall on a deck, a
 ## pillar on the floor, the walkway's step down. The Compatibility renderer the client draws has
 ## no ambient occlusion, and every wall stood on its deck with no shade at its foot. Only the
 ## still, visible, opaque, unpitched `box` pieces: a mover, a turntable and every trap part move
@@ -971,7 +971,7 @@ func _place_gate() -> void:
 ## ramp is tilted, which the helper's creases do not follow; the gate is see-through and drops.
 ## By path, behind the level, so a shell older than the helper draws the course without it.
 func _add_contact_shade() -> void:
-	if GSAddonApi.build_level("dot_lighting") < 4 or not ResourceLoader.exists(CONTACT_SHADE_SCRIPT):
+	if GSAddonApi.build_level("gs_lighting") < 4 or not ResourceLoader.exists(CONTACT_SHADE_SCRIPT):
 		return
 	var boxes: Array = []
 	for piece: Dictionary in pieces:
@@ -1244,7 +1244,7 @@ func lethal_at(feet: Vector3, crouched: bool, tick: int) -> int:
 ## still sent, one a long way under it, falling past, is not); a trigger volume (`solid` false)
 ## takes feet inside its box. `keep` says whether their velocity goes with them. Pure in the
 ## position: the tick calls it on the server and on a predicting client alike. The same piece as
-## mg-wipeout's; dot-map is where a shared one belongs once it is free to take it.
+## mg-wipeout's; gs-map is where a shared one belongs once it is free to take it.
 ## [param runner] picks the pads meant for that side.
 func teleport_at(feet: Vector3, runner: bool = true) -> Array:
 	_index_pieces()

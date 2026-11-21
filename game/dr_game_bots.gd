@@ -209,7 +209,7 @@ func _nearest_enemy(player: DrPlayer) -> DrPlayer:
 	return best
 
 
-## Aims a stand-in at [param target] with dot-bot's [GSBotAim] on `bot_difficulty` and says whether
+## Aims a stand-in at [param target] with gs-bot's [GSBotAim] on `bot_difficulty` and says whether
 ## it fires this tick. Seeded per bot and per round so an empty server does not replay one fight.
 func _aim_bot(player: DrPlayer, command: GSFpsCommand, target: DrPlayer) -> void:
 	var aim: GSBotAim = _bot_hands.get(player.player_id)

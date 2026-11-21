@@ -16,8 +16,8 @@ const KillPovView := preload("dr_kill_pov_view.gd")
 
 const CHANNEL := "dr.client"
 
-## Where a dot-server client link publishes itself.
-const LINK_SERVICE := &"dot_client_link"
+## Where a gs-server client link publishes itself.
+const LINK_SERVICE := &"gs_client_link"
 
 ## Where the camera sits behind the player in third person, in metres.
 const CHASE_BACK := 4.6
@@ -43,7 +43,7 @@ const USE_KEY := KEY_E
 ## player and the camera are all in. See [member GSGameClient.gate].
 var gate: GSLoadGate = null
 
-## dot-game's client platform: the cover, settings and menu, console, HUD theme, Tab, M, the
+## gs-game's client platform: the cover, settings and menu, console, HUD theme, Tab, M, the
 ## pointer and the input block. See [GSGameClient].
 var platform: GSGameClient = null
 var chat: GSGameChatClient = null
@@ -105,7 +105,7 @@ var _use: bool = false
 
 var _touch: DrTouch = null
 
-## dot-game's platformer preset without sprint, board and chat (a runner has no sprint key and the board and chat are not routed from the touch cluster).
+## gs-game's platformer preset without sprint, board and chat (a runner has no sprint key and the board and chat are not routed from the touch cluster).
 static func touch_layout() -> GSGameTouchLayout:
 	var res := GSGameTouchLayout.build(GSGameTouchLayout.PLATFORMER, {
 		GSGameTouchLayout.SPRINT: null, GSGameTouchLayout.BOARD: null, GSGameTouchLayout.CHAT: null,
@@ -116,5 +116,5 @@ static func touch_layout() -> GSGameTouchLayout:
 	return res.value
 
 
-## Where the dead lie: dot-player-char's ragdolls under the game's (the server's) rules.
+## Where the dead lie: gs-player-char's ragdolls under the game's (the server's) rules.
 var ragdolls: GSPlayerRagdolls = null

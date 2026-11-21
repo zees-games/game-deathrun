@@ -59,7 +59,7 @@ var _portraits: Dictionary = {}
 ## Simulated seconds the drawn gun has gone without a trigger, a reload or a switch.
 var _drawn_quiet: float = 0.0
 
-## The Tab board: dot-menu's with this game's columns, fed and held on Tab by the platform.
+## The Tab board: gs-menu's with this game's columns, fed and held on Tab by the platform.
 ## Online it is the server's roster (names, pings, time on) joined by id with the replicated points,
 ## face and side; offline it is [method board_snapshot].
 func _dress_board() -> void:
@@ -263,7 +263,7 @@ func _pose_stage() -> void:
 	if net != null and net.is_running():
 		tick = float(net.clock.tick)
 		# At your own player's draw alpha (see `present_frame`), so a clock slip moves course and
-		# player together. By name, for an older shell's dot-net.
+		# player together. By name, for an older shell's gs-net.
 		if net.clock.has_method(&"render_alpha"):
 			alpha = float(net.clock.call(&"render_alpha"))
 

@@ -5,7 +5,7 @@ const DrConfig := preload("../game/dr_config.gd")
 const DrGame := preload("../game/dr_game.gd")
 const DrPlayer := preload("../game/dr_player.gd")
 
-## Bot soak on the real game: N stand-ins race one course (a "map" is a course id) for M simulated minutes through dot-bot's GSBotSoak, fed by dot-spawn's GSSpawnWatch.
+## Bot soak on the real game: N stand-ins race one course (a "map" is a course id) for M simulated minutes through gs-bot's GSBotSoak, fed by gs-spawn's GSSpawnWatch.
 ## Run: `./game.sh soak [course] [minutes]`. `--probe 1` prints each activator's place, target trap and button distance once a second; the harness's own flags work too.
 ## Writes .godot/test-logs/soak-<course>.json, prints the SOAK line, exits 1 on failure. Rounds run back to back; kills are off.
 

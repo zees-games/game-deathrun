@@ -7,12 +7,12 @@ const DrPlayer := preload("dr_player.gd")
 ## [b]The numbers are the ones only this game has.[/b] A deathmatch counts kills; a course of
 ## traps counts both ends of a trap — how many courses somebody got to the end of, and as the
 ## activator how many runners their presses took. Each is declared once, in [method schema],
-## counted as it happens and reported by dot-stats as a DELTA — "add one", never "now has
+## counted as it happens and reported by gs-stats as a DELTA — "add one", never "now has
 ## forty" — so two servers reporting one player add up rather than overwrite.
 ##
-## [b]Achievements are rules over those numbers and nothing else.[/b] dot-achievements never
+## [b]Achievements are rules over those numbers and nothing else.[/b] gs-achievements never
 ## hears about a trap; it hears that a number moved, through [GSAchievementStatsLink] — which
-## is the differencer between dot-stats' SESSION totals and a lifetime total, and the reason
+## is the differencer between gs-stats' SESSION totals and a lifetime total, and the reason
 ## this is not one `connect`.
 ##
 ## [b]Stand-ins are never counted.[/b] An achievement a bot can earn is noise in every log an
@@ -47,7 +47,7 @@ const END_KILLS := &"dr.end_kills"
 const DEATHS := &"dr.deaths"
 ## Caught by a trap, a pit or the drop.
 const TRAP_DEATHS := &"dr.trap_deaths"
-## The published skill figure the site orders by (dot-stats' GSStatsRank).
+## The published skill figure the site orders by (gs-stats' GSStatsRank).
 const RANK_SCORE := &"rank_score"
 
 signal earned(player_id: StringName, title: String, points: int)
@@ -61,7 +61,7 @@ var link: GSAchievementStatsLink = null
 ## The skill rank, built on lifetime totals (baseline loaded when counting begins).
 var rank: GSStatsRank = null
 
-## Kills and hits by body zone through dot-stats' event feed; ids are world entity ids, resolved by [member entity_key_fn].
+## Kills and hits by body zone through gs-stats' event feed; ids are world entity ids, resolved by [member entity_key_fn].
 var feed: GSStatsEventFeed = null
 
 ## `func(entity_id: int) -> StringName`: the player id an entity belongs to. Set by [DrGame].
@@ -78,7 +78,7 @@ var _in_round: Dictionary = {}
 var _round_trap_kills: Dictionary = {}
 
 ## `func(player_id: StringName) -> String`: the durable key to file this player under, or
-## "" for none. Set by the module from dot-platform; see the class note.
+## "" for none. Set by the module from gs-platform; see the class note.
 var durable_key_fn: Callable = Callable()
 
 ## World id -> the key their numbers are filed under, and back. Fixed at [method record]'s
@@ -345,13 +345,13 @@ func _feed_key(entity_id: Variant) -> StringName:
 	return key
 
 
-## A landed hit, filed by body zone (and wall or body crossed) through the dot-stats hook.
+## A landed hit, filed by body zone (and wall or body crossed) through the gs-stats hook.
 func report_damage(damage: GSDamage) -> void:
 	if feed != null and stats != null and _feed_key(damage.attacker) != &"":
 		var _filed := GSStatsDamage.report(feed, damage)
 
 
-## Every wall a resolved shot crossed, for the site's Penetration cost panel (the shape is dot-stats').
+## Every wall a resolved shot crossed, for the site's Penetration cost panel (the shape is gs-stats').
 func report_shot(shot: GSShot) -> void:
 	if feed != null and stats != null and _feed_key(shot.attacker) != &"":
 		var _walls := GSStatsDamage.report_shot(feed, shot)

@@ -88,9 +88,9 @@ func pose(at: Vector3, yaw_radians: float, speed: float) -> void:
 	rotation = Vector3(0.0, yaw_radians, 0.0)
 	if person == null:
 		return
-	# Game time, as the body moves: a wall-clock step skated the feet. frame_delta is dot_player_char level 11; called by name so an older host still parses.
+	# Game time, as the body moves: a wall-clock step skated the feet. frame_delta is gs_player_char level 11; called by name so an older host still parses.
 	var delta := get_process_delta_time()
-	if GSAddonApi.build_level("dot_player_char") >= 11:
+	if GSAddonApi.build_level("gs_player_char") >= 11:
 		delta = float(person.call(&"frame_delta"))
 	person.animate(speed, delta)
 	clip = person.clip

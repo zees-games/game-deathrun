@@ -1,6 +1,6 @@
 extends RefCounted
 
-## Every key this game reads, as one dot-menu [GSMenuBindings] table: the action, the setting
+## Every key this game reads, as one gs-menu [GSMenuBindings] table: the action, the setting
 ## that stores it, the words a player sees, the default, and the card it goes on.
 ## Why a table, and the Shift/H/chat rows: docs/comment-notes.md.
 
@@ -15,7 +15,7 @@ const DROP_WEAPON := &"dr_drop_weapon"
 const SCOREBOARD := &"dr_scoreboard"
 ## The flashlight, on and off, for everybody still in the round.
 const FLASHLIGHT := &"dr_flashlight"
-## dot-ui's chat window's actions, which dot-game's chat client leaves at their defaults.
+## gs-ui's chat window's actions, which gs-game's chat client leaves at their defaults.
 const CHAT := &"chat_open"
 const CHAT_TEAM := &"chat_open_team"
 ## Slots 1 to 5, the weapon pack's, at the end.
@@ -25,7 +25,7 @@ const SLOTS: Array[StringName] = [&"dr_slot_1", &"dr_slot_2", &"dr_slot_3", &"dr
 static func make() -> GSMenuBindings:
 	var keys := GSMenuBindings.new()
 	keys.add_movement("Movement", "Ctrl", "Crouch")
-	keys.add(&"dot_fps_walk", &"bind_walk", "Walk, for a narrow ledge", "Shift", "Movement")
+	keys.add(&"gs_fps_walk", &"bind_walk", "Walk, for a narrow ledge", "Shift", "Movement")
 	keys.add(USE, &"bind_use", "Press the button in front of you (activators)", "E", "Hands")
 	keys.add(RELOAD, &"bind_reload", "Reload (at the end)", "R", "Hands")
 	keys.add(DROP_WEAPON, &"bind_drop_weapon", "Throw the gun in hand (at the end)", "Q", "Hands")

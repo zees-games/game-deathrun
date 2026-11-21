@@ -1,6 +1,6 @@
 extends RefCounted
 
-## The rules a course's file may set (dot-game's GSGameMapConfig); nothing a round has already decided.
+## The rules a course's file may set (gs-game's GSGameMapConfig); nothing a round has already decided.
 const KEYS := {
 	"dr_round_seconds": {"type": "int", "min": 30},
 	"dr_countdown_seconds": {"type": "int", "min": 0},

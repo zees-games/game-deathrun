@@ -189,7 +189,7 @@ func _player_of(peer_id: int) -> DrPlayer:
 	return (game as DrGame).players.get(DrNetBridge.player_key(session_id))
 
 
-# --- dot-moderation's live tools ---------------------------------------------
+# --- gs-moderation's live tools ---------------------------------------------
 
 ## What the admin set means here, one callable per ability. See `GSGameServices`.
 ##
@@ -288,7 +288,7 @@ func _mod_unsupported() -> Dictionary:
 	}
 
 
-## Toggles that outlive a new body here, beyond dot-moderation's own god and buddha.
+## Toggles that outlive a new body here, beyond gs-moderation's own god and buddha.
 ##
 ## [b]Blind and beacon are about the person, not the body.[/b] A noclip or a freeze ends with
 ## the round because starting a course noclipped, or frozen behind the gate, is the round
@@ -404,7 +404,7 @@ func _on_round_began_for_tools(_number: int, layout: StringName) -> void:
 var _tools_layout: StringName = &""
 
 
-## The team seam dot-chat and dot-voice both ask for, which the base cannot wire.
+## The team seam gs-chat and gs-voice both ask for, which the base cannot wire.
 ##
 ## [GSGameServices] knows nothing about teams — a lobby has none — so the two `team_fn`
 ## hooks are set here, after the base has built each router.

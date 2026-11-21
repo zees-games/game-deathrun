@@ -3,7 +3,7 @@ extends Node
 const DrCatalogue := preload("../game/dr_catalogue.gd")
 const DrCourse := preload("../game/dr_course.gd")
 
-## Writes one bake scene per course for dot-lighting's baker (run by tools/bake_lightmaps.sh).
+## Writes one bake scene per course for gs-lighting's baker (run by tools/bake_lightmaps.sh).
 ## Needs a display, not --headless. Only still opaque pieces bake; changing that means bumping
 ## DrCourse.BAKE_VERSION. See docs/comment-notes.md.
 

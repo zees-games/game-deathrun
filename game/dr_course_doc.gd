@@ -133,9 +133,9 @@ static func validate(source: Dictionary) -> GSResult:
 	if not wired.ok:
 		return wired
 
-	# Toys: dot-props' GSPropBodyBox placements, `{toy, at, yaw}`. Which ids exist is the
+	# Toys: gs-props' GSPropBodyBox placements, `{toy, at, yaw}`. Which ids exist is the
 	# catalogue's to say when the map is built (an unknown one is left out and listed), so a map
-	# with a toy a newer dot-props has still plays on an older server.
+	# with a toy a newer gs-props has still plays on an older server.
 	var toys: Array = []
 	for raw: Variant in doc.get("toys", []):
 		var toy := GSPropBodyBox.normal_placement(raw)

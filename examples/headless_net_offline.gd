@@ -51,7 +51,7 @@ func _check_command_codec() -> void:
 
 
 ## Every encoder against its decoder. Nothing checks that two ends of a serialisation are
-## inverses for you: dot-moderation once wrote "voice muted" and read back a warning.
+## inverses for you: gs-moderation once wrote "voice muted" and read back a warning.
 func _test_the_codec() -> void:
 	_section("every event decodes to what was encoded")
 
@@ -182,7 +182,7 @@ func _workbench_rig(flags: Dictionary, state: Dictionary) -> Dictionary:
 func _test_the_remote_workbench() -> void:
 	_section("[a flagged admin edits the server's profiles, and nobody else can]")
 	if not GSGameWorkbench.available():
-		print("  dot-workbench is not linked: skipped")
+		print("  gs-workbench is not linked: skipped")
 		_passed += 16
 		_finished()
 		return

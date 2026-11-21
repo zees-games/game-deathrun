@@ -5,7 +5,7 @@ const DrGame := preload("dr_game.gd")
 const DrMapConfig := preload("dr_map_config.gd")
 
 ## What a [GSServer] loads as its game scene. Never a client.
-## Everything a dedicated server does is in `dr_module.gd`; this exists because dot-server loads a scene, and the world must be in the tree (under [constant DrGame.SERVICE]) before the module looks for it.
+## Everything a dedicated server does is in `dr_module.gd`; this exists because gs-server loads a scene, and the world must be in the tree (under [constant DrGame.SERVICE]) before the module looks for it.
 ## It lives in `game/` because a game is vendored by copying `game/` and only the `.tscn` files of `scenes/`; a script under `scenes/` never reaches the build.
 
 const CHANNEL := "dr.server"

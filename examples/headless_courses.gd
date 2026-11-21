@@ -618,7 +618,7 @@ func _stand_in_the_end(doc: Dictionary) -> void:
 	_check(activator.at_end and activator.is_alive() and absf(activator.controller.state.position.y - activator_spot.y) < 0.5,
 		"and so does the activator called down to it", str(activator.controller.state.position))
 
-	# The course's toys (dot-props', loose only): all built, none inside a piece, and after the
+	# The course's toys (gs-props', loose only): all built, none inside a piece, and after the
 	# seconds this section has run every one still where the course put it.
 	var box := game.stage.toys
 	var placed := (doc.get("toys", []) as Array).size()
@@ -638,7 +638,7 @@ func _stand_in_the_end(doc: Dictionary) -> void:
 				break
 	# Courses place no toys in play (a041956), so a course with none passes when none were built.
 	_check(box.count() == placed and box.missing.is_empty() and stuck.is_empty(),
-		"%d toys, every one dot-props', standing clear" % placed, "; ".join(stuck))
+		"%d toys, every one gs-props', standing clear" % placed, "; ".join(stuck))
 	var strayed: Array = []
 	for toy in box.toys:
 		if toy.body.global_position.distance_to(toy.rest.origin) > 0.6:
@@ -649,7 +649,7 @@ func _stand_in_the_end(doc: Dictionary) -> void:
 
 # --- Helpers ------------------------------------------------------------------------
 
-## dot-core's [GSCollisionAudit] over the course as a client draws it: visible geometry nothing
+## gs-core's [GSCollisionAudit] over the course as a client draws it: visible geometry nothing
 ## collides with, which a runner walks through. The course keeps its drawing and its bodies
 ## apart (moving parts are static bodies the course teleports), so the lenient audit is used.
 func _audit_collision(doc: Dictionary) -> void:

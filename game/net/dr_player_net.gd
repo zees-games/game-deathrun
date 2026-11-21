@@ -6,11 +6,11 @@ const DrPlayer := preload("../dr_player.gd")
 ## What a networked player replicates: the movement state, their health, and where they are
 ## in the round.
 ##
-## [b]The movement half is dot-player-controller's own table and is not written here.[/b]
+## [b]The movement half is gs-player-controller's own table and is not written here.[/b]
 ## [GSFpsNetSync.state_specs] is what the controller says its state is, in the
 ## quantisation it says it wants; a game that listed the fields itself would be a second
 ## copy to drift — and the type names in that table are STRINGS precisely so the addon can
-## describe a dot-net layout without naming dot-net.
+## describe a gs-net layout without naming gs-net.
 ##
 ## [b]The game fields are not derivable from the movement.[/b] Health decides whether a body
 ## is drawn at all; the finish, the end arena and sitting a round out are the server's
@@ -38,7 +38,7 @@ var net_crouch: float = 0.0
 var net_flags: int = 0
 var net_modifiers: int = 0
 
-## The jump timers (coyote, jump buffer, cooldown), owner only, for the owner's rewind. Opt-in on dot-player-controller API 10; see its docs/networking.md.
+## The jump timers (coyote, jump buffer, cooldown), owner only, for the owner's rewind. Opt-in on gs-player-controller API 10; see its docs/networking.md.
 var net_timers: int = 0
 
 ## Hit points, and the one field with a hard cap on the wire.
@@ -65,13 +65,13 @@ var net_watching: bool = false
 # [b]Seven fields, and the pack's own `all_specs()` names all of them.[/b] GDScript has no
 # dynamic properties, so a spec table that says what to send needs a variable per entry
 # declared by hand — and the one call a game should make is `ZeeWeaponNet.all_specs()`,
-# because concatenating dot-weapon's three with the pack's four by hand is the same work
+# because concatenating gs-weapon's three with the pack's four by hand is the same work
 # and one more place to forget the second half. Forgetting it presents as weapons that are
 # silent for everybody except the person holding them, which is what game-playlot
 # shipped.
 #
 # The magazine and the reserve are `owner_only`: exact ammunition is information an opponent
-# should not have, and dot-combat makes the same decision about the same two numbers.
+# should not have, and gs-combat makes the same decision about the same two numbers.
 
 var net_slot: int = 0
 var net_magazine: int = 0
@@ -134,7 +134,7 @@ func _register_net_vars() -> void:
 
 	# Owner-only jump timers, appended after the movement specs (declaration order is wire order).
 	# Guarded: a shell without API 10 has no GSFpsNetSync.rewind_specs().
-	if GSAddonApi.build_level("dot_player_controller") >= 10:
+	if GSAddonApi.build_level("gs_player_controller") >= 10:
 		for spec in GSFpsNetSync.rewind_specs():
 			var _timers := replicate(spec["property"], GSNetVar.Type[spec["type"]]).bits(int(spec["bits"])).to_owner_only()
 

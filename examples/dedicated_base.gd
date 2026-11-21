@@ -164,18 +164,18 @@ func _test_stats_report() -> void:
 	script.source_code = "extends Node\nfunc post_integration(_a = null, _b = null, _c = null): return null\n"
 	var _reloaded := script.reload()
 	client.set_script(script)
-	GSRegistry.register(&"dot_backbone_client", client)
+	GSRegistry.register(&"gs_backbone_client", client)
 	var _r0 := cv.set_value("0")
 	var _r1 := cv.set_value("1")
 	_check(progress.stats.report_to_backbone, "on with a backbone client makes the tracker report")
 	var _r2 := cv.set_value("0")
 	_check(not progress.stats.report_to_backbone, "off stops it again")
-	GSRegistry.unregister_instance(&"dot_backbone_client", client)
+	GSRegistry.unregister_instance(&"gs_backbone_client", client)
 	client.free()
 	_test_stats_hooks(progress)
 
 
-## Hits by body zone and kills reach the tracker through dot-stats' hooks, for people and not for stand-ins.
+## Hits by body zone and kills reach the tracker through gs-stats' hooks, for people and not for stand-ins.
 func _test_stats_hooks(live: DrProgress) -> void:
 	_check(live.feed != null and live.stats.schema.validate().ok, "progress has an event feed over a schema that validates, hitzones included")
 

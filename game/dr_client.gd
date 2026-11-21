@@ -8,14 +8,14 @@ extends "dr_client_world.gd"
 ## that difference is [DrNetBridge]. A separate single-player build would be a second game to
 ## keep in step, and this family has watched two copies of one thing drift more than once.
 ##
-## [b]Which half runs is decided by whether there is a link in the registry.[/b] A dot-server
-## client publishes a [GSClientLink] under `dot_client_link` before the game scene loads; no
+## [b]Which half runs is decided by whether there is a link in the registry.[/b] A gs-server
+## client publishes a [GSClientLink] under `gs_client_link` before the game scene loads; no
 ## link means nobody connected us to anything, and the honest answer to that is a playable
 ## course rather than an error. `--offline` forces it.
 ##
 ## [b]First person and third, and the motor does not know which.[/b] The camera is
 ## presentation: the simulation is first-person, command-driven and predictable in both, and
-## what changes is where the camera sits. That is the line dot-player-controller draws
+## what changes is where the camera sits. That is the line gs-player-controller draws
 ## between its motor and its view, drawn again here — and on a course the third person view
 ## is the one that shows where your feet are against a trapdoor's edge.
 
@@ -240,7 +240,7 @@ func _build_netcode() -> GSResult:
 	net.local_peer_id = multiplayer.get_unique_id() if multiplayer != null else 2
 	net.auto_tick = false
 	# [b]Empty, and it is not tidiness.[/b] The manager reads a JSON file by default, so a
-	# client with a stale `user://dot_net.json` runs at a tick rate the game did not choose
+	# client with a stale `user://gs_net.json` runs at a tick rate the game did not choose
 	# and nothing says so.
 	net.config_file = ""
 
@@ -289,7 +289,7 @@ func _build_netcode() -> GSResult:
 			chat.notice(text)
 	)
 
-	# The one thing that writes an RTT sample. dot-net never touches a transport, so nothing
+	# The one thing that writes an RTT sample. gs-net never touches a transport, so nothing
 	# in it can; without this the clock's input lead omits the flight time and past about
 	# thirty milliseconds every command arrives after its tick and is discarded as late.
 	if link != null and link.has_method("ping_ms"):
@@ -298,7 +298,7 @@ func _build_netcode() -> GSResult:
 
 	GSLog.result(CHANNEL, "chat and voice", chat.attach(bridge))
 
-	# READY, and not one byte before the scene exists. dot-server's signon finishes and THEN
+	# READY, and not one byte before the scene exists. gs-server's signon finishes and THEN
 	# the client builds this; anything the server sent in between landed on a node that did
 	# not exist and was lost, one "Node not found" per call.
 	if link != null and link.has_method("is_playing") and bool(link.call("is_playing")):
@@ -495,7 +495,7 @@ func _build_settings() -> void:
 	platform.board_snapshot_fn = board_snapshot
 	# M: the course list. Solo a choice changes the course here at once; connected the server
 	# decides, by the owner's `sv_map_menu_flag`, and anybody without it gets a vote instead
-	# (dot-vote's map menu, wired in [DrModule]).
+	# (gs-vote's map menu, wired in [DrModule]).
 	platform.maps_rows_fn = func() -> Array: return game.course_rows() if game != null else []
 	platform.maps_change_fn = func(id: StringName) -> GSResult: return game.change_course_now(id)
 	platform.maps_title = "Change course"
@@ -770,7 +770,7 @@ func _build_camera() -> void:
 
 ## Puts the camera where this view mode wants it, rebuilding the rig if the mode changed.
 ##
-## [b]A boom in third person and nothing in first.[/b] dot-core's [GSCameraBoom] sweeps a
+## [b]A boom in third person and nothing in first.[/b] gs-core's [GSCameraBoom] sweeps a
 ## sphere from the eye and eases in ahead of a wall or a gantry; the spring arm it replaced
 ## cast a ray from a pivot above the head and snapped to whatever it hit.
 func _place_camera() -> void:
@@ -871,7 +871,7 @@ func _build_hud() -> void:
 	_build_touch()
 
 
-## On a touch device: dot-mobile's overlay (see [DrTouch]): use (held, like the key), jump and duck (held on the sampler).
+## On a touch device: gs-mobile's overlay (see [DrTouch]): use (held, like the key), jump and duck (held on the sampler).
 func _build_touch() -> void:
 	if not GSPlatform.has_touch():
 		return
@@ -909,7 +909,7 @@ func _build_chat() -> void:
 	add_child(chat)
 
 
-## dot-team's block rules followed from the server, and the F9 tuning panel where this process hosts the game.
+## gs-team's block rules followed from the server, and the F9 tuning panel where this process hosts the game.
 func _add_noblock_and_workbench() -> void:
 	if link != null:
 		GSLog.result(CHANNEL, "noblock", platform.add_noblock(game, Callable(game, "team_of_side")))
@@ -1044,7 +1044,7 @@ func _physics_process(delta: float) -> void:
 	# the second twice and the first never, the server repeated a stale command for the
 	# one it never got, and the predictor's replay stopped at the hole and drew the player
 	# short of where they were -- after every hitch, and on every frame the display and
-	# the tick rate do not line up. Arithmetic here rather than a new dot-net call,
+	# the tick rate do not line up. Arithmetic here rather than a new gs-net call,
 	# because a pack has to run on whatever client shell the player already has.
 	for i in range(ticks):
 		if not net.clock.is_synced():
@@ -1241,7 +1241,7 @@ func _drive_spectator_camera() -> bool:
 	if view_model != null and is_instance_valid(view_model):
 		view_model.visible = false
 
-	# Chase and death cameras pulled out of the course by dot-spectate, given the level.
+	# Chase and death cameras pulled out of the course by gs-spectate, given the level.
 	var manager: GSSpectatorManager = game.spectate.manager
 	if manager != null and manager.camera_world == null and game.physics != null:
 		manager.camera_world = camera.get_world_3d()
@@ -1254,7 +1254,7 @@ func _drive_spectator_camera() -> bool:
 	else:
 		_free_cam = null
 
-	# Identity is dot-spectate's "no answer" — a target it could not find. Holding the last
+	# Identity is gs-spectate's "no answer" — a target it could not find. Holding the last
 	# frame is better than a camera at the world origin.
 	if where != Transform3D.IDENTITY:
 		camera.global_transform = where
@@ -1308,13 +1308,13 @@ func _fly_free_camera() -> Transform3D:
 
 	if _pointer_ours() and not _covered():
 		move = Vector3(
-			_strength(&"dot_fps_right") - _strength(&"dot_fps_left"),
-			_strength(&"dot_fps_jump") - _strength(&"dot_fps_crouch"),
-			_strength(&"dot_fps_forward") - _strength(&"dot_fps_back"),
+			_strength(&"gs_fps_right") - _strength(&"gs_fps_left"),
+			_strength(&"gs_fps_jump") - _strength(&"gs_fps_crouch"),
+			_strength(&"gs_fps_forward") - _strength(&"gs_fps_back"),
 		)
 
 	var pose := _free_cam.step(
-		move, _held(&"dot_fps_sprint"), _held(&"dot_fps_walk"), get_process_delta_time()
+		move, _held(&"gs_fps_sprint"), _held(&"gs_fps_walk"), get_process_delta_time()
 	)
 	var _kept := game.spectate.manager.move_free(String(player.player_id), pose.origin, pose.basis)
 	return pose
@@ -1365,7 +1365,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		# Opens the settings when the menu left this Escape alone: a released pointer with nothing
 		# on screen to click was a key that did half a job. A second Escape never reaches here:
-		# dot-ui's stack sits deeper in the tree, sees it first, and closes the screen.
+		# gs-ui's stack sits deeper in the tree, sees it first, and closes the screen.
 		if settings != null:
 			settings.open()
 		return
@@ -1374,7 +1374,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _covered():
 		return
 
-	# The wheel, on dot-menu's previous/next weapon actions (rebindable).
+	# The wheel, on gs-menu's previous/next weapon actions (rebindable).
 	if _wheel_pressed(event):
 		return
 
@@ -1508,8 +1508,8 @@ func describe() -> Dictionary:
 	return out
 
 
-## dot-game's chat box and microphone, with this game's channels and voice format. It also
-## draws dot-server's own lines (the vote between games, joins, an admin's `say`), which arrive
+## gs-game's chat box and microphone, with this game's channels and voice format. It also
+## draws gs-server's own lines (the vote between games, joins, an admin's `say`), which arrive
 ## on the shell's client link rather than on this game's bridge. Static so a suite can build
 ## the same box the client does.
 static func new_chat() -> GSGameChatClient:
@@ -1528,7 +1528,7 @@ static func new_chat() -> GSGameChatClient:
 	return box
 
 
-## Where a roster row's player stands, for dot-game's look-to-gag key (G, K).
+## Where a roster row's player stands, for gs-game's look-to-gag key (G, K).
 func _look_position(row: Dictionary) -> Variant:
 	if game == null:
 		return null

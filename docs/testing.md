@@ -23,6 +23,6 @@
 
 ## Delivery
 
-dot-server-deploy's `examples/deathrun_client` boots the delivered pack, joins with a real client over a real socket, checks the courses are mounted where `_add_delivered_courses` looks, and that the client builds the server's course and traps from the document.
+gs-server-deploy's `examples/deathrun_client` boots the delivered pack, joins with a real client over a real socket, checks the courses are mounted where `_add_delivered_courses` looks, and that the client builds the server's course and traps from the document.
 
 `examples/headless_workshop` covers the Workshop against a fixture `GSContentIndex` (never the shared one): a solo pack course is listed as "Name [Pack]" and drawn, an online session lists none, a `map_kind` the game does not accept is left out, the game's own ids win, and the ballot follows the same rules. `tools/shot.sh --view=maps` renders the M menu with a fixture pack.

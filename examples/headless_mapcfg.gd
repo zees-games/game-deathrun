@@ -16,13 +16,13 @@ func _ready() -> void:
 
 
 func _run() -> void:
-	print("mg-deathrun: per-course rules from cfg/game/mg-deathrun/dot_map/map")
+	print("mg-deathrun: per-course rules from cfg/game/mg-deathrun/gs_map/map")
 	if not ResourceLoader.exists(GSGameMapConfig.SCRIPT_PATH):
-		print("SKIPPED: dot-map is not linked at addons/dot_map")
+		print("SKIPPED: gs-map is not linked at addons/gs_map")
 		get_tree().quit(0)
 		return
 	var root := ProjectSettings.globalize_path("user://mapcfg_check")
-	var dir := root.path_join("server/game/%s/dot_map/map" % DrMapConfig.GAME)
+	var dir := root.path_join("server/game/%s/gs_map/map" % DrMapConfig.GAME)
 	DirAccess.make_dir_recursive_absolute(dir)
 	_write(dir.path_join("dr_icy.yml"), "dr_gravity: 12.0\ndr_round_seconds: 120\ndr_autobhop: false\nsv_gravity: 1\n")
 	GSAddonConfig.game = DrMapConfig.GAME
@@ -63,7 +63,7 @@ func _run() -> void:
 	client.apply("dr_plain")
 	_check(config.gravity == before and config.auto_bunny_hop == DrConfig.new().auto_bunny_hop, "the client has them back")
 	_check(not DrMapConfig.client_keys().has("dr_round_seconds"), "the client takes only what it predicts with")
-	_check(DirAccess.dir_exists_absolute(ProjectSettings.globalize_path("res://cfg/game/mg-deathrun/dot_map/map")), "the shipped starter folder exists")
+	_check(DirAccess.dir_exists_absolute(ProjectSettings.globalize_path("res://cfg/game/mg-deathrun/gs_map/map")), "the shipped starter folder exists")
 
 	_report_sections(1, 1, 1, CHECKS)
 

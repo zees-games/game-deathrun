@@ -1,6 +1,6 @@
 extends RefCounted
 
-## What a player looks like, as a dot-user-avatar document: the schema, the stock avatar a
+## What a player looks like, as a gs-user-avatar document: the schema, the stock avatar a
 ## player without one of their own wears, and which skin a document asks for.
 ##
 ## [b]One slot, because this game's people differ in one thing.[/b] Every Blocky Character
@@ -10,7 +10,7 @@ extends RefCounted
 ## promise this game has no art to keep.
 ##
 ## [b]Data only, and loads nothing.[/b] A dedicated server validates a document against
-## this schema without holding the art, which is dot-user-avatar's whole premise; which
+## this schema without holding the art, which is gs-user-avatar's whole premise; which
 ## atlas a skin means is [DrFigure]'s, on a client. [constant SKINS] and
 ## [code]DrFigure.ATLASES[/code] are the same list in the same order, and `headless_run`
 ## checks that they stay so.

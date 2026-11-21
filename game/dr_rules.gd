@@ -8,7 +8,7 @@ var decision_fn: Callable = Callable()
 
 
 static func make() -> GSMatchRules:
-	# Not this class's own name, for dot-match's reason: a script that names itself in an
+	# Not this class's own name, for gs-match's reason: a script that names itself in an
 	# expression cuts Godot 4.7.2's exit teardown short. See docs/gdscript-hazards.md.
 	var rules := new()
 	rules.id = &"deathrun"

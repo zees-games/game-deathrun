@@ -20,7 +20,7 @@ const AMBIENT_KIND := "ambience"
 ## [b]No `class_name`, and that is a requirement rather than a style.[/b]
 ## [method GSModuleHost.load_module] takes a PATH and constructs the module itself — it
 ## must, because that is the shape that lets an operator name one in a config file — and a
-## module delivered inside a dot-cloud pack cannot have a `class_name` at all: a mounted
+## module delivered inside a gs-cloud pack cannot have a `class_name` at all: a mounted
 ## pack's globals are not registered in the host.
 ##
 ## [codeblock]
@@ -39,7 +39,7 @@ const ROSTER_INTERVAL := 2.0
 ## Where the services keep punishments. Empty is [GSGameServices]'s own default,
 ## `user://deathrun_punishments.json` — the store a real server enforces.
 ##
-## [b]Static, because nothing holds this module before it exists[/b]: dot-server constructs
+## [b]Static, because nothing holds this module before it exists[/b]: gs-server constructs
 ## it from a path inside `load_module`, so there is no instance for a host to set a field on
 ## first. `examples/dedicated.tscn` points it at a directory of its own; before it could,
 ## every run appended the live tools' audit warnings to the real store, 106 of them by the
@@ -49,13 +49,13 @@ static var punishments_file: String = ""
 ## The `dr_bots` cvar, held so the tick does not look it up sixty times a second.
 var _bots: GSConVar = null
 
-## dot-workbench over the config and the block rules; the F9 panel off a dedicated server, the HTTP page only with `workbench.enabled`.
+## gs-workbench over the config and the block rules; the F9 panel off a dedicated server, the HTTP page only with `workbench.enabled`.
 var workbench: GSGameWorkbench = null
 
 ## `mp_forcecamera`, kept so the deprecated `dr_spectate_camera` writes through it.
 var _force_camera_cvar: Object = null
 
-## How many stand-ins, from how many people: dot-server's one rule for every game. See
+## How many stand-ins, from how many people: gs-server's one rule for every game. See
 ## [method _keep_the_round_full].
 var _quota: GSBotQuota = null
 
@@ -132,12 +132,12 @@ func _make_services() -> Node:
 	return services
 
 
-## Profiles, avatars and admission: dot-platform's [GSPlatformIdentity] over this game's
-## one-slot schema. [GSGameModule] builds it before the services and loads dot-platform's
+## Profiles, avatars and admission: gs-platform's [GSPlatformIdentity] over this game's
+## one-slot schema. [GSGameModule] builds it before the services and loads gs-platform's
 ## own module beside it.
 ##
 ## [b]Authentication is not here and was never this game's.[/b] Whether a player is proven
-## to be somebody is the host's `dot_auth_server`, the same for every game it runs; what
+## to be somebody is the host's `gs_auth_server`, the same for every game it runs; what
 ## this layer does is everything after — a scoped profile, the name on it, and a face.
 ## With authentication off everybody is a guest with a profile of their own, which is what
 ## a LAN server is.
@@ -157,7 +157,7 @@ func _game_load() -> GSResult:
 
 	add_command("dr_status", _cmd_status, "Show the round, the course and who is where")
 	add_command("dr_net", _cmd_net, "Show what the netcode is doing")
-	# The game's own map commands are renameable from maps.yml's `commands:` block, like dot-vote's.
+	# The game's own map commands are renameable from maps.yml's `commands:` block, like gs-vote's.
 	for name in world.command_names("dr_courses"):
 		add_command(name, _cmd_courses, "List the courses, and any refused file")
 	add_command("dr_traps", _cmd_traps, "List this course's traps, and which are spent")
@@ -194,7 +194,7 @@ func _game_load() -> GSResult:
 		"Automatic stand-ins: 1 keeps as many as bot_quota and bot_quota_mode say, 0 none at all."
 	)
 
-	# [b]How many is dot-server's [GSBotQuota], so `bot_quota` and `bot_quota_mode` mean the
+	# [b]How many is gs-server's [GSBotQuota], so `bot_quota` and `bot_quota_mode` mean the
 	# same thing on every server in the family.[/b] The default is this game's own minimum
 	# (`minimum_players`, from the config file) in fill mode, which is the rule it ran before
 	# the policy was shared: stand-ins top the round up to that many players, a person who
@@ -202,7 +202,7 @@ func _game_load() -> GSResult:
 	# stays the switch it always was, so a server config that sets it means what it meant.
 	_quota = GSBotQuota.install(self, world.config.minimum_players)
 
-	# dot-game's "still loading": a seat behind its client's cover is neither hurt nor eliminated
+	# gs-game's "still loading": a seat behind its client's cover is neither hurt nor eliminated
 	# (see DrGame.harm_gate). Asked by player id, resolved to a peer through the bridge.
 	world.harm_gate = func(player_id: StringName) -> bool:
 		if bridge == null:
@@ -210,7 +210,7 @@ func _game_load() -> GSResult:
 		var peer := int((bridge as DrNetBridge).peer_for_player(DrNetBridge.session_of(player_id)))
 		return peer <= 0 or can_peer_be_harmed(peer)
 
-	# How well the stand-ins fight and react: dot-bot's `bot_difficulty` and its `bot_*`
+	# How well the stand-ins fight and react: gs-bot's `bot_difficulty` and its `bot_*`
 	# settings, on the world (`DrGame._aim_bot`, the activator's press).
 	var _bot_cvars := GSBotSettings.of(world).bind_cvars(add_cvar, GSConVar.FLAG_NOTIFY, add_command)
 
@@ -239,7 +239,7 @@ func _game_load() -> GSResult:
 ## The cvar sets of the rules objects the world holds, REPLICATED where a client predicts or draws under them.
 func _bind_rule_cvars(world: DrGame) -> void:
 	# Whether shots pass through team-mates: `mp_teammate_passthrough` 0 never, 1 a team-mate
-	# holding the muzzle (the default), 2 every team-mate in the line. dot-combat's cvar,
+	# holding the muzzle (the default), 2 every team-mate in the line. gs-combat's cvar,
 	# defined there once for every game; live from the next shot, and a value the operator set
 	# first (argv, content.yml) is read back. NOTIFY, because players should know; REPLICATED,
 	# because every client's own manager predicts its tracers under it (the client follows it
@@ -247,31 +247,31 @@ func _bind_rule_cvars(world: DrGame) -> void:
 	if world.combat != null:
 		var _passthrough := world.combat.bind_cvars(add_cvar, GSConVar.FLAG_NOTIFY | GSConVar.FLAG_REPLICATED)
 
-	# Dead bodies: dot-player-char's sv_ragdoll* set. The server only picks each death's reaction
+	# Dead bodies: gs-player-char's sv_ragdoll* set. The server only picks each death's reaction
 	# from them; REPLICATED, because the clients draw the bodies (see the client's _build_netcode).
 	var _ragdolls := world.ragdoll_rules.bind_cvars(
 		add_cvar, GSConVar.FLAG_ARCHIVE | GSConVar.FLAG_NOTIFY | GSConVar.FLAG_REPLICATED
 	)
-	# The course's toys: dot-props' sv_toys* set. REPLICATED, because a client hides the toys the
+	# The course's toys: gs-props' sv_toys* set. REPLICATED, because a client hides the toys the
 	# server took away.
 	var _toys := world.toy_rules.bind_cvars(
 		add_cvar, GSConVar.FLAG_ARCHIVE | GSConVar.FLAG_NOTIFY | GSConVar.FLAG_REPLICATED
 	)
 
-	# sv_weapon_drop*: dot-weapon's drop rules. REPLICATED, because the drop key and the pickup reach follow them.
+	# sv_weapon_drop*: gs-weapon's drop rules. REPLICATED, because the drop key and the pickup reach follow them.
 	var _drops := world.drop_rules.bind_cvars(add_cvar, GSConVar.FLAG_ARCHIVE | GSConVar.FLAG_NOTIFY | GSConVar.FLAG_REPLICATED)
 
 	# zee_ads_rules: spread and pace while aimed are part of the prediction, so the numbers cross as one JSON cvar.
 	var _ads := world.ads_rules.bind_cvars(add_cvar, GSConVar.FLAG_ARCHIVE | GSConVar.FLAG_NOTIFY | GSConVar.FLAG_REPLICATED)
 
-	# dot-player-controller's mp_forceview (first or third person: the player's choice, or one
+	# gs-player-controller's mp_forceview (first or third person: the player's choice, or one
 	# held) and mp_solidplayers (players and stand-ins block each other, 1 by default).
 	# REPLICATED: the client places its own camera under the first and predicts its own
 	# player under the second.
 	var _views := world.view_rules.bind_cvars(
 		add_cvar, GSConVar.FLAG_ARCHIVE | GSConVar.FLAG_NOTIFY | GSConVar.FLAG_REPLICATED
 	)
-	# sv_mobile_*: what a phone player may use (dot-mobile). REPLICATED, each client draws its own controls.
+	# sv_mobile_*: what a phone player may use (gs-mobile). REPLICATED, each client draws its own controls.
 	var _mobile := world.mobile_rules.bind_cvars(
 		add_cvar, GSConVar.FLAG_ARCHIVE | GSConVar.FLAG_NOTIFY | GSConVar.FLAG_REPLICATED
 	)
@@ -296,10 +296,10 @@ func _bind_rule_cvars(world: DrGame) -> void:
 
 	# REPLICATED: where the clients' killcam camera sits (0 the killer's eye, 1 behind the killer).
 	var _camera := add_cvar("mp_killview_camera", "0",
-		"Killcam camera: 0 the killer's eye, 1 behind the killer (dot-replay GSKillcamFraming)",
+		"Killcam camera: 0 the killer's eye, 1 behind the killer (gs-replay GSKillcamFraming)",
 		GSConVar.FLAG_ARCHIVE | GSConVar.FLAG_NOTIFY | GSConVar.FLAG_REPLICATED)
 
-	# mp_forcecamera, mp_freeroam, mp_freeroam_speed: dot-spectate's rules, so spectators
+	# mp_forcecamera, mp_freeroam, mp_freeroam_speed: gs-spectate's rules, so spectators
 	# free-roam unless an operator says otherwise. REPLICATED, because each client flies its
 	# own spectator camera under them (DrClient.toggle_roam).
 	for made: Object in world.spectate_rules.bind_cvars(
@@ -310,9 +310,9 @@ func _bind_rule_cvars(world: DrGame) -> void:
 
 
 ## Who somebody is reaches the world: a face as they are seated, and the real name and
-## face once dot-platform has them.
+## face once gs-platform has them.
 ##
-## [b]Three events and one path.[/b] Admission finishes AFTER a player is seated — dot-server
+## [b]Three events and one path.[/b] Admission finishes AFTER a player is seated — gs-server
 ## has no stage between authentication and content to hold them in — so the name and face
 ## a player is seated with are a guest's whenever the profile store is slower than the
 ## join; `player_admitted` is the moment the real ones exist. A wardrobe change and an
@@ -330,13 +330,13 @@ func _wire_identity() -> void:
 	hook_post("player_renamed", _on_profile)
 
 
-## What a session looks like: what dot-platform resolved for them, or the stock person.
+## What a session looks like: what gs-platform resolved for them, or the stock person.
 ##
 ## [b]Through the platform module's `player_for`, and never the hub by a key made here.[/b]
 ## The hub keys a player by their scoped profile key, which only admission knows; a lookup
 ## by `u<session>` finds nobody, every time, and falls through to stock — which reads as
 ## "this player has no avatar" rather than as a wrong key. Duck-typed, because a server
-## without dot-platform is a configuration.
+## without gs-platform is a configuration.
 func _avatar_for(session_id: int) -> GSAvatar:
 	var session := server.session_by_userid(session_id) if server != null else null
 	var platform: Object = server.modules.get_module("platform") \
@@ -408,7 +408,7 @@ func _add_tunables(world: DrGame) -> void:
 			config.auto_bunny_hop = value > 0.5
 			for id: StringName in world.players:
 				(world.players[id] as DrPlayer).retune())
-	# Deprecated: a stand-in's aim is dot-bot's now (`bot_difficulty`, `bot_aim_error`). Kept so a
+	# Deprecated: a stand-in's aim is gs-bot's now (`bot_difficulty`, `bot_aim_error`). Kept so a
 	# config that sets it still means something: it sets `bot_aim_error`.
 	_tunable("dr_bot_spread", config.bot_aim_spread_degrees,
 		"Deprecated, sets bot_aim_error: degrees a stand-in's first shots are off",
@@ -458,7 +458,7 @@ func _hand_cvar(key: String) -> String:
 	return name if console.has_name(name) else ""
 
 
-## Every config field as a `dr_<field>` cvar (the hand-written ones keep their handlers and follow workbench edits), the cfg/ diff commands, the workbench and dot-team's block rules.
+## Every config field as a `dr_<field>` cvar (the hand-written ones keep their handlers and follow workbench edits), the cfg/ diff commands, the workbench and gs-team's block rules.
 func _bind_config(world: DrGame) -> GSResult:
 	var _fl := world.flashlight_conf()
 	if world.flashlight_binder != null:
@@ -596,7 +596,7 @@ func _game_tick(_tick: int, delta: float) -> void:
 	_note_pings()
 
 
-## Each session's ping onto its player, for the Tab board. dot-server already keeps it.
+## Each session's ping onto its player, for the Tab board. gs-server already keeps it.
 func _note_pings() -> void:
 	var world := game as DrGame
 	if world == null or server == null:
@@ -696,7 +696,7 @@ func _wire_progress(world: DrGame) -> void:
 	if bridge == null:
 		return
 
-	# Filed under dot-game's stable per-server key (guests too), so it outlives the connection
+	# Filed under gs-game's stable per-server key (guests too), so it outlives the connection
 	# and a restart; see [DrProgress].
 	if world.progress != null:
 		world.progress.durable_key_fn = func(id: StringName) -> String:

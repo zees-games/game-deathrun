@@ -10,7 +10,7 @@ const DrPaths := preload("dr_paths.gd")
 ## noise, so a runner who did not see it still knows the person in front is gone. At the end,
 ## a shot behind you is the warning that works without looking.
 ##
-## [b]A catalogue of ids and a table of stand-ins, which is the family's shape.[/b] dot-audio
+## [b]A catalogue of ids and a table of stand-ins, which is the family's shape.[/b] gs-audio
 ## decides what is audible, how many at once, how far away it stops mattering and what loses
 ## to what; [method sound_catalogue] is those decisions, as a document naming paths nobody
 ## has produced yet. [method sound_recipes] says which synthesised voice stands in for each
@@ -65,12 +65,12 @@ const UI_DENY := &"ui_deny"
 
 var manager: GSAudioManager = null
 
-## Everybody's footsteps by what they stand on, and the course's bed: dot-audio's stock
+## Everybody's footsteps by what they stand on, and the course's bed: gs-audio's stock
 ## (Kenney's footsteps, generated beds, all CC0; the addon's stock/CREDITS.md).
 var steps: GSAudioFootsteps = null
 var ambience: GSAudioAmbience = null
 
-## Quiet moods under the course (dot-audio's stock set); the old bed plays only when none loaded.
+## Quiet moods under the course (gs-audio's stock set); the old bed plays only when none loaded.
 var ambient: GSAmbienceDirector = null
 
 ## Each course's bed and the ground it is built of, for a course document that names neither
@@ -90,11 +90,11 @@ static func ids() -> Array[StringName]:
 		TRAP, TRAP_SAW, TRAP_DROP, TRAP_CRUSH, TRAP_FIRE, TRAP_GRIND, FINISH, COUNTDOWN, GATE, PLAYER_DOWN, YOU_ARE_OUT, ROUND_START, ROUND_END,
 		SHOWDOWN, WEAPON_SHOT, WEAPON_SWING, WEAPON_LAUNCH, WEAPON_BEAM, WEAPON_THROW,
 		UI_CLICK, UI_DENY,
-		# dot-player-char's dead bodies.
+		# gs-player-char's dead bodies.
 		GSPlayerDeathReactions.SOUND_THUD, GSPlayerDeathReactions.SOUND_FACE_PLANT,
 		GSPlayerDeathReactions.SOUND_SLUMP, GSPlayerDeathReactions.SOUND_WHOOSH,
 	]
-	# dot-props' toys.
+	# gs-props' toys.
 	for row: Dictionary in GSPropBodySounds.rows():
 		out.append(StringName(row["id"]))
 	# A typed array plus a typed array is an untyped one: appended, not added.
@@ -150,7 +150,7 @@ static func sound_catalogue() -> GSAudioCatalogue:
 	deny.cooldown_ms = 250
 	c.add(deny)
 
-	# A body landing: dot-player-char's stock death sounds (Kenney, CC0), shipped in the addon.
+	# A body landing: gs-player-char's stock death sounds (Kenney, CC0), shipped in the addon.
 	for row: Dictionary in GSPlayerDeathSounds.rows():
 		var fall := _placed(row["id"], 45.0, 8.0, 3, 50, float(row["pitch_min"]), float(row["pitch_max"]))
 		fall.path = row["path"]
@@ -159,7 +159,7 @@ static func sound_catalogue() -> GSAudioCatalogue:
 		fall.cooldown_ms = int(row["cooldown_ms"])
 		c.add(fall)
 
-	# The course's toys: dot-props' stock toy sounds (Kenney, CC0), shipped in the addon.
+	# The course's toys: gs-props' stock toy sounds (Kenney, CC0), shipped in the addon.
 	for row: Dictionary in GSPropBodySounds.rows():
 		var toy := _placed(row["id"], float(row["distance"]), 6.0, 3, 30, float(row["pitch_min"]), float(row["pitch_max"]))
 		toy.path = row["path"]
@@ -190,7 +190,7 @@ static func sound_recipes() -> Dictionary:
 		WEAPON_THROW: GSAudioSynth.Voice.CLICK,
 		UI_CLICK: GSAudioSynth.Voice.CLICK,
 		UI_DENY: GSAudioSynth.Voice.DENY,
-		# Stand-ins only for a build without dot-props' toy files.
+		# Stand-ins only for a build without gs-props' toy files.
 		GSPropBodySounds.BOUNCE: GSAudioSynth.Voice.IMPACT,
 		GSPropBodySounds.THUMP: GSAudioSynth.Voice.IMPACT,
 		GSPropBodySounds.KNOCK: GSAudioSynth.Voice.IMPACT,
@@ -204,7 +204,7 @@ static func sound_recipes() -> Dictionary:
 		GSPropBodySounds.WATER: GSAudioSynth.Voice.STEP,
 		GSPropBodySounds.BOING: GSAudioSynth.Voice.SPAWN,
 		GSPropBodySounds.HORN: GSAudioSynth.Voice.BLIP,
-		# Stand-ins only for a build without dot-player-char's files.
+		# Stand-ins only for a build without gs-player-char's files.
 		GSPlayerDeathReactions.SOUND_THUD: GSAudioSynth.Voice.IMPACT,
 		GSPlayerDeathReactions.SOUND_FACE_PLANT: GSAudioSynth.Voice.IMPACT,
 		GSPlayerDeathReactions.SOUND_SLUMP: GSAudioSynth.Voice.STEP,
@@ -334,7 +334,7 @@ func setup() -> GSResult:
 	manager.register_as_service = false
 	# Two traps, a death and a firefight at once is the busiest this game gets.
 	manager.voices = 24
-	# Measured toward the family's -17 LUFS (dot-audio docs/loudness.md): a 40 s stand-in run
+	# Measured toward the family's -17 LUFS (gs-audio docs/loudness.md): a 40 s stand-in run
 	# on the practice course read -19.7 LUFS integrated with the beds and steps in; -18.0 after.
 	# Once the stand-in turned off walls (2026-10-12): a run is as loud as the runner is alive,
 	# so it swings with how soon a trap gets it (-21.7 at +3.5 with the camera at 45 m, -18.5
@@ -450,8 +450,8 @@ func deny() -> bool:
 	return _flat_play(UI_DENY)
 
 
-## A dead body's sound (dot-player-char's ragdolls), where it landed.
-## A toy's sound (dot-props' toys): a bounce, a knock, where it happened.
+## A dead body's sound (gs-player-char's ragdolls), where it landed.
+## A toy's sound (gs-props' toys): a bounce, a knock, where it happened.
 func on_toy(id: StringName, at: Vector3, strength: float) -> bool:
 	return _at(id, at, clampf(strength, 0.25, 1.0))
 
@@ -470,7 +470,7 @@ func _flat_play(id: StringName) -> bool:
 
 # --- The machinery, synthesised ---------------------------------------------------
 #
-# dot-audio's voices are one swept tone with noise, which is a click, a shot or a blip; a saw
+# gs-audio's voices are one swept tone with noise, which is a click, a shot or a blip; a saw
 # winding up or a press landing is several things at once, so these are baked here, into the
 # same bank, under the id and the path a real file would have. A real `.ogg` still wins.
 

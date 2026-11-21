@@ -1,7 +1,7 @@
 extends RefCounted
 
 ## Where this game's own files are, wherever this copy of it lives. A delivered pack mounts
-## under `res://dot_cloud/<id>/<version>/`, so own-file paths go through [method rebase]; built
+## under `res://gs_cloud/<id>/<version>/`, so own-file paths go through [method rebase]; built
 ## in it returns its argument. Holders of these paths are `static var`, never `const`.
 
 const _SELF := preload("dr_paths.gd")

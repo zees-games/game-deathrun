@@ -27,7 +27,7 @@ const EYE_HEIGHT := 1.6
 @export var player_id: StringName = &"local"
 @export var display_name: String = "Player"
 
-## What this player looks like, as a dot-user-avatar document; null is the stock person.
+## What this player looks like, as a gs-user-avatar document; null is the stock person.
 var avatar: GSAvatar = null
 
 ## Whether a command is sampled from the input devices each tick. The person at the keyboard.
@@ -63,7 +63,7 @@ var side_wish: int = 0
 var points: int = 0
 var ping_ms: int = -1
 
-## The entity id dot-combat and dot-entity know them by.
+## The entity id gs-combat and gs-entity know them by.
 var entity_id: int = 0
 
 ## How many times [method place_at] has put them somewhere. Replicated, so a watcher's
@@ -262,7 +262,7 @@ static func new_sampler(p_tunables: GSFpsTunables) -> GSFpsSampler:
 ## Registers the movement actions, and binds the slow walk to shift. See mg-smash-copter.
 static func register_actions(p_sampler: GSFpsSampler = null) -> void:
 	var _added := GSFpsSampler.register_default_actions(p_sampler)
-	var walk := &"dot_fps_walk"
+	var walk := &"gs_fps_walk"
 
 	if not InputMap.has_action(walk):
 		return
@@ -280,7 +280,7 @@ static func register_actions(p_sampler: GSFpsSampler = null) -> void:
 
 ## The clear air a running player crosses in one jump, landing [param rise] metres higher.
 ##
-## dot-player-controller's own arithmetic over this game's tunables, so a cvar that shortens
+## gs-player-controller's own arithmetic over this game's tunables, so a cvar that shortens
 ## the jump shortens every check that reads this.
 static func jump_reach(config: DrConfig, rise: float = 0.0) -> float:
 	return tunables_for(config).jump_reach(rise)
@@ -415,7 +415,7 @@ func eye_position() -> Vector3:
 	return controller.state.position + Vector3(0.0, EYE_HEIGHT, 0.0)
 
 
-## The duck-typed lookup dot-weapon's player bridge asks a carrier for. Without it every shot
+## The duck-typed lookup gs-weapon's player bridge asks a carrier for. Without it every shot
 ## leaves the player's feet pointing north; see mg-smash-copter.
 func component(type_name: StringName) -> Object:
 	match String(type_name):

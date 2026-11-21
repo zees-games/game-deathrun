@@ -72,7 +72,7 @@ func _run() -> void:
 func _boot() -> void:
 	_section("booting")
 
-	# `startup_config`, because `sv_tickrate` is startup-only and dot-server execs this file
+	# `startup_config`, because `sv_tickrate` is startup-only and gs-server execs this file
 	# before the listener for exactly that reason.
 	var cfg_path := "%s/server.cfg" % SERVER_DIR
 	var cfg := FileAccess.open(cfg_path, FileAccess.WRITE)
@@ -143,7 +143,7 @@ func _test_the_module_loads() -> void:
 
 	var module := _module()
 	_check(game != null and game.progress != null and game.progress.durable_key_fn.is_valid(),
-		"progress is filed under dot-game's stable stats key")
+		"progress is filed under gs-game's stable stats key")
 	_check(module != null and module.get("net") != null and module.get("bridge") != null,
 		"with its netcode and the game's bridge")
 
@@ -185,7 +185,7 @@ func _test_the_commands() -> void:
 	_check(is_equal_approx(game.config.countdown_seconds, 90.0), "a negative countdown is refused, not clamped",
 		"%.1f" % game.config.countdown_seconds)
 	var _restore := _run_command("dr_countdown_seconds %s" % was_countdown)
-	# And it is REPLICATED: dot-server sends it to every client before its scene loads and on
+	# And it is REPLICATED: gs-server sends it to every client before its scene loads and on
 	# every change, so a client's own combat manager (following its link) predicts tracers
 	# under the server's level rather than its default.
 	var shared := server.console.find_cvar("mp_teammate_passthrough")
@@ -255,7 +255,7 @@ func _test_a_round_runs() -> void:
 		var bots_after: int = (quota_module.get("_bot_ids") as Array).size()
 		_check(bots_after == bots_before, "and a stand-in comes back when they leave",
 			"%d -> %d" % [bots_with, bots_after])
-		# Named from the game's list through dot-bot, never "Stand-in 2", never twice.
+		# Named from the game's list through gs-bot, never "Stand-in 2", never twice.
 		var names: Array = []
 		for id: StringName in quota_module.get("_bot_ids"):
 			names.append((game.players[id] as DrPlayer).display_name)
@@ -304,7 +304,7 @@ func _test_the_course_vote() -> void:
 	_check(ids.has("dr_ice_works") and ids.has("dr_foundry"), "it offers the delivered courses", str(ids))
 
 	# The map menu's server half (M): the owner's flag changes the course now, anybody else
-	# gets a nomination and a rock-the-vote. Contexts as dot-server makes them for a chat line.
+	# gets a nomination and a rock-the-vote. Contexts as gs-server makes them for a chat line.
 	var menu_half: Object = vote.get("commands").get("map_menu")
 	_check(menu_half != null and server.console.find_command("mapmenu") != null
 		and server.console.find_cvar("sv_map_menu_flag").get_string() == "generic"
@@ -359,7 +359,7 @@ func _test_the_course_vote() -> void:
 
 	# Rock the vote, typed at the console as a player's !rtv reaches it. Under MANUAL the
 	# director opens nothing itself, a passed rtv included: it answered "Rocked. 1 of 1." and
-	# no ballot came. Past dot-vote's cooldown between two ballots, on the director alone so
+	# no ballot came. Past gs-vote's cooldown between two ballots, on the director alone so
 	# the course's own ballot timer does not open one first.
 	_check(director.current_id() == voted and not director.is_voting(),
 		"the new course starts the vote over", str(director.current_id()))
@@ -374,14 +374,14 @@ func _test_the_course_vote() -> void:
 	var rocked := _run_command("rtv")
 	vote.call("advance", 0.05)
 	_check(director.is_voting(), "and a passing rock-the-vote opens a ballot", str(rocked))
-	# The director opens a rocked ballot itself (dot-vote API 2); this game no longer does, so
+	# The director opens a rocked ballot itself (gs-vote API 2); this game no longer does, so
 	# exactly one ballot opens, not one from each.
 	_check(ballots.size() == 1, "and exactly one ballot, the director's alone", str(ballots.size()))
 	_finished()
 
 
 ## [b]`time_up: finish_round` waits for a round being played, never for warmup.[/b] The game
-## hands dot-vote its match's answer (`round_in_progress_fn`); without it a limit that ran out
+## hands gs-vote its match's answer (`round_in_progress_fn`); without it a limit that ran out
 ## in warmup held the change for `finish_round_max_sec` over a round that had not started.
 ## Run on a director of its own carrying the game's own hook, so the real vote's clock is
 ## untouched; the match's state is set by hand and put back.
@@ -422,7 +422,7 @@ func _test_finish_round_waits_for_a_live_round() -> void:
 
 
 ## A director under `time_up: finish_round` carrying [param hook], its clock run out with a
-## winner already decided: what dot-vote's own suite builds, with the game's answer in it.
+## winner already decided: what gs-vote's own suite builds, with the game's answer in it.
 func _finish_round_probe(hook: Callable, applied: Array) -> GSVoteDirector:
 	var source := GSVoteListSource.new()
 	var _a := source.add(GSVoteChoice.of(&"a", "A"))
@@ -470,11 +470,11 @@ func _finish_round_probe(hook: Callable, applied: Array) -> GSVoteDirector:
 ## A reload keeps the courses the server names. `dr_reload` reads the course directory again with
 ## `load_from`, which forgets everything read before, and in two of the three games built this
 ## way it stopped there: every delivered course was gone until a restart, with nothing logged.
-## A pack "mounted" on the disk and a descriptor naming it stand in for dot-cloud and the
-## deployment's map config (dot-server-deploy's cfg/content.yml), which a suite has neither of.
+## A pack "mounted" on the disk and a descriptor naming it stand in for gs-cloud and the
+## deployment's map config (gs-server-deploy's cfg/content.yml), which a suite has neither of.
 func _test_a_reload_keeps_delivered_courses() -> void:
 	_section("a reload keeps the courses the server names")
-	var key := "dot-test/dr-delivered@1.0.0"
+	var key := "gs-test/dr-delivered@1.0.0"
 	var mount := GSGameContent.mount_of(key)
 	var dir := mount.path_join("courses")
 	var id := &"dr_delivered_check"
@@ -540,15 +540,15 @@ func _test_a_reload_keeps_delivered_courses() -> void:
 
 	DirAccess.remove_absolute(dir.path_join("delivered_check.json"))
 	var path := dir
-	while path != "res://dot_cloud":
+	while path != "res://gs_cloud":
 		DirAccess.remove_absolute(path)
 		path = path.get_base_dir()
-	DirAccess.remove_absolute("res://dot_cloud")
+	DirAccess.remove_absolute("res://gs_cloud")
 	_finished()
 
 
 ## [b]A seat whose client has not lifted its loading cover cannot be harmed, and can once it does[/b]
-## (dot-game's "still loading"), over a real ENet socket. A client joins and says nothing, as one
+## (gs-game's "still loading"), over a real ENet socket. A client joins and says nothing, as one
 ## still loading its level; the world's damage path is then asked to kill it by a shot, by a trap
 ## and by the floor, and must refuse all of them. An admin's slay still passes, and the draw of
 ## activators leaves it for last. The client then sends `game.cover` on the wire and the same hit
@@ -767,7 +767,7 @@ class CommandHost extends Node:
 		return null
 
 
-## `maps.yml` (dot_map tiers): which courses rotate. The format is dot-map's selftest's; this is what the GAME
+## `maps.yml` (gs_map tiers): which courses rotate. The format is gs-map's selftest's; this is what the GAME
 ## does with it: a course left out is installed and loadable and is never drawn, never on a
 ## ballot, never nominated, marked in the map list; a switch of rotation takes effect; a renamed
 ## command is registered; no file means every course.
@@ -798,7 +798,7 @@ func _test_rotation_file() -> void:
 	}}], "mg-deathrun")
 	_check(parsed.ok, "a rotation file parses", str(parsed.error))
 	var shipped := GSMapRotationFile.find_layers("", "mg-deathrun")
-	_check(not shipped.is_empty() and str(shipped[0]).ends_with("cfg/game/mg-deathrun/dot_map/maps.yml"), "the shipped maps.yml is the game tier file", str(shipped))
+	_check(not shipped.is_empty() and str(shipped[0]).ends_with("cfg/game/mg-deathrun/gs_map/maps.yml"), "the shipped maps.yml is the game tier file", str(shipped))
 	var kept = catalogue.rotation_file
 	catalogue.rotation_file = parsed.value
 	catalogue.apply_rotation(game.config.course_ids)
@@ -871,7 +871,7 @@ func _test_rotation_file() -> void:
 	_finished()
 
 
-## Config cvars, the workbench's sync into a hand-written cvar, and dot-team's block rules through dot-game's GSGameNoblock.
+## Config cvars, the workbench's sync into a hand-written cvar, and gs-team's block rules through gs-game's GSGameNoblock.
 ## Hibernation: the ballot's timer waits with the server and waking starts it from the top.
 func _hibernation_checks(vote: Node) -> void:
 	var sleeper: GSVoteDirector = vote.get("director")
@@ -906,12 +906,12 @@ func _rotation_ballot_checks(vote: Node) -> void:
 		_check(not _said(accepted, "nothing called"), "while one in the rotation is known to it", ", ".join(accepted))
 		var merged: Callable = (vote.get("source") as GSVoteListSource).get("in_rotation_fn") if "in_rotation_fn" in vote.get("source") else Callable()
 		_check(merged.is_valid() and not bool(merged.call(&"rot_2")) and bool(merged.call(&"rot_0")),
-			"and the pack maps dot-vote merges are filtered by the same file")
+			"and the pack maps gs-vote merges are filtered by the same file")
 	else:
 		_check(false, "never on a ballot", "no vote")
 		_check(false, "refused by nominate", "no vote")
 		_check(false, "while one in the rotation is known to it", "no vote")
-		_check(false, "and the pack maps dot-vote merges are filtered by the same file", "no vote")
+		_check(false, "and the pack maps gs-vote merges are filtered by the same file", "no vote")
 
 
 func _noblock_and_config(module: GSModule) -> void:

@@ -57,11 +57,11 @@ The game has a short practice course built in. Many more courses (Ice Works, The
 | **Esc** | Menu: settings (every key above can be rebound), help, and leave |
 
 ## Getting started
-You need [Godot 4.7](https://godotengine.org/download). The game is built from many GameSpice addons, each in its own repository, so the easiest way to get everything is [dot-bootstrap](https://github.com/gamespice-platform/bootstrap). It clones every project and links the addons into each one:
+You need [Godot 4.7](https://godotengine.org/download). The game is built from many GameSpice addons, each in its own repository, so the easiest way to get everything is [gs-bootstrap](https://github.com/gamespice-platform/bootstrap). It clones every project and links the addons into each one:
 
 ```bash
 git clone https://github.com/gamespice-platform/bootstrap.git
-cd dot-bootstrap
+cd gs-bootstrap
 ./bootstrap.sh
 cd projects/mg-deathrun
 ./game.sh
@@ -69,7 +69,7 @@ cd projects/mg-deathrun
 
 On Windows, run `bootstrap.ps1` instead and open the project in Godot.
 
-The courses come from the mg-deathrun-maps checkout, which bootstrap links into `courses/` for you. On a deployed server they come from the server instead: the game ships only its built-in practice course, and the server owner picks the courses pack (`gamemann/mg-deathrun-maps`, or their own) in dot-server-deploy's `cfg/content.yml`.
+The courses come from the mg-deathrun-maps checkout, which bootstrap links into `courses/` for you. On a deployed server they come from the server instead: the game ships only its built-in practice course, and the server owner picks the courses pack (`gamemann/mg-deathrun-maps`, or their own) in gs-server-deploy's `cfg/content.yml`.
 
 `game.sh` does everything else:
 
@@ -83,7 +83,7 @@ The courses come from the mg-deathrun-maps checkout, which bootstrap links into 
 | `./game.sh shot` | Save a screenshot to `screenshots/`. `./game.sh shot --help` lists the views |
 | `./game.sh help` | All of the options |
 
-`online` and `server` use [dot-server-deploy](https://github.com/gamespice-platform/server-deploy), which bootstrap clones next to this one. Run its `./setup.sh` once first.
+`online` and `server` use [gs-server-deploy](https://github.com/gamespice-platform/server-deploy), which bootstrap clones next to this one. Run its `./setup.sh` once first.
 
 ## Running a server
 Settings are cvars. Set them in the server's config, on the command line, or live from the console. Most of them take effect from the next round.
@@ -106,13 +106,13 @@ bot_difficulty medium          // easy, medium, hard or nightmare: how bots aim,
 dr_vote_after 20               // seconds into a course before the vote for the next one opens
 ```
 
-The bot cvars are the family's shared ones (dot-server's `GSBotQuota`, dot-bot's `bot_difficulty` and `bot_*`; solo they are console variables, or `-- --bot_difficulty hard` at launch). `dr_min_players` still works and sets `bot_quota`, and `dr_bot_spread` sets `bot_aim_error`; both are deprecated.
+The bot cvars are the family's shared ones (gs-server's `GSBotQuota`, gs-bot's `bot_difficulty` and `bot_*`; solo they are console variables, or `-- --bot_difficulty hard` at launch). `dr_min_players` still works and sets `bot_quota`, and `dr_bot_spread` sets `bot_aim_error`; both are deprecated.
 
-Dead runners fall as ragdolls ([dot-player-char](https://github.com/gamespice-platform/player-char)); the server picks how each one goes down and everybody sees the same fall. `sv_ragdoll 0` makes it a quick fall with no physics, `sv_ragdoll_style` picks ragdoll, stiff, topple or hide, `sv_ragdoll_time` and `sv_ragdoll_max` say how long and how many, and `sv_ragdoll_reactions` weights the falls (`limp`, `face_plant`, `crumple`, `headshot_launch`, `power_launch`; 0 turns one off).
+Dead runners fall as ragdolls ([gs-player-char](https://github.com/gamespice-platform/player-char)); the server picks how each one goes down and everybody sees the same fall. `sv_ragdoll 0` makes it a quick fall with no physics, `sv_ragdoll_style` picks ragdoll, stiff, topple or hide, `sv_ragdoll_time` and `sv_ragdoll_max` say how long and how many, and `sv_ragdoll_reactions` weights the falls (`limp`, `face_plant`, `crumple`, `headshot_launch`, `power_launch`; 0 turns one off).
 
-`mp_teammate_passthrough` is the family's shared one from dot-combat, live from the next shot. At 2 a team-mate in the line never stops a shot; splash still reaches them.
+`mp_teammate_passthrough` is the family's shared one from gs-combat, live from the next shot. At 2 a team-mate in the line never stops a shot; splash still reaches them.
 
-`--dr-course-ids=<ids>` limits a server to some courses. The vote's settings go in `user://cfg/deathrun_vote.json` (`{"enabled": false}` turns it off); dot-vote's README lists them.
+`--dr-course-ids=<ids>` limits a server to some courses. The vote's settings go in `user://cfg/deathrun_vote.json` (`{"enabled": false}` turns it off); gs-vote's README lists them.
 
 Console commands:
 
@@ -125,7 +125,7 @@ Console commands:
 | `dr_net` | What the network code is doing |
 
 ### Admin commands
-These come from [dot-moderation](https://github.com/gamespice-platform/moderation): `noclip`, `freeze`, `speed`, `gravity`, `god`, `buddha`, `hp`, `slay`, `slap`, `rename`, the teleports, `blind` and `beacon`. `respawn` puts somebody back at the start of their side. `give` and `strip` are turned off, because the weapons are what the end hands out.
+These come from [gs-moderation](https://github.com/gamespice-platform/moderation): `noclip`, `freeze`, `speed`, `gravity`, `god`, `buddha`, `hp`, `slay`, `slap`, `rename`, the teleports, `blind` and `beacon`. `respawn` puts somebody back at the start of their side. `give` and `strip` are turned off, because the weapons are what the end hands out.
 
 ## Writing a course
 A course is a JSON file: a start, a corridor of pieces and traps, a walkway with a button for every trap, a finish and an end arena. The courses are in [mg-deathrun-maps](https://github.com/zees-games/mg-deathrun-maps), whose `tools/build_courses.py` writes them section by section (so the corridor and the walkway always line up). That is also the easiest way to write a new one. [`courses/README.md`](https://github.com/zees-games/mg-deathrun-maps/blob/main/courses/README.md) in that repository describes the format. The server sends the course to each player when the round starts, so players don't need the course files.
@@ -153,12 +153,12 @@ A course is a JSON file: a start, a corridor of pieces and traps, a walkway with
 | Asset | Author / source | License | Where |
 | --- | --- | --- | --- |
 | Surfaces | Kenney, Prototype Textures, tinted per course | CC0 | each kit's licence |
-| Players | Quaternius, [Zombie Apocalypse Kit](https://quaternius.com/packs/zombieapocalypsekit.html), skinned from Kenney's blocky characters | CC0 1.0 | dot-player-char |
-| Weapons | [zee-dot-weapons](https://github.com/zees-games/zee-dot-weapons) | see that repo | that repo |
-| Footsteps | Kenney, Impact Sounds | CC0 | `addons/dot_audio/stock/CREDITS.md` |
-| Ambience beds | Generated by dot-audio | CC0 | `addons/dot_audio/stock/CREDITS.md` |
+| Players | Quaternius, [Zombie Apocalypse Kit](https://quaternius.com/packs/zombieapocalypsekit.html), skinned from Kenney's blocky characters | CC0 1.0 | gs-player-char |
+| Weapons | [zee-gs-weapons](https://github.com/zees-games/zee-gs-weapons) | see that repo | that repo |
+| Footsteps | Kenney, Impact Sounds | CC0 | `addons/gs_audio/stock/CREDITS.md` |
+| Ambience beds | Generated by gs-audio | CC0 | `addons/gs_audio/stock/CREDITS.md` |
 | Spikes, blades, fire, pools | Drawn in code | none | in code |
-| Toys (balls, barrels, a tyre) | [dot-props](https://github.com/gamespice-platform/props), drawn in code; sounds by Kenney | CC0 | `addons/dot_props/toys/sounds/CREDITS.md` |
+| Toys (balls, barrels, a tyre) | [gs-props](https://github.com/gamespice-platform/props), drawn in code; sounds by Kenney | CC0 | `addons/gs_props/toys/sounds/CREDITS.md` |
 
 If you made one of these assets and want it removed, open an issue.
 
@@ -166,7 +166,7 @@ If you made one of these assets and want it removed, open an issue.
 MIT. See [LICENSE](LICENSE). The Kenney art is CC0, which is public domain.
 
 ## Choosing which courses are played
-The file `cfg/game/mg-deathrun/dot_map/maps.yml` says which installed courses are drawn, voted on and nominated. A server operator can replace it with `cfg/server/addons/dot_map/maps.yml` in the `--config` directory. Start that file with `merge: true` to add to the shipped list, and use `remove: [ids]` to drop courses.
+The file `cfg/game/mg-deathrun/gs_map/maps.yml` says which installed courses are drawn, voted on and nominated. A server operator can replace it with `cfg/server/addons/gs_map/maps.yml` in the `--config` directory. Start that file with `merge: true` to add to the shipped list, and use `remove: [ids]` to drop courses.
 
 | Setting or command | What it does |
 | --- | --- |
@@ -175,4 +175,4 @@ The file `cfg/game/mg-deathrun/dot_map/maps.yml` says which installed courses ar
 | `dr_maps_reload` | Reads the file again |
 | `shuffle_courses` in `config_courses/game.yml` | Random or in-order choice when no rotation file names rotations (default on) |
 
-A course left out of the rotation stays installed: the map menu and an admin can still load it, marked "not in rotation". The file can also rename the vote commands. The format is dot-map's `GSMapRotationFile`.
+A course left out of the rotation stays installed: the map menu and an admin can still load it, marked "not in rotation". The file can also rename the vote commands. The format is gs-map's `GSMapRotationFile`.

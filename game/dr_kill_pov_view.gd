@@ -59,7 +59,7 @@ func _end() -> void:
 	label = null
 
 
-## Puts the killer's screen under [param parent] and makes it [param target]'s `present_fn`; false on a dot-replay without one.
+## Puts the killer's screen under [param parent] and makes it [param target]'s `present_fn`; false on a gs-replay without one.
 static func mount(parent: Node, target: Object) -> bool:
 	if not (&"present_fn" in target):
 		return false

@@ -1,10 +1,10 @@
 {
   "format": 1,
   "addons": {
-    "dot_core": 41,
-    "dot_mobile": 1,
-    "dot_player_char": 3,
-    "dot_player_controller": 27,
-    "dot_ui": 19
+    "gs_core": 41,
+    "gs_mobile": 1,
+    "gs_player_char": 3,
+    "gs_player_controller": 27,
+    "gs_ui": 19
   }
 }

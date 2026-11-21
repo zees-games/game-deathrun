@@ -10,7 +10,7 @@ const KillPov := preload("dr_kill_pov.gd")
 const CHANNEL := "deathrun.killcam"
 
 ## Skip keys: jump, the use key and Escape.
-const SKIP_ACTIONS: PackedStringArray = ["dot_fps_jump", "ui_cancel"]
+const SKIP_ACTIONS: PackedStringArray = ["gs_fps_jump", "ui_cancel"]
 
 ## The killcam is over (or never began); the end-of-round flow goes on from here.
 signal over(skipped: bool)

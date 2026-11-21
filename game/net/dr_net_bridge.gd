@@ -5,7 +5,7 @@ extends "dr_net_state.gd"
 ##
 ## [codeblock]
 ## # server
-## bridge.attach(game, net)          # dot-game's GSGameNetcode does this
+## bridge.attach(game, net)          # gs-game's GSGameNetcode does this
 ## bridge.open_link(server)          # and this
 ## bridge.add_player(peer_id, userid, "Ada")
 ## bridge.server_tick(tick)          # instead of the game's own loop
@@ -24,7 +24,7 @@ extends "dr_net_state.gd"
 ## client predicting tick N poses the course at tick N itself and gets the server's answer
 ## without being told it.
 ##
-## [b]The ordering is the other half of the file.[/b] dot-net drives simulation per entity;
+## [b]The ordering is the other half of the file.[/b] gs-net drives simulation per entity;
 ## this game's tick is a whole-world property — the course is posed, every player moves, then
 ## the buttons, the traps and the finish are decided. [method ensure_game_ticked] reconciles the
 ## two: the first behaviour through on a tick runs the whole world and the rest find it done.
@@ -144,16 +144,16 @@ func _wire_server_events() -> void:
 	weapon_net.watch(game.weapon_layer)
 
 
-## Hands dot-combat the two callables that make lag compensation real.
+## Hands gs-combat the two callables that make lag compensation real.
 ##
-## [b]Two lines, and without them the setting is a lie.[/b] dot-combat names no dot-net type
+## [b]Two lines, and without them the setting is a lie.[/b] gs-combat names no gs-net type
 ## — the whole point of the seam — so it takes a rewind and a restore as [Callable]s and,
 ## unset, says so once at boot and then resolves every shot against the present anyway. A
 ## game that left the flag on and the callables unset would report lag compensation as
 ## enabled, do nothing, and cost the next reader an afternoon; this family calls that
 ## "produced correctly and consumed by nothing" and it is its second most repeated bug.
 ##
-## dot-net already records the history: `GSNetManager.server_tick` calls
+## gs-net already records the history: `GSNetManager.server_tick` calls
 ## `history.record(identities, tick)` once a snapshot. There is nothing to build.
 ##
 ## [b]The shooter is not excluded, and that is safe here rather than an oversight.[/b]
@@ -313,7 +313,7 @@ func _on_player_added(id: StringName) -> void:
 
 	# [b]Every id on the wire is `u<session>`, and anything else parses back to zero.[/b] A
 	# world that added a player called `bot` would replicate it under session 0 — which is
-	# also dot-net's broadcast address — and a second one would silently replace the first
+	# also gs-net's broadcast address — and a second one would silently replace the first
 	# in this table. Refused with a line rather than accepted quietly: the symptom otherwise
 	# is one stand-in playing and the other standing still for ever.
 	if player_key(session_id) != id:
@@ -508,7 +508,7 @@ func _release_toys() -> void:
 
 ## Client, on TOYS: a mirror for every id at once, under the holder, whether this end's toys
 ## for that course exist yet or not. [b]A client must know every entity a snapshot carries[/b]:
-## dot-net stops reading a snapshot at the first one it does not know (a body cannot be skipped
+## gs-net stops reading a snapshot at the first one it does not know (a body cannot be skipped
 ## without its declarations), so a toy mirror missing while the client loads the map, or ever,
 ## on a client left on another map, was every player after it frozen. Paired with its toy
 ## by index as soon as both are here.
@@ -825,7 +825,7 @@ func _on_request(message: GSNetMessage) -> void:
 	if ask == null or net == null or not net.is_server:
 		return
 
-	# [b]From the message, which dot-net stamped from the TRANSPORT.[/b] A peer id inside a
+	# [b]From the message, which gs-net stamped from the TRANSPORT.[/b] A peer id inside a
 	# body is a claim; `sender_peer_id` is what the socket said, which is the only version
 	# of it a server may act on.
 	var peer_id := ask.sender_peer_id
@@ -889,7 +889,7 @@ func _spectate_roam(peer_id: int) -> void:
 ## Everything in the world, to one peer, once its own copy exists.
 ##
 ## [b]On READY and not on connect, and the difference is a whole join's worth of
-## messages.[/b] dot-server's signon finishes and THEN the client builds its scene; a server
+## messages.[/b] gs-server's signon finishes and THEN the client builds its scene; a server
 ## that started talking at connect is one whose JOIN and STAGE land on a node
 ## that does not exist yet and are lost, one "Node not found" per call.
 func _admit(peer_id: int) -> void:
@@ -1001,7 +1001,7 @@ func _broadcast(kind: int, body: PackedByteArray) -> void:
 
 ## One peer, and never zero.
 ##
-## `net.send(msg, 0)` is a BROADCAST in dot-net, so a helper that passed a missing peer id
+## `net.send(msg, 0)` is a BROADCAST in gs-net, so a helper that passed a missing peer id
 ## straight through would send one player's private message to everybody. game-hungario
 ## shipped exactly that.
 func _tell(peer_id: int, kind: int, body: PackedByteArray) -> void:
@@ -1262,10 +1262,10 @@ func _adopt_tick_rate(rate: int) -> void:
 	# The LIVE one, which is built from the config back at `setup()` and is therefore not
 	# updated by writing the config alone.
 	net.clock.tick_rate = game.tick_rate
-	# dot-net API 7 has GSNetClock.adopt_tick_rate(), which also raises the engine's step cap to
+	# gs-net API 7 has GSNetClock.adopt_tick_rate(), which also raises the engine's step cap to
 	# a quarter second of ticks, so a slow-frame client keeps up with the server. A shell built
 	# before it gets the same rule here; remove this branch when the oldest shell is API 7.
-	if GSAddonApi.build_level("dot_net") >= 7:
+	if GSAddonApi.build_level("gs_net") >= 7:
 		GSNetClock.adopt_tick_rate(game.tick_rate)
 	else:
 		Engine.max_physics_steps_per_frame = maxi(Engine.max_physics_steps_per_frame, ceili(0.25 * float(game.tick_rate)))
@@ -1362,7 +1362,7 @@ func _apply_join(reader: GSNetReader) -> void:
 ##
 ## [b]Never the local peer for anybody else[/b], or this client would predict a person whose
 ## keys it never had. And a client whose local peer is 0 claims nothing: 0 is the server's
-## owner id, and on such a registry dot-net's `is_owner` (owner == local peer) is already true
+## owner id, and on such a registry gs-net's `is_owner` (owner == local peer) is already true
 ## of every owner-0 mirror — which this function cannot undo, and which no client here runs
 ## into, because `DrClient` takes its id from the multiplayer API and that never answers 0.
 func _mirror_owner(session_id: int) -> int:

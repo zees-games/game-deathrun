@@ -90,7 +90,7 @@ func _test_the_wire() -> void:
 	var torn := bytes.slice(0, bytes.size() / 2)
 	_check(not DrCourseDoc.decode(torn).ok, "half of it is refused, not built")
 
-	# A death carries how the body falls (dot-player-char's GSPlayerDeath), last and optional.
+	# A death carries how the body falls (gs-player-char's GSPlayerDeath), last and optional.
 	var fall := GSPlayerDeath.new()
 	fall.reaction = &"face_plant"
 	fall.roll_seed = 1234
@@ -155,7 +155,7 @@ func _test_delivery() -> void:
 	_check(named.is_empty(), "no class_name anywhere", ", ".join(named))
 	_check(bare.is_empty(), "no bare res:// path to this game's own files", ", ".join(bare))
 
-	var root := "res://dot_cloud/someone/mg-deathrun/1.0.0/"
+	var root := "res://gs_cloud/someone/mg-deathrun/1.0.0/"
 	var once := DrPaths.rebase_onto("res://textures/prototype/deck.png", root)
 	_check(once == root + "textures/prototype/deck.png", "a path is rebased onto a mount", once)
 	_check(DrPaths.rebase_onto(once, root) == once, "and a rebased path is left alone")

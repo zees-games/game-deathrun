@@ -6,7 +6,7 @@ const DrTestToys := preload("dr_test_toys.gd")
 ##
 ## [b]Counts sections AND checks, and the second is the one that matters.[/b] A script error
 ## inside a section aborts that function and the section counter is already satisfied,
-## because the section announced itself on the way in. dot-settings has the story.
+## because the section announced itself on the way in. gs-settings has the story.
 ##
 ## Every number about the course here is the built-in practice course's
 ## ([method DrCatalogue.practice]), whose comment lists where each trap is.
@@ -377,7 +377,7 @@ func _test_the_end() -> void:
 	activator.wants_use = false
 	_check(fired.is_empty(), "an activator at the end presses nothing")
 
-	# A stand-in's fight is dot-bot's aim: no shot on the tick it first looks, and a preset that
+	# A stand-in's fight is gs-bot's aim: no shot on the tick it first looks, and a preset that
 	# reacts faster fires sooner (bot_reaction).
 	var first_shot := {}
 	for preset in ["easy", "nightmare"]:
@@ -495,7 +495,7 @@ func _mean_spread(rig: ZeeWeaponRig, held: GSWeaponDef, aim: bool) -> float:
 	return total / float(maxi(shots, 1))
 
 
-## dot-props' toys on the practice course: a runner walking into the start's football sends it
+## gs-props' toys on the practice course: a runner walking into the start's football sends it
 ## on; an armed runner's shot sends the arena's beach ball off and the combat's trace sees
 ## straight through it, so it is no cover.
 func _test_toys() -> void:

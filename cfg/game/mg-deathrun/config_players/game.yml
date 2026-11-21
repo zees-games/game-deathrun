@@ -26,7 +26,7 @@
 # --- Bots
 # How many players the server keeps in the round by adding stand-ins. [0..]
 # minimum_players: 3
-# Deprecated: what `dr_bot_spread` last set `bot_aim_error` to. A stand-in's aim is dot-bot's ([GSBotAim] on... [0.0..]
+# Deprecated: what `dr_bot_spread` last set `bot_aim_error` to. A stand-in's aim is gs-bot's ([GSBotAim] on... [0.0..]
 # bot_aim_spread_degrees: 7.0
 # How likely a stand-in runner is to mistime a jump, in a hundred. [0.0..100.0]
 # bot_fumble_chance: 8.0

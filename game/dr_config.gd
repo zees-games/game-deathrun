@@ -3,7 +3,7 @@ extends GSConfig
 ## Every number this game has, layered like every other [GSConfig] in the family.
 ##
 ## [code]exported defaults < JSON file < environment < command line[/code], identically to
-## dot-server, dot-cloud and the other games. Nothing here reads
+## gs-server, gs-cloud and the other games. Nothing here reads
 ## [code]OS.get_cmdline_args[/code] itself.
 ##
 ## [b]Metres and seconds.[/b] The courses are documents in the same units (see
@@ -165,7 +165,7 @@ extends GSConfig
 ## Whether the next course is drawn at random (seeded) rather than taken in order.
 @export var shuffle_courses: bool = true
 
-## The file that says which courses this server ROTATES; the default stem makes dot-map look through its tiers for `maps.yml` in `cfg/game/mg-deathrun/dot_map/` (shipped) or `cfg/server/addons/dot_map/` (operator; dot-map's
+## The file that says which courses this server ROTATES; the default stem makes gs-map look through its tiers for `maps.yml` in `cfg/game/mg-deathrun/gs_map/` (shipped) or `cfg/server/addons/gs_map/` (operator; gs-map's
 ## `GSMapRotationFile`: named rotations, `random` or `cycle`, wildcards, command names). Empty, or no such file, rotates every course. A course it
 ## leaves out stays installed (the map menu and an admin's change load it); it is only never
 ## drawn, balloted or nominated. A rotation in the file replaces [member shuffle_courses].
@@ -214,7 +214,7 @@ extends GSConfig
 ## at them — or the activator, with somebody to press them at.
 @export_range(0, 24, 1, "or_greater") var minimum_players: int = 3
 
-## Deprecated: what `dr_bot_spread` last set `bot_aim_error` to. A stand-in's aim is dot-bot's
+## Deprecated: what `dr_bot_spread` last set `bot_aim_error` to. A stand-in's aim is gs-bot's
 ## ([GSBotAim] on `bot_difficulty`); nothing reads this but the alias.
 @export_range(0.0, 45.0, 0.5, "or_greater") var bot_aim_spread_degrees: float = 7.0
 

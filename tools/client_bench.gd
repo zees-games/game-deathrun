@@ -2,7 +2,7 @@ extends GSGameClientBench
 
 const DrConfig := preload("../game/dr_config.gd")
 
-## Client prediction bench (dot-game's GSGameClientBench): see that class for the flags.
+## Client prediction bench (gs-game's GSGameClientBench): see that class for the flags.
 ## The world is the server scene and module a dedicated server loads, on dr_ice_works with no warmup; `--bots` is ignored (the module's stand-ins are off).
 
 

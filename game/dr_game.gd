@@ -2,7 +2,7 @@ extends "dr_game_state.gd"
 
 ## The simulation. Headless, authoritative, and the only thing that decides anything.
 ## A round is a corridor of traps: runners run one long course to its end, activators drawn fresh each round press a button per trap from a corridor beside it. The first runner to the end arena calls the activators down; there is no respawn, so a press is worth something.
-## The round, sides and scoreboard are dot-match's (through [DrRules]); health and damage are dot-combat's; weapons are zee-dot-weapons'. The course, traps and presses are [DrCourse], this game's own.
+## The round, sides and scoreboard are gs-match's (through [DrRules]); health and damage are gs-combat's; weapons are zee-gs-weapons'. The course, traps and presses are [DrCourse], this game's own.
 
 
 func _ready() -> void:
@@ -43,7 +43,7 @@ func _ready() -> void:
 		# The Workshop's courses, solo only by the index's own session (an online session lists none).
 		catalogue.follow_content(GSContentIndex.shared(), DrCatalogue.accepted_map_kinds())
 		var _rotation := load_rotation()
-		# Laid out now, not on the first round: dot-match runs a warmup first, and an empty
+		# Laid out now, not on the first round: gs-match runs a warmup first, and an empty
 		# world through the warmup is indistinguishable from a map that failed to load.
 		_lay_out_course()
 
@@ -55,7 +55,7 @@ func _ready() -> void:
 
 ## The `<pack>/<subdir>` directories of the map packs a host running this game with no server
 ## has mounted for it: the client shell's Solo play, which fetches the packs a server owner
-## would name (dot-server-deploy's `client/solo.json`) because a tab has no server to name
+## would name (gs-server-deploy's `client/solo.json`) because a tab has no server to name
 ## them. Read the way the module reads its server's ([GSGameContent]). Empty everywhere else:
 ## a server, a suite, a run from the repository. Looked up by name and duck-typed, because a
 ## delivered game may not name a host's class.
@@ -107,7 +107,7 @@ func _build_physics() -> void:
 				# is 0 by default here (see `body_rules`); the camera fade keeps a runner who
 				# walks through you out of the lens.
 				layer.collides_with = [&"world"]
-			# A course's loose toy (dot-props'): the course, its traps and the other toys,
+			# A course's loose toy (gs-props'): the course, its traps and the other toys,
 			# never a runner, who walks through it and pushes it (`_advance_toys`).
 			&"toy":
 				layer.collides_with = [&"world", &"toy"]
@@ -191,7 +191,7 @@ func _build_combat() -> void:
 	combat.resolver.team_of = func(entity_id: int) -> int:
 		return team_of(entities.key_for_id(entity_id))
 
-	# dot-game's "still loading": the one place every hurt passes (a trap's kill, the floor, a
+	# gs-game's "still loading": the one place every hurt passes (a trap's kill, the floor, a
 	# weapon), so a covered seat is neither hurt nor eliminated, and a round counts the living
 	# from health. An admin's slay or slap is the operator's word and passes.
 	combat.resolver.adjust = func(damage: GSDamage) -> void:
@@ -288,7 +288,7 @@ func _build_match() -> void:
 	match_node.teams.teams = teams
 	match_node.teams.force_balance = false
 	match_node.teams.allow_choice = false
-	# Off: the sides are this game's to draw, and dot-match's default difference of one refused
+	# Off: the sides are this game's to draw, and gs-match's default difference of one refused
 	# a ninth runner against one activator.
 	match_node.teams.max_difference = 0
 	match_node.teams.reindex()
@@ -437,7 +437,7 @@ func add_player(
 		var seated := match_node.add_player(String(player_id), display_name, _tick, side)
 
 		if not seated.ok:
-			GSLog.error(CHANNEL, "dot-match refused a player", {
+			GSLog.error(CHANNEL, "gs-match refused a player", {
 				"id": String(player_id), "side": side, "why": seated.error.message,
 			})
 
@@ -524,7 +524,7 @@ func remove_player(player_id: StringName) -> void:
 
 	var player: DrPlayer = players[player_id]
 
-	# Before the node goes: dot-combat keyed a health on this entity, and a stale record has
+	# Before the node goes: gs-combat keyed a health on this entity, and a stale record has
 	# no symptom until the process runs out of memory.
 	if combat != null and is_instance_valid(combat) and player.entity_id != 0:
 		combat.forget(player.entity_id)
@@ -687,7 +687,7 @@ func _on_round_started(number: int) -> void:
 func _on_round_ended(number: int, winner: int, _outcome: int) -> void:
 	_set_phase(Phase.IDLE)
 
-	# The clock dot-match itself called, past every clock this game keeps: a backstop that
+	# The clock gs-match itself called, past every clock this game keeps: a backstop that
 	# should never be what ends a round, and is said so when it is.
 	if not _decided:
 		_winner_name = "the round ran out"
@@ -730,7 +730,7 @@ func _draw_sides() -> void:
 		if not can_be_harmed(id):
 			wishes[id] = -1
 
-	# dot-team's draw, which was extracted from this one. rest_first keeps this game's rule:
+	# gs-team's draw, which was extracted from this one. rest_first keeps this game's rule:
 	# last round's activators sit out even if they volunteered, and come back only when there
 	# are not enough fresh names (unless the server lets them repeat).
 	var history := {}
@@ -876,7 +876,7 @@ func command_names(role: String) -> PackedStringArray:
 
 ## Every course this server plays, as the map menu (M) lists them: `{id, name, detail,
 ## current}`, the blurb under the name (a course's `theme` is its colours, not a word). Solo the
-## client's list, online the server's (the module hands it to dot-vote's map menu).
+## client's list, online the server's (the module hands it to gs-vote's map menu).
 func course_rows() -> Array:
 	var out: Array = []
 	if catalogue == null:
@@ -896,7 +896,7 @@ func course_rows() -> Array:
 
 
 ## The map menu's change: [param id] now, not after this round. The next course is set and a
-## fresh round begins on it (dot-match's `begin_round_now`: the round called off has no
+## fresh round begins on it (gs-match's `begin_round_now`: the round called off has no
 ## winner and no activator's score); with no match running it is simply built. Authority only.
 func change_course_now(id: StringName) -> GSResult:
 	if not authoritative:
@@ -1135,7 +1135,7 @@ func apply_trap_fired(index: int, tick: int, by: StringName = &"") -> void:
 
 ## What the course did to everybody this tick: the traps, the pits, the drop and the finish.
 ##
-## [b]A height comparison for the drop, not a trigger volume,[/b] as dot-timer and mg-wipeout
+## [b]A height comparison for the drop, not a trigger volume,[/b] as gs-timer and mg-wipeout
 ## both say: something falling fast crosses a thin trigger between two ticks without ever being
 ## inside it.
 func _watch_course() -> void:
@@ -1145,7 +1145,7 @@ func _watch_course() -> void:
 	for id: StringName in players:
 		var player: DrPlayer = players[id]
 
-		# A death can decide the round, and dot-match can end it inside the call: nothing after
+		# A death can decide the round, and gs-match can end it inside the call: nothing after
 		# that is this round's.
 		if phase == Phase.IDLE:
 			return
@@ -1619,7 +1619,7 @@ func _advance_toys(delta: float) -> void:
 
 
 ## An armed runner's shot against the toys: the first one on its ray, nearer than a wall, is
-## pushed (dot-props' `shot_along`). The shot goes on to the combat, whose trace never sees a
+## pushed (gs-props' `shot_along`). The shot goes on to the combat, whose trace never sees a
 ## toy, so a ball is never cover in the arena. Server side.
 func _shoot_toys(shot: GSShot) -> void:
 	if not authoritative or stage == null or stage.toys == null or stage.toys.count() == 0:
@@ -1964,7 +1964,7 @@ func _on_player_died(player: DrPlayer, damage: GSDamage) -> void:
 	var by := entities.key_for_id(damage.attacker)
 	var why: StringName = damage.context.get("why", DIED_SHOT)
 
-	# Spectating and progress BEFORE dot-match: `report_kill` can end the round inside the
+	# Spectating and progress BEFORE gs-match: `report_kill` can end the round inside the
 	# call, and a kill counted after that is counted in no round. mg-smash-copter's finding.
 	if spectate != null and authoritative:
 		spectate.on_died(
@@ -1993,7 +1993,7 @@ func _on_player_died(player: DrPlayer, damage: GSDamage) -> void:
 	})
 
 
-## The fall a death gets: dot-player-char's reaction rule over the server's weights, seeded from
+## The fall a death gets: gs-player-char's reaction rule over the server's weights, seeded from
 ## the player and the tick, with the killing weapon's def (zee's sniper and launcher always throw
 ## the body). A trap kills "downward", which pushes nothing; the body just drops.
 func decide_death(player: DrPlayer, damage: GSDamage) -> GSPlayerDeath:

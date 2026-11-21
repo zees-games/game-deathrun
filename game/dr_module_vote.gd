@@ -47,12 +47,12 @@ static func _between(value: String, cvar_name: String, least: float, most: float
 	return GSResult.success(value)
 
 
-## The players' vote for the next course, over dot-vote (`!vote`, `!rtv`, `!nominate`): opened
+## The players' vote for the next course, over gs-vote (`!vote`, `!rtv`, `!nominate`): opened
 ## [member DrVote.open_after_sec] into every course and applied when the round ends, because a
 ## round here is a course; see [code]game/dr_vote.gd[/code].
 func _build_vote(world: DrGame) -> void:
 	# A server owner turns it off or reshapes it in `user://cfg/deathrun_vote.json` or `game.yml`'s
-	# `metadata: course_vote:`, keyed as dot-vote's [GSVoteRules]. One that cannot be built is a
+	# `metadata: course_vote:`, keyed as gs-vote's [GSVoteRules]. One that cannot be built is a
 	# WARN and the rotation alone, never a server that will not start.
 	if world.catalogue == null:
 		return
@@ -147,9 +147,9 @@ func _wire_vote_server() -> void:
 
 ## The vote's hooks into the world: the map menu, its cvar, and the plays, rounds and leavers it counts.
 func _wire_vote_world(world: DrGame) -> void:
-	# The map menu (M), dot-vote's: a player holding the owner's `sv_map_menu_flag` changes the
+	# The map menu (M), gs-vote's: a player holding the owner's `sv_map_menu_flag` changes the
 	# course now, not next round, and sees the same rows a solo player does. Read by name,
-	# because a server on a dot-vote older than the menu has no `map_menu` and runs without it.
+	# because a server on a gs-vote older than the menu has no `map_menu` and runs without it.
 	var menu_half: Variant = vote.commands.get(&"map_menu") if vote.commands != null else null
 	if menu_half is Object:
 		(menu_half as Object).set(&"change_fn", world.change_course_now)

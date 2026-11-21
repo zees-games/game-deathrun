@@ -2,16 +2,16 @@ extends GSMenuGameSettings
 
 const DrBindings := preload("dr_bindings.gd")
 
-## A player's own settings and the menu that changes them, on dot-menu's `GSMenuGameSettings` with this game's spec.
+## A player's own settings and the menu that changes them, on gs-menu's `GSMenuGameSettings` with this game's spec.
 ## Call `setup()`, then `bind_look`, `bind_camera` and `bind_audio`; `open()` shows the menu.
 ## Why the scopes are the family's: docs/comment-notes.md.
 
 const SCHEMA_VERSION := 1
 
-## Where this game's own document lives. The shared account document is dot-settings'.
+## Where this game's own document lives. The shared account document is gs-settings'.
 const SETTINGS_DIR := "user://deathrun_settings"
 
-## The app's namespace. ACCOUNT settings are shared under dot-menu's `tmc_account`.
+## The app's namespace. ACCOUNT settings are shared under gs-menu's `tmc_account`.
 const APP_NAMESPACE := &"deathrun"
 
 ## The field of view the camera had before this existed, and still the default.

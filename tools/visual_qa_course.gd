@@ -1,6 +1,6 @@
 extends RefCounted
 
-## The course half of Deathrun's visual QA capture (tools/visual_qa.gd; the loop is dot-game's docs/visual-qa.md): the traps and the
+## The course half of Deathrun's visual QA capture (tools/visual_qa.gd; the loop is gs-game's docs/visual-qa.md): the traps and the
 ## course objects, each filmed with a runner (DrFigure) in the real built course (DrCourse, drawn as a client draws it).
 ##   trap_<course>_<trap>   one trap per distinct kind of parts across every shipped course, button post included. Clips:
 ##                          watch (the runner stands where the trap catches somebody, the trap fires at 0.6 s) and
@@ -8,7 +8,7 @@ extends RefCounted
 ##   object_<kind>          one of every piece kind a course is made of (mover, turntable, ramp, ball, cylinder, kill pit,
 ##                          teleport) and the start pen with its gate. Clip: approach (the runner walks up to it; a mover
 ##                          or turntable is ridden).
-## The first-person camera is the runner's eye, so f shows what a runner sees; t and o are dot-game's outside views.
+## The first-person camera is the runner's eye, so f shows what a runner sees; t and o are gs-game's outside views.
 
 const DrCatalogue := preload("../game/dr_catalogue.gd")
 const DrCourse := preload("../game/dr_course.gd")
