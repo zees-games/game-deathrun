@@ -10,10 +10,17 @@ config_version=5
 
 [application]
 
-config/name="mg-deathrun"
+config/name="Deathrun"
 config/description="One long course of traps. The runners run it; the activators, drawn each round, press the buttons. Whoever reaches the end is handed a weapon and the activators are called down to meet them."
 run/main_scene="res://game/dr.tscn"
 config/features=PackedStringArray("4.7")
+config/icon="res://branding/icon.png"
+config/windows_native_icon="res://branding/icon.ico"
+boot_splash/bg_color=Color(0.051, 0.0588, 0.0784, 1)
+boot_splash/fullsize=true
+boot_splash/image="res://branding/splash.png"
+boot_splash/show_image=true
+boot_splash/use_filter=true
 
 [audio]
 

@@ -152,6 +152,7 @@ A course is a JSON file: a start, a corridor of pieces and traps, a walkway with
 
 | Asset | Author / source | License | Where |
 | --- | --- | --- | --- |
+| Godot Engine logo (boot splash) | Andrea Calabró, [godotengine.org](https://godotengine.org/press/) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | `branding/splash.png` |
 | Surfaces | Kenney, Prototype Textures, tinted per course | CC0 | each kit's licence |
 | Players | Quaternius, [Zombie Apocalypse Kit](https://quaternius.com/packs/zombieapocalypsekit.html), skinned from Kenney's blocky characters | CC0 1.0 | gs-player-char |
 | Weapons | [zee-gs-weapons](https://github.com/zees-games/zee-gs-weapons) | see that repo | that repo |
