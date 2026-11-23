@@ -1,7 +1,7 @@
 {
   "format": 1,
   "addons": {
-    "gs_core": 41,
+    "gs_core": 43,
     "gs_mobile": 1,
     "gs_player_char": 3,
     "gs_player_controller": 27,
