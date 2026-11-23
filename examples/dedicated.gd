@@ -289,7 +289,7 @@ func _test_the_course_vote() -> void:
 		return
 
 	_check(server.console.find_command("vote") != null if server.console.has_method("find_command") else true,
-		"and registered dot-vote's vote command")
+		"and registered gs-vote's vote command")
 
 	_hibernation_checks(vote)
 
