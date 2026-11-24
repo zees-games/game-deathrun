@@ -11,7 +11,7 @@ game/dr_avatars.gd	50
 game/dr_catalogue.gd	32
 game/dr_client.gd	185
 game/dr_client_base.gd	40
-game/dr_course_doc.gd	54
+game/dr_course_doc.gd	30
 game/dr_figure.gd	75
 game/dr_game.gd	32
 game/dr_hud.gd	34
@@ -20,11 +20,10 @@ game/dr_killcam.gd	138
 game/dr_module.gd	33
 game/dr_player.gd	49
 game/dr_progress.gd	74
-game/dr_services.gd	150
+game/dr_services.gd	83
 game/dr_textures.gd	42
 game/net/dr_events.gd	199
 game/net/dr_net_bridge.gd	30
-game/net/dr_net_link.gd	120
 game/net/dr_player_net.gd	37
 game/net/dr_toy_net.gd	32
 tools/client_bench.gd	31
