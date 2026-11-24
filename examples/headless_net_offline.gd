@@ -49,6 +49,33 @@ func _check_command_codec() -> void:
 	_check(bits_plain.to_bytes().size() == bits_aim.to_bytes().size() and plain._equals(plain) and not plain._equals(DrNetCommand.new()),
 		"the bit costs no byte, and a command with it is not equal to one without", "%d bytes" % bits_aim.to_bytes().size())
 
+	# The view fields: a named view and bracket survive the wire, none costs one bit, an overlong lag is clamped by the reader.
+	var viewed := DrNetCommand.new()
+	viewed.tick = 90
+	viewed.view_lag_q = 37
+	viewed.view_back = 9
+	viewed.view_span = 2
+	var view_bits := GSNetWriter.new()
+	viewed._write(view_bits)
+	var view_back_read := DrNetCommand.new()
+	view_back_read._read(view_bits.to_reader())
+	_check(view_back_read.view_lag_q == 37 and view_back_read.view_back == 9 and view_back_read.view_span == 2 and not viewed._equals(DrNetCommand.new()),
+		"a command's view lag and snapshot bracket round-trip", "%d/%d/%d" % [view_back_read.view_lag_q, view_back_read.view_back, view_back_read.view_span])
+	var lag_only := DrNetCommand.new()
+	lag_only.view_lag_q = 5
+	var lag_bits := GSNetWriter.new()
+	lag_only._write(lag_bits)
+	var lag_read := DrNetCommand.new()
+	lag_read._read(lag_bits.to_reader())
+	_check(lag_read.view_lag_q == 5 and lag_read.view_back == -1 and not lag_only._equals(viewed), "a lag with no bracket arrives with none")
+	var unviewed := DrNetCommand.new()
+	var none_bits := GSNetWriter.new()
+	unviewed._write(none_bits)
+	_check(none_bits.to_bytes().size() <= bits_plain.to_bytes().size() + 1 and unviewed.view_lag_q == -1, "a command with no view carries one bit for it",
+		"%d vs %d bytes" % [none_bits.to_bytes().size(), bits_plain.to_bytes().size()])
+	viewed._neutralise()
+	_check(viewed.view_lag_q == -1 and viewed.view_back == -1, "a silent player's command names no view")
+
 
 ## Every encoder against its decoder. Nothing checks that two ends of a serialisation are
 ## inverses for you: gs-moderation once wrote "voice muted" and read back a warning.

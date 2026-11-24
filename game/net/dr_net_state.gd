@@ -4,6 +4,7 @@ extends GSGameNetIo
 
 const DrEvent := preload("dr_event.gd")
 const DrEvents := preload("dr_events.gd")
+const DrHullView := preload("dr_hull_view.gd")
 const DrNetCommand := preload("dr_net_command.gd")
 const DrNetLink := preload("dr_net_link.gd")
 const DrPlayerNet := preload("dr_player_net.gd")

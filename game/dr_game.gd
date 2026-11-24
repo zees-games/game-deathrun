@@ -1529,7 +1529,7 @@ func _step(delta: float) -> void:
 		# Nobody out is simulated: a body left to fall would fall for the rest of the round,
 		# and one standing in a corridor would be a body the next runner collides with.
 		if player.is_alive() and not player.watching:
-			player.simulate(_tick, delta)
+			step_against_view(id, _tick, player.simulate.bind(_tick, delta))
 	GSFrameCost.add(&"dr.players", t)
 
 	t = GSFrameCost.now()

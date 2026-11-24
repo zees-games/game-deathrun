@@ -88,6 +88,9 @@ func attach(p_game: Object, p_net: GSNetManager) -> GSResult:
 	# its own `_physics_process` would move every player twice.
 	game.external_tick = true
 
+	# Where the other hulls stood on a mover's screen (mp_solidplayers_unlag): the game and the predicted step both ask it.
+	game.hull_view = DrHullView.new(game, net, _behaviours)
+
 	# The course's toys: the server's leave the registry before their nodes go and the new ones
 	# are named after STAGE; a client's mirrors stay registered and are handed this end's toys
 	# when its course is built.
@@ -140,45 +143,8 @@ func _wire_server_events() -> void:
 	if game.spectate != null:
 		game.spectate.view_changed.connect(_on_spectate_changed)
 
-	_wire_lag_compensation()
+	DrHullView.wire_combat(game, net)
 	weapon_net.watch(game.weapon_layer)
-
-
-## Hands gs-combat the two callables that make lag compensation real.
-##
-## [b]Two lines, and without them the setting is a lie.[/b] gs-combat names no gs-net type
-## — the whole point of the seam — so it takes a rewind and a restore as [Callable]s and,
-## unset, says so once at boot and then resolves every shot against the present anyway. A
-## game that left the flag on and the callables unset would report lag compensation as
-## enabled, do nothing, and cost the next reader an afternoon; this family calls that
-## "produced correctly and consumed by nothing" and it is its second most repeated bug.
-##
-## gs-net already records the history: `GSNetManager.server_tick` calls
-## `history.record(identities, tick)` once a snapshot. There is nothing to build.
-##
-## [b]The shooter is not excluded, and that is safe here rather than an oversight.[/b]
-## `GSNetHistory.rewind` can leave one entity alone so that rewinding does not move the
-## shooter's own muzzle — but `resolve_shot` fixes `shot.origin` before it rewinds anything,
-## so the muzzle has already been decided, and the resolver refuses self damage separately.
-## What excluding would buy is one fewer entity moved and put back.
-func _wire_lag_compensation() -> void:
-	if game.combat == null or net == null:
-		return
-
-	if game.combat.config != null:
-		game.combat.config.lag_compensation = true
-
-	game.combat.rewind_fn = func(target_tick: float) -> void:
-		var _rewound := net.history.rewind(
-			net.registry.all(), int(target_tick), net.clock.tick
-		)
-
-	game.combat.restore_fn = func() -> int:
-		return net.history.restore()
-
-	GSLog.debug(CHANNEL, "lag compensation is wired to the netcode's history", {
-		"max_rewind_ms": game.combat.config.max_rewind_ms if game.combat.config != null else 0.0,
-	})
 
 
 ## Opens the link under [param parent], whose NAME is half the RPC routing.
@@ -662,6 +628,9 @@ func ensure_game_ticked(tick: int) -> void:
 
 	game.tick_once(tick)
 
+	# Every player's feet after this tick, for the next ticks' rewinds.
+	game.hull_view.record(tick)
+
 	# The toys where the physics left them, before the snapshot.
 	for behaviour: DrToyNet in _toy_nets:
 		behaviour.pull()
@@ -681,6 +650,8 @@ func client_tick(tick: int, command: GSFpsCommand, slot: int = 0, use: bool = fa
 	packet.slot = slot
 	packet.use = use
 	packet.aim = aim
+
+	game.hull_view.fill(packet, tick, _behaviours.get(local_player_id))
 
 	# Into the local history BEFORE predicting: reconciliation replays it.
 	net.local_inputs().push(packet)

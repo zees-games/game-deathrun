@@ -17,8 +17,8 @@ const DrTestToys := preload("dr_test_toys.gd")
 ##
 ## Sections and checks are both counted; mg-smash-copter's notes say why the second matters.
 
-const SECTIONS := 19
-const CHECKS := 114
+const SECTIONS := 20
+const CHECKS := 126
 
 
 func _ready() -> void:
@@ -48,6 +48,7 @@ func _run() -> void:
 		await _test_the_end_crosses()
 		await _test_the_toys_reach_the_client()
 		await _test_a_teleport_is_predicted()
+		await _test_the_hull_view()
 		await _test_leaving()
 		await _test_killcam_icon()
 
@@ -710,4 +711,36 @@ func _test_killcam_icon() -> void:
 	_check((placed["transform"] as Transform3D).origin.z > 1.0, "the behind camera sits behind the killer's eye")
 	kc.free()
 	client.free()
+	_finished()
+
+
+## mp_solidplayers_unlag: a command names the view it was drawn from, the server keeps a ring of feet to answer it, and the client's step uses the same rule.
+func _test_the_hull_view() -> void:
+	_section("the hulls the mover bumps are the ones its screen drew")
+	_check(_server_game.hull_view != null and _client_game.hull_view != null, "both ends have a hull view")
+	_check(not _server_game.body_rules.solid, "players are not solid by default, so this costs nothing until a server turns it on")
+
+	for game: DrGame in [_server_game, _client_game]:
+		game.body_rules.solid = true
+		game.body_rules.unlag = true
+		game.body_rules.refresh()
+
+	var bot: DrPlayer = _server_bridge.add_bot("Bot", DrGame.RUNNERS)
+	await _steps(60)
+	var behaviour: Object = _server_bridge._behaviours.get(SESSION)
+	_check(behaviour != null and behaviour.last_view_q >= 0, "the server read a view off the client's command", str(behaviour.last_view_q if behaviour != null else -2))
+	_check(behaviour != null and behaviour.last_view_tick > 0, "and the tick it was for")
+	var ring: Variant = _server_game.hull_view.view.ring_at(bot.player_id, _server_net.clock.tick - 2)
+	_check(ring is Vector3, "the server's ring holds another player's feet for a recent tick", str(ring))
+	var answered: int = 0
+	for kind: String in ["ring", "interp", "miss", "teleport", "none"]:
+		answered += int(_server_game.hull_view.view.counts[kind]) + int(_client_game.hull_view.view.counts[kind])
+	_check(answered > 0, "the movers' steps asked it", str(_server_game.hull_view.view.counts) + str(_client_game.hull_view.view.counts))
+	_check(int(_client_game.hull_view.view.counts["interp"]) > 0, "the client answers from the interpolator", str(_client_game.hull_view.view.counts))
+
+	for game: DrGame in [_server_game, _client_game]:
+		game.body_rules.unlag = false
+	var before: int = _server_game.hull_view.view.counts["ring"]
+	await _steps(10)
+	_check(int(_server_game.hull_view.view.counts["ring"]) == before, "with unlag off the step runs against the present and asks nothing")
 	_finished()

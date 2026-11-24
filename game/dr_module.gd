@@ -104,7 +104,7 @@ func _net_config() -> GSNetConfig:
 	# [b]On, and the two callables that make it real are wired by the bridge.[/b] It was off
 	# for as long as they were not: a flag reported as enabled with nothing behind it is
 	# worse than one that is off, because the first reader to trust it loses an afternoon.
-	# See [method DrNetBridge._wire_lag_compensation].
+	# See [method DrHullView.wire_combat].
 	#
 	# The end arena is a fight at range with rifles, which is the ordinary reason to want it.
 	config.enable_lag_compensation = true
